@@ -304,6 +304,13 @@ int xdl_recs_cmp(diffdata_t *dd1, long off1, long lim1,
 }
 
 
+void print(FILE* fp, xdfenv_t*xe){
+	fprintf(fp,"xe->xdf1.nrec %ld \n",xe->xdf1.nrec);
+	fprintf(fp,"xe->xdf1.hbits %i \n",xe->xdf1.hbits);
+	fprintf(fp,"xe->xdf1.dstart %ld \n",xe->xdf1.dstart);
+	fprintf(fp,"xe->xdf1.dend %ld \n",xe->xdf1.dend);
+	fprintf(fp,"xe->xdf1.nreff %ld \n",xe->xdf1.nreff);
+}
 int xdl_do_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 		xdfenv_t *xe) {
 	long ndiags;
@@ -317,10 +324,18 @@ int xdl_do_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	if (XDF_DIFF_ALG(xpp->flags) == XDF_HISTOGRAM_DIFF)
 		return xdl_do_histogram_diff(mf1, mf2, xpp, xe);
 
+	// break HERE
+	FILE*fp=fopen("debug.txt","a");
+	fprintf(fp,"start debug-------------------------------------\n");
+	fprintf(fp,"before:\n");
+	print(fp,xe);
 	if (xdl_prepare_env(mf1, mf2, xpp, xe) < 0) {
+		// break HERE
 
 		return -1;
 	}
+	print(fp,xe);
+	fclose(fp);
 
 	/*
 	 * Allocate and setup K vectors to be used by the differential algorithm.
