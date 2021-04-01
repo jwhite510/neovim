@@ -305,11 +305,45 @@ int xdl_recs_cmp(diffdata_t *dd1, long off1, long lim1,
 
 
 void print(FILE* fp, xdfenv_t*xe){
-	fprintf(fp,"xe->xdf1.nrec %ld \n",xe->xdf1.nrec);
-	fprintf(fp,"xe->xdf1.hbits %i \n",xe->xdf1.hbits);
-	fprintf(fp,"xe->xdf1.dstart %ld \n",xe->xdf1.dstart);
-	fprintf(fp,"xe->xdf1.dend %ld \n",xe->xdf1.dend);
-	fprintf(fp,"xe->xdf1.nreff %ld \n",xe->xdf1.nreff);
+	// fprintf(fp,"xe->xdf1.nrec %ld \n",xe->xdf1.nrec);
+	// fprintf(fp,"xe->xdf1.hbits %i \n",xe->xdf1.hbits);
+	// fprintf(fp,"xe->xdf1.dstart %ld \n",xe->xdf1.dstart);
+	// fprintf(fp,"xe->xdf1.dend %ld \n",xe->xdf1.dend);
+	// fprintf(fp,"xe->xdf1.nreff %ld \n",xe->xdf1.nreff);
+	// fprintf(fp,"*(xe->xdf1.ha) %lu \n",*(xe->xdf1.ha));
+	// fprintf(fp,"*(xe->xdf1.rindex) %ld \n",*(xe->xdf1.rindex));
+	// fprintf(fp,"*(xe->xdf1.rchg) %c \n",*(xe->xdf1.rchg));
+
+	// // printing recs
+	// cast to void pointer
+	fprintf(fp,"recs: next:%p \n",(void*)(**(xe->xdf1.recs)).next);
+	fprintf(fp,"recs: ptr:%s",(**(xe->xdf1.recs)).ptr);
+	// fprintf(fp,"recs: size:%ld \n",(**(xe->xdf1.recs)).size);
+	// fprintf(fp,"recs: ha:%lu \n",(**(xe->xdf1.recs)).ha);
+
+	// xrecord_t
+	fprintf(fp,"rhash: next:%p \n",(void*)(**(xe->xdf1.rhash)).next);
+	fprintf(fp,"rhash: ptr:%s \n",(**(xe->xdf1.rhash)).ptr);
+	// fprintf(fp,"rhash: size:%ld \n",(**(xe->xdf1.rhash)).size);
+	// fprintf(fp,"rhash: ha:%lu \n",(**(xe->xdf1.rhash)).ha);
+	// todo: iterate through and print all of these
+	// chastore_t
+	// fprintf(fp,"rcha isize:%ld , nsize:%ld, scurr:%ld",
+	// 		xe->xdf1.rcha.isize,
+	// 		xe->xdf1.rcha.nsize,
+	// 		xe->xdf1.rcha.scurr);
+
+
+
+	// fprintf(fp,"*ancur->icurr:%ld \n",(xe->xdf1.rcha.ancur)->icurr);
+	// fprintf(fp,"*ancur->next:%p \n",(void*)(xe->xdf1.rcha.ancur)->next);
+	// fprintf(fp,"*sncur->icurr:%ld",(xe->xdf1.rcha.sncur)->icurr);
+	// fprintf(fp,"*sncur->next:%p",(void*)(xe->xdf1.rcha.sncur)->next);
+	// fprintf(fp,"*head->icurr:%ld",(xe->xdf1.rcha.head)->icurr);
+	// fprintf(fp,"*head->next:%p",(void*)(xe->xdf1.rcha.head)->next);
+	// fprintf(fp,"*tail->icurr:%ld",(xe->xdf1.rcha.tail)->icurr);
+	// fprintf(fp,"*tail->next:%p",(void*)(xe->xdf1.rcha.tail)->next);
+
 }
 int xdl_do_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 		xdfenv_t *xe) {
@@ -324,17 +358,19 @@ int xdl_do_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	if (XDF_DIFF_ALG(xpp->flags) == XDF_HISTOGRAM_DIFF)
 		return xdl_do_histogram_diff(mf1, mf2, xpp, xe);
 
-	// break HERE
-	FILE*fp=fopen("debug.txt","a");
-	fprintf(fp,"start debug-------------------------------------\n");
-	fprintf(fp,"before:\n");
-	print(fp,xe);
 	if (xdl_prepare_env(mf1, mf2, xpp, xe) < 0) {
 		// break HERE
 
 		return -1;
 	}
-	print(fp,xe);
+
+	FILE*fp=fopen("debug.txt","a");
+	fprintf(fp,"start debug-------------------------------------\n");
+	fprintf(fp,"before:\n");
+	fprintf(fp,"xdf1: recs: ptr:\n %s",(**(xe->xdf1.recs)).ptr);
+	fprintf(fp,"xdf1: rhash: ptr:\n %s \n",(**(xe->xdf1.rhash)).ptr);
+	fprintf(fp,"xdf2: recs: ptr:\n %s",(**(xe->xdf2.recs)).ptr);
+	fprintf(fp,"xdf2: rhash: ptr:\n %s \n",(**(xe->xdf2.rhash)).ptr);
 	fclose(fp);
 
 	/*

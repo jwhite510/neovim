@@ -46,7 +46,7 @@ typedef struct s_xrecord {
 } xrecord_t;
 
 typedef struct s_xdfile {
-	chastore_t rcha;
+	chastore_t rcha; // todo
 	long nrec;
 	unsigned int hbits;
 	xrecord_t **rhash;
