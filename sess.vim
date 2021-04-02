@@ -9,7 +9,7 @@ endif
 set shortmess=aoO
 badd +80 README.md
 badd +1 term://.//141672:/bin/bash
-badd +2291 src/nvim/diff.c
+badd +514 src/nvim/diff.c
 badd +2672 src/nvim/ex_cmds.c
 badd +1560 src/nvim/buffer.c
 badd +1 ~/projects/alg/AddString/main.cpp
@@ -18,7 +18,7 @@ badd +25 term://.//141707:/bin/bash
 badd +1 ~/.local/share/nvim/log
 badd +742 src/nvim/screen.c
 badd +108 CMakeLists.txt
-badd +907 src/nvim/buffer_defs.h
+badd +904 src/nvim/buffer_defs.h
 badd +1187 src/nvim/move.c
 badd +15 term://.//854243:/bin/bash
 badd +6 term://.//854258:/bin/bash
@@ -61,6 +61,9 @@ badd +0 term://.//189472:/bin/bash
 badd +0 term://.//192832:/bin/bash
 badd +7 src/nvim/pos.h
 badd +0 term://.//201671:/bin/bash
+badd +102 term://.//203893:/bin/bash
+badd +42 src/nvim/memory.c
+badd +22 test/symbolic/klee/nvim/memory.c
 argglobal
 %argdel
 $argadd ./
@@ -167,7 +170,7 @@ setlocal fdl=6
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-let s:l = 1109 - ((0 * winheight(0) + 16) / 32)
+let s:l = 1109 - ((4 * winheight(0) + 16) / 32)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
@@ -391,11 +394,11 @@ setlocal fml=1
 setlocal fdn=20
 setlocal fen
 silent! normal! zE
-let s:l = 3193 - ((0 * winheight(0) + 15) / 31)
+let s:l = 3238 - ((0 * winheight(0) + 15) / 31)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-3193
+3238
 normal! 03|
 lcd ~/projects/neovim
 wincmd w
@@ -839,11 +842,11 @@ setlocal fml=1
 setlocal fdn=20
 setlocal fen
 silent! normal! zE
-let s:l = 2368 - ((20 * winheight(0) + 20) / 40)
+let s:l = 2413 - ((20 * winheight(0) + 20) / 40)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-2368
+2413
 normal! 027|
 lcd ~/projects/neovim
 wincmd w
@@ -858,11 +861,11 @@ setlocal fml=1
 setlocal fdn=20
 setlocal fen
 silent! normal! zE
-let s:l = 2408 - ((21 * winheight(0) + 20) / 40)
+let s:l = 2453 - ((21 * winheight(0) + 20) / 40)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-2408
+2453
 normal! 0
 lcd ~/projects/neovim
 wincmd w
@@ -992,11 +995,11 @@ normal! zc
 normal! zc
 1595
 normal! zc
-let s:l = 3142 - ((22 * winheight(0) + 25) / 51)
+let s:l = 3187 - ((22 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-3142
+3187
 normal! 05|
 lcd ~/projects/neovim
 wincmd w
@@ -1032,17 +1035,17 @@ setlocal fml=1
 setlocal fdn=20
 setlocal fen
 silent! normal! zE
-2345,2359fold
-2330,2412fold
-2330
+2390,2404fold
+2375,2457fold
+2375
 normal! zo
-2345
+2390
 normal! zc
-let s:l = 2282 - ((23 * winheight(0) + 25) / 51)
+let s:l = 2318 - ((23 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-2282
+2318
 normal! 055|
 lcd ~/projects/neovim
 wincmd w
@@ -1176,9 +1179,9 @@ exe '3resize ' . ((&lines * 10 + 27) / 54)
 exe 'vert 3resize ' . ((&columns * 41 + 136) / 273)
 exe '4resize ' . ((&lines * 40 + 27) / 54)
 exe 'vert 4resize ' . ((&columns * 93 + 136) / 273)
-exe '5resize ' . ((&lines * 29 + 27) / 54)
+exe '5resize ' . ((&lines * 33 + 27) / 54)
 exe 'vert 5resize ' . ((&columns * 72 + 136) / 273)
-exe '6resize ' . ((&lines * 21 + 27) / 54)
+exe '6resize ' . ((&lines * 17 + 27) / 54)
 exe 'vert 6resize ' . ((&columns * 72 + 136) / 273)
 argglobal
 setlocal fdm=manual
@@ -1190,48 +1193,48 @@ setlocal fml=1
 setlocal fdn=20
 setlocal fen
 silent! normal! zE
-2271,2271fold
-2274,2278fold
-2274,2278fold
-2282,2286fold
-2270,2295fold
-2346,2349fold
-2351,2352fold
-2345,2353fold
-2355,2356fold
-2345,2356fold
-2345,2359fold
-2345,2359fold
-2361,2363fold
-2378,2379fold
-2381,2400fold
-2402,2403fold
-2270
+2307,2307fold
+2310,2314fold
+2310,2314fold
+2318,2322fold
+2306,2331fold
+2391,2394fold
+2396,2397fold
+2390,2398fold
+2400,2401fold
+2390,2401fold
+2390,2404fold
+2390,2404fold
+2406,2408fold
+2423,2424fold
+2426,2445fold
+2447,2448fold
+2306
 normal! zo
-2271
+2307
 normal! zo
-2274
+2310
 normal! zo
-2345
+2390
 normal! zo
-2345
+2390
 normal! zo
-2345
+2390
 normal! zo
-2345
+2390
 normal! zo
-2345
+2390
 normal! zc
-2361
+2406
 normal! zo
-2378
+2423
 normal! zo
-let s:l = 2308 - ((29 * winheight(0) + 25) / 51)
+let s:l = 2356 - ((28 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-2308
-normal! 013|
+2356
+normal! 011|
 lcd ~/projects/neovim
 wincmd w
 argglobal
@@ -1245,12 +1248,12 @@ setlocal fml=1
 setlocal fdn=20
 setlocal fen
 silent! normal! zE
-let s:l = 907 - ((6 * winheight(0) + 5) / 10)
+let s:l = 908 - ((7 * winheight(0) + 5) / 10)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-907
-normal! 03|
+908
+normal! 012|
 lcd ~/projects/neovim
 wincmd w
 argglobal
@@ -1263,12 +1266,12 @@ setlocal fdl=20
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-let s:l = 390 - ((9 * winheight(0) + 5) / 10)
+let s:l = 546 - ((9 * winheight(0) + 5) / 10)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-390
-normal! 030|
+546
+normal! 0
 lcd ~/projects/neovim
 wincmd w
 argglobal
@@ -1285,11 +1288,11 @@ silent! normal! zE
 2010,2344fold
 2010
 normal! zc
-let s:l = 2346 - ((340 * winheight(0) + 20) / 40)
+let s:l = 2349 - ((344 * winheight(0) + 20) / 40)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-2346
+2349
 normal! 05|
 lcd ~/projects/neovim
 wincmd w
@@ -1303,11 +1306,11 @@ setlocal fdl=20
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-let s:l = 3990 - ((13 * winheight(0) + 14) / 29)
+let s:l = 10033 - ((32 * winheight(0) + 16) / 33)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-3990
+10033
 normal! 0
 lcd ~/projects/neovim
 wincmd w
@@ -1328,12 +1331,12 @@ silent! normal! zE
 normal! zc
 1340
 normal! zc
-let s:l = 1339 - ((601 * winheight(0) + 10) / 21)
+let s:l = 742 - ((3 * winheight(0) + 8) / 17)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-1339
-normal! 03|
+742
+normal! 019|
 lcd ~/projects/neovim
 wincmd w
 exe 'vert 1resize ' . ((&columns * 106 + 136) / 273)
@@ -1343,10 +1346,165 @@ exe '3resize ' . ((&lines * 10 + 27) / 54)
 exe 'vert 3resize ' . ((&columns * 41 + 136) / 273)
 exe '4resize ' . ((&lines * 40 + 27) / 54)
 exe 'vert 4resize ' . ((&columns * 93 + 136) / 273)
-exe '5resize ' . ((&lines * 29 + 27) / 54)
+exe '5resize ' . ((&lines * 33 + 27) / 54)
 exe 'vert 5resize ' . ((&columns * 72 + 136) / 273)
-exe '6resize ' . ((&lines * 21 + 27) / 54)
+exe '6resize ' . ((&lines * 17 + 27) / 54)
 exe 'vert 6resize ' . ((&columns * 72 + 136) / 273)
+tabedit ~/projects/neovim/src/nvim/diff.c
+set splitbelow splitright
+wincmd _ | wincmd |
+split
+1wincmd k
+wincmd _ | wincmd |
+vsplit
+wincmd _ | wincmd |
+vsplit
+2wincmd h
+wincmd w
+wincmd w
+wincmd _ | wincmd |
+split
+1wincmd k
+wincmd _ | wincmd |
+vsplit
+1wincmd h
+wincmd w
+wincmd w
+wincmd w
+set nosplitbelow
+set nosplitright
+wincmd t
+set winminheight=0
+set winheight=1
+set winminwidth=0
+set winwidth=1
+exe '1resize ' . ((&lines * 44 + 27) / 54)
+exe 'vert 1resize ' . ((&columns * 73 + 136) / 273)
+exe '2resize ' . ((&lines * 44 + 27) / 54)
+exe 'vert 2resize ' . ((&columns * 72 + 136) / 273)
+exe '3resize ' . ((&lines * 17 + 27) / 54)
+exe 'vert 3resize ' . ((&columns * 63 + 136) / 273)
+exe '4resize ' . ((&lines * 17 + 27) / 54)
+exe 'vert 4resize ' . ((&columns * 62 + 136) / 273)
+exe '5resize ' . ((&lines * 26 + 27) / 54)
+exe 'vert 5resize ' . ((&columns * 126 + 136) / 273)
+exe '6resize ' . ((&lines * 6 + 27) / 54)
+argglobal
+setlocal fdm=manual
+setlocal fde=0
+setlocal fmr={{{,}}}
+setlocal fdi=#
+setlocal fdl=20
+setlocal fml=1
+setlocal fdn=20
+setlocal nofen
+silent! normal! zE
+let s:l = 2272 - ((22 * winheight(0) + 22) / 44)
+if s:l < 1 | let s:l = 1 | endif
+exe s:l
+normal! zt
+2272
+normal! 047|
+lcd ~/projects/neovim
+wincmd w
+argglobal
+if bufexists("~/projects/neovim/src/nvim/diff.c") | buffer ~/projects/neovim/src/nvim/diff.c | else | edit ~/projects/neovim/src/nvim/diff.c | endif
+setlocal fdm=manual
+setlocal fde=0
+setlocal fmr={{{,}}}
+setlocal fdi=#
+setlocal fdl=20
+setlocal fml=1
+setlocal fdn=20
+setlocal nofen
+silent! normal! zE
+let s:l = 2349 - ((16 * winheight(0) + 22) / 44)
+if s:l < 1 | let s:l = 1 | endif
+exe s:l
+normal! zt
+2349
+normal! 0
+lcd ~/projects/neovim
+wincmd w
+argglobal
+if bufexists("~/projects/neovim/src/nvim/diff.c") | buffer ~/projects/neovim/src/nvim/diff.c | else | edit ~/projects/neovim/src/nvim/diff.c | endif
+setlocal fdm=manual
+setlocal fde=0
+setlocal fmr={{{,}}}
+setlocal fdi=#
+setlocal fdl=20
+setlocal fml=1
+setlocal fdn=20
+setlocal nofen
+silent! normal! zE
+let s:l = 512 - ((5 * winheight(0) + 8) / 17)
+if s:l < 1 | let s:l = 1 | endif
+exe s:l
+normal! zt
+512
+normal! 011|
+lcd ~/projects/neovim
+wincmd w
+argglobal
+if bufexists("~/projects/neovim/test/symbolic/klee/nvim/memory.c") | buffer ~/projects/neovim/test/symbolic/klee/nvim/memory.c | else | edit ~/projects/neovim/test/symbolic/klee/nvim/memory.c | endif
+setlocal fdm=manual
+setlocal fde=0
+setlocal fmr={{{,}}}
+setlocal fdi=#
+setlocal fdl=20
+setlocal fml=1
+setlocal fdn=20
+setlocal fen
+silent! normal! zE
+let s:l = 26 - ((5 * winheight(0) + 8) / 17)
+if s:l < 1 | let s:l = 1 | endif
+exe s:l
+normal! zt
+26
+normal! 03|
+lcd ~/projects/neovim
+wincmd w
+argglobal
+if bufexists("term://.//203893:/bin/bash") | buffer term://.//203893:/bin/bash | else | edit term://.//203893:/bin/bash | endif
+setlocal fdm=manual
+setlocal fde=0
+setlocal fmr={{{,}}}
+setlocal fdi=#
+setlocal fdl=20
+setlocal fml=1
+setlocal fdn=20
+setlocal fen
+let s:l = 593 - ((25 * winheight(0) + 13) / 26)
+if s:l < 1 | let s:l = 1 | endif
+exe s:l
+normal! zt
+593
+normal! 0
+lcd ~/projects/neovim
+wincmd w
+argglobal
+enew
+setlocal fdm=manual
+setlocal fde=0
+setlocal fmr={{{,}}}
+setlocal fdi=#
+setlocal fdl=20
+setlocal fml=1
+setlocal fdn=20
+setlocal fen
+lcd ~/projects/neovim
+wincmd w
+exe '1resize ' . ((&lines * 44 + 27) / 54)
+exe 'vert 1resize ' . ((&columns * 73 + 136) / 273)
+exe '2resize ' . ((&lines * 44 + 27) / 54)
+exe 'vert 2resize ' . ((&columns * 72 + 136) / 273)
+exe '3resize ' . ((&lines * 17 + 27) / 54)
+exe 'vert 3resize ' . ((&columns * 63 + 136) / 273)
+exe '4resize ' . ((&lines * 17 + 27) / 54)
+exe 'vert 4resize ' . ((&columns * 62 + 136) / 273)
+exe '5resize ' . ((&lines * 26 + 27) / 54)
+exe 'vert 5resize ' . ((&columns * 126 + 136) / 273)
+exe '6resize ' . ((&lines * 6 + 27) / 54)
 tabnew
 set splitbelow splitright
 set nosplitbelow
@@ -1366,12 +1524,12 @@ setlocal fdl=20
 setlocal fml=1
 setlocal fdn=20
 setlocal fen
-let s:l = 297 - ((50 * winheight(0) + 25) / 51)
+let s:l = 884 - ((50 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-297
-normal! 039|
+884
+normal! 030|
 lcd ~/projects/neovim
 tabnext 10
 set stal=1

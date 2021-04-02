@@ -2248,6 +2248,42 @@ bool diffopt_closeoff(void)
   return (diff_flags & DIFF_CLOSE_OFF) != 0;
 }
 
+int min(int a, int b, int c)
+{
+	if(a <= b && a <= c)
+	{
+		return a;
+	}
+	else if(b <= a && b <= c)
+	{
+		return b;
+	}
+	else if(c <= a && c <= b)
+	{
+		return c;
+	}
+	return 0;
+}
+
+int levenshtein(char_u *s1, char_u *s2) {
+    unsigned int x, y, s1len, s2len;
+    s1len = strlen((char*)s1);
+    s2len = strlen((char*)s2);
+    if(s2len>1000 || s2len>10000)return INT_MAX;
+    // unsigned int matrix[s2len+1][s1len+1];
+    unsigned int matrix[1000][1000];
+    matrix[0][0] = 0;
+    for (x = 1; x <= s2len; x++)
+        matrix[x][0] = matrix[x-1][0] + 1;
+    for (y = 1; y <= s1len; y++)
+        matrix[0][y] = matrix[0][y-1] + 1;
+    for (x = 1; x <= s2len; x++)
+        for (y = 1; y <= s1len; y++)
+            matrix[x][y] = min(matrix[x-1][y] + 1, matrix[x][y-1] + 1, matrix[x-1][y-1] + (s1[y-1] == s2[x-1] ? 0 : 1));
+
+    return(matrix[s2len][s1len]);
+}
+
 /// Find the difference within a changed line.
 ///
 /// @param  wp      window whose current buffer to check
@@ -2307,21 +2343,30 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
 	if(off==0){
 	  // set current line of comparison
 	  dp->thresh[idx][i]=0; // initial offset at 0
+	}else{
+	  // start from greater than 0
 	}
 	// search for a more similar line between thresh[idx][i] and end
-	for(int j=0;j<dp->df_count[idx];j++){
-	  if(j>=dp->df_count[i])break;
-	  // compare to this line
+      }
+      int smallest_distance=INT_MAX;
+      for(int j=dp->thresh[idx][i];j<dp->df_count[i];j++){
+	// compare to this line
+	char_u*testline = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j,false);
+	fprintf(fp,"to: %s \n",testline);
+	int dist=levenshtein(testline,line_org);
+	if(dist<smallest_distance){
+	  smallest_distance=dist;
+	  dp->thresh[idx][i]=j;
 	  line_new = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j,false);
-	  fprintf(fp,"to: %s \n",line_new);
-	  // to this line
-	  //
-	  // after finding the most similar line set:
-	  // dp->thresh[idx][i]=j;
 	}
+	fprintf(fp,"result:%i \n",dist);
+	// to this line
+	//
+	// after finding the most similar line set:
+	// dp->thresh[idx][i]=j;
       }
       // set the line to compare to
-      dp->thresh[idx][i]=1;
+      // dp->thresh[idx][i]=1;
     }
   }
   fclose(fp);
@@ -2335,8 +2380,8 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       added = false;
       // get the line to compare to
       // search for most similar line below threshold
-      line_new = ml_get_buf(curtab->tp_diffbuf[i],
-                            dp->df_lnum[i] + off, false);
+      // line_new = ml_get_buf(curtab->tp_diffbuf[i],
+      //                       dp->df_lnum[i] + off, false);
 
       // Search for start of difference
       si_org = si_new = 0;
