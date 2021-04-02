@@ -905,6 +905,7 @@ struct diffblock_S {
   diff_T      *df_next;
   linenr_T df_lnum[DB_COUNT];           // line number in buffer
   linenr_T df_count[DB_COUNT];          // nr of inserted/changed lines
+  linenr_T thresh[DB_COUNT][DB_COUNT]; // for diffing below threshold only
 };
 
 #define SNAP_HELP_IDX   0

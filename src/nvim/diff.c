@@ -1058,6 +1058,9 @@ static int diff_file_internal(diffio_T *diffio)
   emit_cfg.ctxlen = 0;  // don't need any diff_context here
   emit_cb.priv = &diffio->dio_diff;
   emit_cb.outf = xdiff_out;
+  // FILE*fp=fopen("debug.txt","a");
+  // fprintf(fp,"\nstart debug-------------------------------------\n");
+  // fclose(fp);
   if (xdl_diff(&diffio->dio_orig.din_mmfile,
                &diffio->dio_new.din_mmfile,
                &param, &emit_cfg, &emit_cb) < 0) {
@@ -2287,15 +2290,51 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
     return false;
   }
 
-  int off = lnum - dp->df_lnum[idx];
+  // always start with first line no matter if drawing at second line etc
+  // first search down for the most similar line, next lines of this window
+  // offset of this current line below the start of the diff
+  // move down and find most similar line
+  int off = lnum - dp->df_lnum[idx]; // the line that it is compared to
+  FILE*fp=fopen("debug.txt","a");
+  fprintf(fp,"pointer: %p off:%i \n",(void*)dp,off);
+  // if this top line is blank, look
+  fprintf(fp,"compare this: %s \n", line_org);
   int i;
+  for(i=0;i<DB_COUNT;++i){
+    if((curtab->tp_diffbuf[i]!=NULL)&&(i!=idx)){
+      // starting from new redraw
+      if(dp->thresh[idx][i]==-1){
+	if(off==0){
+	  // set current line of comparison
+	  dp->thresh[idx][i]=0; // initial offset at 0
+	}
+	// search for a more similar line between thresh[idx][i] and end
+	for(int j=0;j<dp->df_count[idx];j++){
+	  if(j>=dp->df_count[i])break;
+	  // compare to this line
+	  line_new = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j,false);
+	  fprintf(fp,"to: %s \n",line_new);
+	  // to this line
+	  //
+	  // after finding the most similar line set:
+	  // dp->thresh[idx][i]=j;
+	}
+      }
+      // set the line to compare to
+      dp->thresh[idx][i]=1;
+    }
+  }
+  fclose(fp);
   for (i = 0; i < DB_COUNT; ++i) {
     if ((curtab->tp_diffbuf[i] != NULL) && (i != idx)) {
+      // search through all the other line nums for this diff
       // Skip lines that are not in the other change (filler lines).
       if (off >= dp->df_count[i]) {
         continue;
       }
       added = false;
+      // get the line to compare to
+      // search for most similar line below threshold
       line_new = ml_get_buf(curtab->tp_diffbuf[i],
                             dp->df_lnum[i] + off, false);
 
@@ -2326,6 +2365,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       si_new -= utf_head_off(line_new, line_new + si_new);
 
       if (*startp > si_org) {
+        // *startp = si_org+10;
         *startp = si_org;
       }
 
@@ -2367,6 +2407,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
         }
 
         if (*endp < ei_org) {
+          // *endp = ei_org+10;
           *endp = ei_org;
         }
       }
@@ -3136,6 +3177,9 @@ static int parse_diff_unified(char_u        *line,
 ///
 static int xdiff_out(void *priv, mmbuffer_t *mb, int nbuf)
 {
+  // FILE*fp=fopen("debug.txt","a");
+  // fprintf(fp,"\nptr:\n %s",mb->ptr);
+  // fclose(fp);
   diffout_T *dout = (diffout_T *)priv;
   char_u    *p;
 

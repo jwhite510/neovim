@@ -1,0 +1,3 @@
+filler lines added below diff lines
+src/nvim/diff.c:diff_redraw
+src/nvim/diff.c:diff_check
