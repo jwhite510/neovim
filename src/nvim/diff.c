@@ -2344,19 +2344,34 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
 	  // set current line of comparison
 	  dp->thresh[idx][i]=0; // initial offset at 0
 	}else{
+	  // check all of the line comparisons when the diff is not drawn from the top line
+	  // (offset > 0)
+	  dp->thresh[idx][i]=0; // initial offset at 0
+	  for(int h=0;h<off;h++){
+	    for(int j=dp->thresh[idx][i],smallest_distance=INT_MAX;j<dp->df_count[i];j++){
+	      // compare to this line
+	      char_u*testline2=ml_get_buf(wp->w_buffer, lnum-off+h, false);
+	      char_u*testline1=ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j,false);
+	      int dist=levenshtein(testline1,testline2);
+	      if(dist<smallest_distance){
+		smallest_distance=dist;
+		dp->thresh[idx][i]=j+1;
+	      }
+	    }
+	  }
 	  // start from greater than 0
 	}
 	// search for a more similar line between thresh[idx][i] and end
       }
-      int smallest_distance=INT_MAX;
-      for(int j=dp->thresh[idx][i];j<dp->df_count[i];j++){
+      char_u c='\0'; line_new=&c; // default value for comparison if all lines are already compared
+      for(int j=dp->thresh[idx][i],smallest_distance=INT_MAX;j<dp->df_count[i];j++){
 	// compare to this line
 	char_u*testline = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j,false);
 	fprintf(fp,"to: %s \n",testline);
 	int dist=levenshtein(testline,line_org);
 	if(dist<smallest_distance){
 	  smallest_distance=dist;
-	  dp->thresh[idx][i]=j;
+	  dp->thresh[idx][i]=j+1;
 	  line_new = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j,false);
 	}
 	fprintf(fp,"result:%i \n",dist);
@@ -2374,9 +2389,9 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
     if ((curtab->tp_diffbuf[i] != NULL) && (i != idx)) {
       // search through all the other line nums for this diff
       // Skip lines that are not in the other change (filler lines).
-      if (off >= dp->df_count[i]) {
-        continue;
-      }
+      // if (off >= dp->df_count[i]) {
+      //   continue;
+      // }
       added = false;
       // get the line to compare to
       // search for most similar line below threshold
