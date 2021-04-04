@@ -1842,7 +1842,7 @@ static void f_did_filetype(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_diff_filler(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  rettv->vval.v_number = MAX(0, diff_check(curwin, tv_get_lnum(argvars)));
+  rettv->vval.v_number = MAX(0, diff_check(curwin, tv_get_lnum(argvars), NULL));
 }
 
 /*
@@ -1867,9 +1867,10 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       || changedtick != buf_get_changedtick(curbuf)
       || fnum != curbuf->b_fnum) {
     // New line, buffer, change: need to get the values.
-    filler_lines = diff_check(curwin, lnum);
-    if (filler_lines < 0) {
-      if (filler_lines == -1) {
+    int linestatus = 0;
+    filler_lines = diff_check(curwin, lnum, &linestatus);
+    if (filler_lines < 0 || linestatus < 0) {
+      if (filler_lines == -1 || linestatus == -1) {
         change_start = MAXCOL;
         change_end = -1;
         if (diff_find_change(curwin, lnum, &change_start, &change_end)) {
