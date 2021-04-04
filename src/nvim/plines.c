@@ -58,7 +58,7 @@ int win_get_fill(win_T *wp, linenr_T lnum)
 
   // be quick when there are no filler lines
   if (diffopt_filler()) {
-    int n = diff_check(wp, lnum);
+    int n = diff_check(wp, lnum, NULL);
 
     if (n > 0) {
       return virt_lines+n;
