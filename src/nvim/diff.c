@@ -2326,25 +2326,25 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
     return false;
   }
 
-  int off = lnum - dp->df_lnum[idx];
+  // int off = lnum - dp->df_lnum[idx];
   int i;
-  FILE*fp=fopen("debug.txt","a");
-  fprintf(fp,"pointer: %p off:%i \n",(void*)dp,off);
+  // FILE*fp=fopen("debug.txt","a");
+  // fprintf(fp,"pointer: %p off:%i \n",(void*)dp,off);
   // lnum
   // figure out which lines to compare to what
   // fprintf(fp,"compare this: %s \n", line_org);
   if(dp->redraw){
-    fprintf(fp,"redraw all diffs\n");
+    // fprintf(fp,"redraw all diffs\n");
     // check which line numbers to compare to each other
     for(i=0;i<DB_COUNT;++i){
       for(int j=0;j<DB_COUNT;++j){
 	if((curtab->tp_diffbuf[i]!=NULL)&&(curtab->tp_diffbuf[j]!=NULL)&&(i!=j)){
-	  fprintf(fp,"db: %i, df_lnum: %li, df_count: %lu \n",i,dp->df_lnum[i],dp->df_count[i]);
+	  // fprintf(fp,"db: %i, df_lnum: %li, df_count: %lu \n",i,dp->df_lnum[i],dp->df_count[i]);
 	  // create an list of line numbers to compare to other line numbers
-	  fprintf(fp,"comparison %i to %i is valid\n",i,j);
+	  // fprintf(fp,"comparison %i to %i is valid\n",i,j);
 	  // line from this buffer
 	  // start line:
-	  fprintf(fp,"original buffer:\n");
+	  // fprintf(fp,"original buffer:\n");
 	  char_u* lineoriginal;
 	  char_u* linenew;
 	  int skipped=0;
@@ -2352,7 +2352,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
 	  for(int k=0;k<dp->df_count[i];k++){
 	    int thislinenumber=dp->df_lnum[i]+k;
 	    lineoriginal=ml_get_buf(curtab->tp_diffbuf[i],thislinenumber,false);
-	    fprintf(fp,"k:%i lineoriginal: %s \n",k,lineoriginal);
+	    // fprintf(fp,"k:%i lineoriginal: %s \n",k,lineoriginal);
 	    dp->comparisonlines[i][j].mem[k]=-1; // initialize to -1
 	    // TODO stop the reverse search at this df_count[j] to ensure in bounds search
 	    // get the lowest score, set the comparison line to that
@@ -2363,7 +2363,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
 	      for(int cl=comparisonline;cl<dp->df_lnum[j]+dp->df_count[j];cl++){
 		linenew=ml_get_buf(curtab->tp_diffbuf[j],cl,false);
 		int score=levenshtein(lineoriginal,linenew);
-		fprintf(fp,"linenew: %s ->score: %i",linenew,score);
+		// fprintf(fp,"linenew: %s ->score: %i",linenew,score);
 		if(score<lowestscore){
 		  // thislinenumber -> cl
 		  // for dp->something[i][j]->linemap[k]=cl;
@@ -2372,12 +2372,12 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
 		  }
 		  dp->comparisonlines[i][j].mem[k]=cl;
 		  lowestscore=score;
-		  fprintf(fp,"->WINNER:setting comparisonline to:%i \n",cl);
+		  // fprintf(fp,"->WINNER:setting comparisonline to:%i \n",cl);
 		  d_skipped=(cl-comparisonlinestart);
 		  comparisonline=cl+1;
 		}else {
 		  // skipped++;
-		  fprintf(fp,"\n");
+		  // fprintf(fp,"\n");
 		}
 	      }
 	      skipped+=d_skipped;
@@ -2418,7 +2418,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
     }
 
   }
-  fclose(fp);
+  // fclose(fp);
   // on first redraw iterate over all the diffs and figure out which lines to compare
   dp->redraw=false;
 
@@ -2458,6 +2458,10 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
 
       line_new = ml_get_buf(curtab->tp_diffbuf[i],
                             comparl, false);
+
+      FILE*fp=fopen("debug.txt","a");
+      fprintf(fp,"idx: %i comparing line:\n %s \nTO\n %s \n",idx,line_org, line_new);
+      fclose(fp);
 
       // Search for start of difference
       si_org = si_new = 0;
