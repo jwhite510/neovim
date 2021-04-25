@@ -1008,24 +1008,24 @@ int main(int argc, char **argv)
       ]])
 
       feed('G')
-      feed(':set diffopt+=linematch')
+      feed(':set diffopt+=linematch\n')
       screen:expect([[
         {1:  }if __name__ == "__{3:│}{1:  }if __name__ == "_|
         {1:  }    import sys    {3:│}{1:  }    import sys   |
-        {1:  }{9:    }{8:app = QWidgets}{3:│}{1:  }{9:    }{8:comment these}|
-        {1:  }{9:    }{8:MainWindow = Q}{3:│}{1:  }{9:    }{8:#app = QWidge}|
-        {1:  }{9:    }{8:ui = UI_}{9:MainWi}{3:│}{1:  }{9:    }{8:#MainWindow =}|
+        {1:  }{2:------------------}{3:│}{1:  }{4:    comment these}|
+        {1:  }{9:    app = QWidgets}{3:│}{1:  }{4:    #app = QWidge}|
+        {1:  }{9:    MainWindow = Q}{3:│}{1:  }{9:    }{8:#}{9:MainWindow =}|
         {1:  }{2:------------------}{3:│}{1:  }{4:    add a complet}|
-        {1:  }{2:------------------}{3:│}{1:  }{4:    #ui = UI_Main}|
+        {1:  }{9:    ui = UI_MainWi}{3:│}{1:  }{4:    #ui = UI_Main}|
         {1:  }{2:------------------}{3:│}{1:  }{4:    add another n}|
-        {1:  }    ui.setupUI(Mai{3:│}{1:  }    ui.setupUI(Ma|
-        {1:  }    MainWindow.sho{3:│}{1:  }    MainWindow.sh|
-        {1:  }    sys.exit(app.e{3:│}{1:  }    sys.exit(app.|
-        {6:~                   }{3:│}{6:~                  }|
-        {6:~                   }{3:│}{6:~                  }|
+        {1:  }    ui.setupUI(Mai{3:│}{1:  }{2:-----------------}|
+        {1:  }    MainWindow.sho{3:│}{1:  }{2:-----------------}|
+        {1:  }    ^sys.exit(app.e{3:│}{1:  }    ui.setupUI(Ma|
+        {6:~                   }{3:│}{1:  }    MainWindow.sh|
+        {6:~                   }{3:│}{1:  }    sys.exit(app.|
         {6:~                   }{3:│}{6:~                  }|
         {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
-        :set diffopt+=linematch^                 |
+        :set diffopt+=linematch                 |
       ]])
     end)
   end)
