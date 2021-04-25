@@ -1827,7 +1827,8 @@ int diff_check(win_T *wp, linenr_T lnum, bool *diffaddedr)
     // check which line numbers to compare to each other
     for (i = 0; i < DB_COUNT; i++) {
       for (int j = 0; j < DB_COUNT; j++) {
-        if (curtab->tp_diffbuf[i] != NULL && curtab->tp_diffbuf[j] != NULL
+        if (curtab->tp_diffbuf[i] != NULL
+            && curtab->tp_diffbuf[j] != NULL
             && i != j) {
           char_u *lineoriginal;
           char_u *linenew;
@@ -1835,12 +1836,13 @@ int diff_check(win_T *wp, linenr_T lnum, bool *diffaddedr)
           int comparisonline = dp->df_lnum[j];
           for (int k = 0; k < dp->df_count[i]; k++) {
             int thislinenumber = dp->df_lnum[i] + k;
-            lineoriginal = ml_get_buf(curtab->tp_diffbuf[i], thislinenumber,
+            lineoriginal = ml_get_buf(curtab->tp_diffbuf[i],
+                                      thislinenumber,
                                       false);
-            dp->df_comparisonlines[i][j].mem[k] = -1;  // initialize
-            // TODO(jwhite500): stop the reverse search at this df_count[j]
-            // to ensure in bounds search get the lowest score,
-            // set the comparison line to that
+            dp->df_comparisonlines[i][j].mem[k] = -1;  // initialize to -1
+            // TODO(jwhite510): stop the reverse search at this df_count[j]
+            // to ensure in bounds search
+            // get the lowest score, set the comparison line to that
             int lowestscore = INT_MAX;
             if (comparisonline < dp->df_lnum[j] + dp->df_count[j]) {
               int d_skipped = 0;
@@ -1861,7 +1863,6 @@ int diff_check(win_T *wp, linenr_T lnum, bool *diffaddedr)
                   // fprintf(fp,"->WINNER:setting comparisonline to:%i \n",cl);
                   d_skipped = cl - comparisonlinestart;
                   comparisonline = cl + 1;
-                } else {
                 }
               }
               skipped+=d_skipped;
@@ -1892,7 +1893,6 @@ int diff_check(win_T *wp, linenr_T lnum, bool *diffaddedr)
   }
   if (diff_linematch(dp)) {
     if (idx == dp->df_preferredbuffer) {
-      int ld = lnum - dp->df_lnum[idx];
       // make a return for all possible cases of lines skipped
       // when returning changed line with added lines above it
       // diffaddedr: true
@@ -1900,10 +1900,10 @@ int diff_check(win_T *wp, linenr_T lnum, bool *diffaddedr)
       // if there should be no filler lines above it return -1
       for (int j = 0; j < DB_COUNT; j++) {
         if (curtab->tp_diffbuf[j] != NULL && j != idx) {
-          int *mem = dp->df_comparisonlines[idx][j].mem;
-
           // comparing the first line?
           // the first line is being compared
+          int ld = lnum - dp->df_lnum[idx];
+          int *mem = dp->df_comparisonlines[idx][j].mem;
           if (ld == 0
               // there is atleast one line to compare in the this diff
               && dp->df_count[idx] > 0
@@ -1917,24 +1917,22 @@ int diff_check(win_T *wp, linenr_T lnum, bool *diffaddedr)
           } else if (ld > 0
                      && ld < dp->df_count[idx]
                      && mem[ld] != -1
-                     && mem[ld]
-                     != mem[ld - 1] + 1) {
+                     && mem[ld] != mem[ld -1] + 1) {
             if (diffaddedr != NULL) {
               *diffaddedr = 1;
             }
-            return mem[ld] - mem[ld - 1] -1;
+            return mem[ld] - mem[ld - 1] - 1;
+          // drawing fillers below the last last line
+          // the last line
           } else if (lnum == dp->df_lnum[idx] + dp->df_count[idx]
-                     // drawing fillers below the last last line
-                     // the last line
                      // there is atleast one line to compare in the this diff
                      && dp->df_count[idx] > 0) {
             if (mem[dp->df_count[idx] - 1] == -1) {
               return 0;
             } else {
-              // the last line of j diff
-              return dp->df_lnum[j] + dp->df_count[j] - 1
-                // last line that was compared to
-                - mem[dp->df_count[idx]-1];
+              return
+                dp->df_lnum[j] + dp->df_count[j] - 1  // the last line of j diff
+                - mem[dp->df_count[idx] - 1];  // last line that was compared to
             }
           } else if (lnum == dp->df_lnum[idx] + dp->df_count[idx]
                      && dp->df_count[idx] == 0) {  // this is a zero line diff
@@ -1944,13 +1942,13 @@ int diff_check(win_T *wp, linenr_T lnum, bool *diffaddedr)
       }
     } else {
       // set skip lines in non preferred buffer
-      // TODO(jwhite500): add logic if not the preferred buffer
+      // TODO(jwhite510): add logic if not the preferred buffer
       for (int j = 0; j < DB_COUNT; j++) {
         if (curtab->tp_diffbuf[j] != NULL && j != idx) {
-          int *mem = dp->df_comparisonlines[idx][j].mem;
-
           // for this case, we consider only two buffers..
           // so j is always the preferred buffer in this case
+
+          int *mem = dp->df_comparisonlines[j][idx].mem;
 
           // comparing first line?
           bool foundline = false;
@@ -1959,7 +1957,8 @@ int diff_check(win_T *wp, linenr_T lnum, bool *diffaddedr)
               foundline = true;
             }
           }
-          if (!foundline && lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
+          int bottom = dp->df_lnum[idx] + dp->df_count[idx];
+          if (!foundline && lnum < bottom) {
             return -2;
           }
           // comparing some line in the middle that is added
@@ -1967,9 +1966,9 @@ int diff_check(win_T *wp, linenr_T lnum, bool *diffaddedr)
           // lnum
 
           // comparing last line?
-          if (lnum == dp->df_lnum[idx] + dp->df_count[idx]) {
-            // count the number of added lines at the end of the preferred
-            // buffer
+          if (lnum == bottom) {
+            // count the number of added lines at the end
+            // of the preferred buffer
             int skipped = 0, k = dp->df_count[j] - 1;
             while (k >= 0 && mem[k] == -1) {
               skipped++, k--;
@@ -2232,7 +2231,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
       for (int k = dp->df_lnum[fromidx]; k <= fromwin->w_topline; k++) {
         bool diffaddedr = 0;
         int n = diff_check(fromwin, k, &diffaddedr);
-        // TODO(jwhite500): also need to count the number of added lines,
+        // TODO(jwhite510): also need to count the number of added lines,
         // then need to add the top fill later
         if (n > 0) {
           from_filler_lines += n;
@@ -2246,8 +2245,8 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
         + dfl - from_added_lines_above;
       int from_added_lines_below = 0;
       int k = fromwin->w_topline;
-      while (k < dp->df_lnum[fromidx] + dp->df_count[fromidx]
-             && diff_check(fromwin, k, NULL) == -2) {
+      int bottom = dp->df_lnum[fromidx] + dp->df_count[fromidx];
+      while (k < bottom && diff_check(fromwin, k, NULL) == -2) {
         from_added_lines_below++;
         k++;
       }
@@ -2495,7 +2494,7 @@ static int levenshtein(char_u *s1, char_u *s2)
     }
   }
 
-  return(matrix[s2len][s1len]);
+  return matrix[s2len][s1len];
 }
 
 /// Find the difference within a changed line.
@@ -2542,16 +2541,14 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
 
   int off = lnum - dp->df_lnum[idx];
   int i;
-  for (i = 0; i < DB_COUNT; i++) {
-    if (curtab->tp_diffbuf[i] != NULL && i != idx) {
-      int *mem = dp->df_comparisonlines[idx][i].mem;
+  for (i = 0; i < DB_COUNT; ++i) {
+    if ((curtab->tp_diffbuf[i] != NULL) && (i != idx)) {
       // Skip lines that are not in the other change (filler lines).
       int comparl;
       if (diff_linematch(dp)) {
         // get the line to compare to
-        int idx2 = dp->df_preferredbuffer;
-        if (idx2 == idx) {
-          comparl = mem[lnum - dp->df_lnum[idx]];
+        if (dp->df_preferredbuffer == idx) {
+          comparl = dp->df_comparisonlines[idx][i].mem[lnum - dp->df_lnum[idx]];
         } else {
           // searching for this line number:
           // lnum;
@@ -2559,15 +2556,16 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
           // comparl=dp->df_comparisonlines[preferredbuffer][idx];
           // endpoint:
           // dp->df_count[preferredbuffer];
+          int *mem = dp->df_comparisonlines[dp->df_preferredbuffer][idx].mem;
           bool foundline = false;
-          for (int _s = 0; _s < dp->df_count[idx2]; _s++) {
-            if (dp->df_comparisonlines[idx2][idx].mem[_s] == lnum) {
+          for (int _s = 0; _s < dp->df_count[dp->df_preferredbuffer]; _s++) {
+            if (mem[_s] == lnum) {
               foundline = true;
-              comparl = _s + dp->df_lnum[idx2];
+              comparl = _s + dp->df_lnum[dp->df_preferredbuffer];
             }
           }
           if (!foundline) {
-            comparl=-1;
+            comparl = -1;
           }
         }
         if (comparl == -1) {
@@ -2857,14 +2855,13 @@ void ex_diffgetput(exarg_T *eap)
   if (eap->addr_count == 0) {
     // Make it possible that ":diffget" on the last line gets line below
     // the cursor line when there is no difference above the cursor.
-    if ((eap->cmdidx == CMD_diffget)
-        && (eap->line1 == curbuf->b_ml.ml_line_count)
-        && (diff_check(curwin, eap->line1, NULL) == 0)
-        && ((eap->line1 == 1)
-            || (diff_check(curwin, eap->line1 - 1, NULL) == 0))) {
+    if (eap->cmdidx == CMD_diffget
+        && eap->line1 == curbuf->b_ml.ml_line_count
+        && diff_check(curwin, eap->line1, NULL) == 0
+        && (eap->line1 == 1 || diff_check(curwin, eap->line1 - 1, NULL) == 0)) {
       eap->line2++;
     } else if (eap->line1 > 0) {
-      eap->line1++;
+      eap->line1--;
     }
   }
 
@@ -3218,14 +3215,13 @@ static linenr_T diff_get_corresponding_line_int(buf_T *buf1, win_T *win1,
           bool diffaddedr = 0;
           int n = diff_check(win1, k, &diffaddedr);
           if (n > 0) {
-            skipped_lines_above += n;
+            skipped_lines_above+=n;
           }
           if (n == -2) {
             added_lines_above++;
           }
         }
-        return dp->df_lnum[idx2] + baseline + skipped_lines_above
-          - added_lines_above;
+        return dp->df_lnum[idx2]+baseline+skipped_lines_above-added_lines_above;
       }
       if (baseline > dp->df_count[idx2]) {
         baseline = dp->df_count[idx2];
