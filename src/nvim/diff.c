@@ -3211,24 +3211,19 @@ static linenr_T diff_get_corresponding_line_int(buf_T *buf1,win_T* win1, linenr_
       // Inside the diffblock
       baseline = lnum1 - dp->df_lnum[idx1];
 
-      // if(diff_linematch(dp)){
-      //   // add the number of lines skipped (above, in this buffer)
-      //   int skipped_lines_above=0;
-      //   // subtract the number of lines added (above, in this buffer)
-      //   int added_lines_above=0;
-      //   for(int k=dp->df_lnum[idx1];k<=lnum1;k++){
-      //     bool diffaddedr=0;
-      //     int n = diff_check(win1, k, &diffaddedr);
-      //     if(n>0)skipped_lines_above+=n;
-      //     if(n==-2)added_lines_above++;
-      //   }
-      //   // FILE*fp=fopen("debug.txt","a");
-      //   // fprintf(fp,"dp->df_lnum[idx2]+baseline : %li \n",dp->df_lnum[idx2]+baseline);
-      //   // fprintf(fp,"skipped_lines_above : %i \n",skipped_lines_above);
-      //   // fprintf(fp,"added_lines_above : %i \n",added_lines_above);
-      //   // fclose(fp);
-      //   return dp->df_lnum[idx2]+baseline+skipped_lines_above-added_lines_above;
-      // }
+      if(diff_linematch(dp)){
+        // add the number of lines skipped (above, in this buffer)
+        int skipped_lines_above=0;
+        // subtract the number of lines added (above, in this buffer)
+        int added_lines_above=0;
+        for(int k=dp->df_lnum[idx1];k<=lnum1;k++){
+          int diffaddedr=0;
+          int n = diff_check(win1, k, &diffaddedr);
+          if(n>0)skipped_lines_above+=n;
+          if(diffaddedr==-2)added_lines_above++;
+        }
+        return dp->df_lnum[idx2]+baseline+skipped_lines_above-added_lines_above;
+      }
       if (baseline > dp->df_count[idx2]) {
         baseline = dp->df_count[idx2];
       }
