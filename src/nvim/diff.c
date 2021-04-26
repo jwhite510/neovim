@@ -1819,7 +1819,7 @@ void print_complines(diff_T *dp){
 /// @param lnum
 ///
 /// @return diff status.
-int diff_check(win_T *wp, linenr_T lnum, bool* diffaddedr)
+int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 {
   int idx; // index in tp_diffbuf[] for this buffer
   diff_T *dp;
@@ -2002,9 +2002,10 @@ int diff_check(win_T *wp, linenr_T lnum, bool* diffaddedr)
   if(diff_linematch(dp)){
     for(int j=0;j<DB_COUNT;j++)
       if((curtab->tp_diffbuf[j]!=NULL)&&(j!=idx)) {
-	if(off!=dp->df_count[idx]){
-	  if(diffaddedr!=NULL)
-	    *diffaddedr=1;
+	if(off<dp->df_count[idx]){
+	  if(diffaddedr!=NULL&&dp->df_comparisonlines2[idx][j][lnum-dp->df_lnum[idx]][0]==-1)
+	    *diffaddedr=-2; // line was added
+	  else if(diffaddedr!=NULL) *diffaddedr=-1; // line was compared
 	  return dp->df_comparisonlines2[idx][j][lnum-dp->df_lnum[idx]][1]; // the number of filler lines
 	}else{
 	  return dp->df_comparisonlines2[idx][j][lnum-dp->df_lnum[idx]][1]; // the number of filler lines
@@ -2256,32 +2257,31 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
       towin->w_topline = lnum + (dp->df_lnum[toidx] - dp->df_lnum[fromidx]);
 
     if(diff_linematch(dp)){
-      // // for each line above
 
-      // // add the skipped lines here
-      // int from_filler_lines=0;
-      // int from_added_lines_above=0;
-      // for(int k=dp->df_lnum[fromidx];k<=fromwin->w_topline;k++){
+      // get the number of added / skipped lines above the current top line (out of view)
+      int from_filler_lines=0;
+      int from_added_lines_above=0;
+      for(int k=dp->df_lnum[fromidx];k<=fromwin->w_topline;k++){
+        int diffaddedr=0;
+        int n = diff_check(fromwin, k, &diffaddedr);
+        if(n>0)from_filler_lines+=n; // a filler line
+        if(k<fromwin->w_topline && diffaddedr==-2)from_added_lines_above++; // a new line
+      }
+      towin->w_topline = lnum + (dp->df_lnum[toidx] - dp->df_lnum[fromidx]) + (from_filler_lines - fromwin->w_topfill) - from_added_lines_above;
 
-      //   bool diffaddedr=0;
-      //   int n = diff_check(fromwin, k, &diffaddedr);
-      //   // TODO also need to count the number of added lines, then need to add the top fill later
-      //   if(n>0)from_filler_lines+=n;
-      //   if(k<fromwin->w_topline && n==-2)from_added_lines_above++;
-      // }
-      // int dfl=from_filler_lines - fromwin->w_topfill;
-      // towin->w_topline = lnum + (dp->df_lnum[toidx] - dp->df_lnum[fromidx]) + dfl - from_added_lines_above;
-      // int from_added_lines_below=0;
-      // int k=fromwin->w_topline;
-      // while(k < dp->df_lnum[fromidx]+dp->df_count[fromidx] && diff_check(fromwin,k,NULL)==-2){
-      //   from_added_lines_below++;
-      //   k++;
-      // }
-      // towin->w_topfill=from_added_lines_below; // number of added lines in the top of from buffer
-      // return;
-    }else{
+      // get the number of added lines below the topline of the current window
+      int from_added_lines_below=0;
+      int k=fromwin->w_topline;
+      int diffaddedr=0;
+      diff_check(fromwin,k,&diffaddedr);
+      while(k < dp->df_lnum[fromidx]+dp->df_count[fromidx] && diffaddedr==-2){
+        from_added_lines_below++, k++;
+	diff_check(fromwin,k,&diffaddedr);
+      }
+      towin->w_topfill=from_added_lines_below; // number of added lines in the top of from buffer
+
+      return;
     }
-
     if (lnum >= dp->df_lnum[fromidx]) {
       // Inside a change: compute filler lines. With three or more
       // buffers we need to know the largest count.
@@ -2573,9 +2573,6 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       // Skip lines that are not in the other change (filler lines).
       int comparl;
       if(diff_linematch(dp)){
-	// if (off >= dp->df_count[i]) {
-	//   continue;
-	// }
 	comparl=dp->df_comparisonlines2[idx][i][ lnum - dp->df_lnum[idx]  ][0];
 	if(comparl!=-1)comparl+=dp->df_lnum[i];
 	if(comparl==-1){

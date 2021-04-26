@@ -2338,11 +2338,11 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
     }
   }
 
-  bool diffaddedr=0; // TODO change this to integer, represents number of lines
+  int diffaddedr=0; // TODO change this to integer, represents number of lines
   // char_u*testline=ml_get_buf(wp->w_buffer, lnum, false); // DEBUG only
   filler_lines = diff_check(wp, lnum, &diffaddedr);
-  if (filler_lines < 0 || diffaddedr) {
-    if (filler_lines == -1 || diffaddedr) {
+  if (filler_lines < 0 || diffaddedr!=0) {
+    if (filler_lines == -1 || diffaddedr!=0) {
       if (diff_find_change(wp, lnum, &change_start, &change_end))
         diff_hlf = HLF_ADD;             /* added line */
       else if (change_start == 0)
@@ -2351,7 +2351,6 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
         diff_hlf = HLF_CHD;             /* changed line */
     } else
       diff_hlf = HLF_ADD;               /* added line */
-    if(!diffaddedr)filler_lines = 0;
     area_highlighting = TRUE;
   }
   if (lnum == wp->w_topline)
