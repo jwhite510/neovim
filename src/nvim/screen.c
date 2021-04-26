@@ -2338,7 +2338,8 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
     }
   }
 
-  bool diffaddedr=0;
+  bool diffaddedr=0; // TODO change this to integer, represents number of lines
+  // char_u*testline=ml_get_buf(wp->w_buffer, lnum, false); // DEBUG only
   filler_lines = diff_check(wp, lnum, &diffaddedr);
   if (filler_lines < 0 || diffaddedr) {
     if (filler_lines == -1 || diffaddedr) {
