@@ -902,9 +902,15 @@ struct file_buffer {
  * This is using a linked list, because the number of differences is expected
  * to be reasonable small.  The list is sorted on lnum.
  */
-typedef struct diffcomparisonpath_S diffcomparisonpath_T;
-struct diffcomparisonpath_S{
-  int df_path[LINEMATCH_MAX_LINES * LINEMATCH_MAX_LINES]; // TODO this would work for two buffers, raise to the power of the max number of buffers diffed
+typedef struct diffcomparisonpath2_S diffcomparisonpath2_T;
+struct diffcomparisonpath2_S{
+  int df_path2[2*(LINEMATCH_MAX_LINES+1)]; // TODO this would work for two buffers, raise to the power of the max number of buffers diffed
+  int df_lev_score; // to keep track of the total score of this path
+  int path_index;
+};
+typedef struct diffcomparisonpath3_S diffcomparisonpath3_T;
+struct diffcomparisonpath3_S{
+  int df_path3[3*(LINEMATCH_MAX_LINES+1)]; // TODO this would work for two buffers, raise to the power of the max number of buffers diffed
   int df_lev_score; // to keep track of the total score of this path
   int path_index;
 };
@@ -916,7 +922,8 @@ struct diffblock_S {
   int df_redraw; // calculate which lines should be diffed with eachother
   int df_valid_buffers[DB_COUNT];
   int df_valid_buffers_max;
-  diffcomparisonpath_T df_pathmatrix[LINEMATCH_MAX_LINES][LINEMATCH_MAX_LINES]; // for two buffers
+  diffcomparisonpath2_T df_pathmatrix2[LINEMATCH_MAX_LINES][LINEMATCH_MAX_LINES]; // for two buffers
+  diffcomparisonpath3_T df_pathmatrix3[LINEMATCH_MAX_LINES][LINEMATCH_MAX_LINES][LINEMATCH_MAX_LINES]; // for two buffers
   int df_comparisonlines2[DB_COUNT][DB_COUNT][LINEMATCH_MAX_LINES][2];
 
 
