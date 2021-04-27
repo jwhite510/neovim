@@ -2159,8 +2159,6 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 		i-1,j,k-1, // from
 		DFPATH3_COMPARE02); // choice
 	  }
-	  dp->df_pathmatrix3[i][0][k].df_lev_score=dp->df_pathmatrix3[i][0][0].df_lev_score+dp->df_pathmatrix3[0][0][k].df_lev_score;
-	  dp->df_pathmatrix3[i][0][k].path_index=0;
 	}
       }
       for(i=1;i<=dp->df_count[dp->df_valid_buffers[0]];i++){
