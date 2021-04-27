@@ -907,6 +907,18 @@ enum path2_choice{
   DFPATH2_SKIP0,
   DFPATH2_SKIP1,
 };
+enum path3_choice{
+  DFPATH3_COMPARE01,
+  DFPATH3_COMPARE02,
+  DFPATH3_COMPARE10,
+  DFPATH3_COMPARE12,
+  DFPATH3_COMPARE20,
+  DFPATH3_COMPARE21,
+  DFPATH3_COMPARE012,
+  DFPATH3_SKIP0,
+  DFPATH3_SKIP1,
+  DFPATH3_SKIP2,
+};
 typedef struct diffcomparisonpath2_S diffcomparisonpath2_T;
 struct diffcomparisonpath2_S{
   enum path2_choice df_path2[2*(LINEMATCH_MAX_LINES+1)]; // TODO this would work for two buffers, raise to the power of the max number of buffers diffed
@@ -915,7 +927,7 @@ struct diffcomparisonpath2_S{
 };
 typedef struct diffcomparisonpath3_S diffcomparisonpath3_T;
 struct diffcomparisonpath3_S{
-  int df_path3[3*(LINEMATCH_MAX_LINES+1)]; // TODO this would work for two buffers, raise to the power of the max number of buffers diffed
+  enum path3_choice df_path3[3*(LINEMATCH_MAX_LINES+1)]; // TODO this would work for two buffers, raise to the power of the max number of buffers diffed
   int df_lev_score; // to keep track of the total score of this path
   int path_index;
 };

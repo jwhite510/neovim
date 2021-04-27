@@ -1891,11 +1891,6 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
     }
     // assume for now that it is two buffers
     if(dp->df_valid_buffers_max==2){
-      // enum{
-      //   SKIP1,
-      //   SKIP0,
-      //   COMPARE01
-      // };
       // define the boundaries
       for(int idc=0;idc<dp->df_valid_buffers_max;idc++){
 	int chbuf=dp->df_valid_buffers[idc];
@@ -1922,7 +1917,6 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 	  }
 	}
       }
-      // limits
       for(i=1;i<=dp->df_count[dp->df_valid_buffers[0]];i++){
 	for(int j=1;j<=dp->df_count[dp->df_valid_buffers[1]];j++){
 	  int strlength;
@@ -1999,6 +1993,70 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
       // print_complines(dp);
       // print_dp(dp);
     }else if(dp->df_valid_buffers_max==3){
+      // define the boundaries
+      for(int idc=0;idc<dp->df_valid_buffers_max;idc++){
+	int chbuf=dp->df_valid_buffers[idc];
+	for(i=0;i<=dp->df_count[chbuf];i++){
+	  char_u* thisline=(i)?
+	    ml_get_buf( curtab->tp_diffbuf[chbuf], dp->df_lnum[chbuf]+i-1, false):
+	    (char_u*)"\0";
+	  int strlength=0;
+	  while(thisline[strlength]!='\0')strlength++;
+	  if(idc==0){
+	    dp->df_pathmatrix3[i][0][0].df_lev_score=(
+		(i)?(dp->df_pathmatrix3[i-1][0][0].df_lev_score)+strlength
+		:strlength
+		);
+	    dp->df_pathmatrix3[i][0][0].path_index=i;
+	    for(int k=0;k<i;k++)dp->df_pathmatrix3[i][0][0].df_path3[k]=DFPATH3_SKIP0;
+	  }else if(idc==1){
+	    dp->df_pathmatrix3[0][i][0].df_lev_score=(
+		(i)?(dp->df_pathmatrix3[0][i-1][0].df_lev_score)+strlength
+		:strlength
+		);
+	    dp->df_pathmatrix3[0][i][0].path_index=i;
+	    for(int k=0;k<i;k++)dp->df_pathmatrix3[0][i][0].df_path3[k]=DFPATH3_SKIP1;
+	  }else if(idc==2){
+ 	    dp->df_pathmatrix3[0][0][i].df_lev_score=(
+		(i)?(dp->df_pathmatrix3[0][0][i-1].df_lev_score)+strlength
+		:strlength
+		);
+	    dp->df_pathmatrix3[0][0][i].path_index=i;
+	    for(int k=0;k<i;k++)dp->df_pathmatrix3[0][0][i].df_path3[k]=DFPATH3_SKIP2;
+	  }
+	}
+      }
+      for(i=1;i<=dp->df_count[dp->df_valid_buffers[0]];i++){
+	for(int j=1;j<=dp->df_count[dp->df_valid_buffers[1]];j++){
+	  dp->df_pathmatrix3[i][j][0].df_lev_score=dp->df_pathmatrix3[i][0][0].df_lev_score+dp->df_pathmatrix3[0][j][0].df_lev_score;
+	  dp->df_pathmatrix3[i][j][0].path_index=0;
+	  for(int _k=0;_k<i;_k++)dp->df_pathmatrix3[i][j][0].df_path3[dp->df_pathmatrix3[i][j][0].path_index++]=DFPATH3_SKIP0;
+	  for(int _k=0;_k<j;_k++)dp->df_pathmatrix3[i][j][0].df_path3[dp->df_pathmatrix3[i][j][0].path_index++]=DFPATH3_SKIP1;
+	}
+      }
+      for(int j=1;j<=dp->df_count[dp->df_valid_buffers[1]];j++){
+	for(int k=1;k<=dp->df_count[dp->df_valid_buffers[2]];k++){
+	  dp->df_pathmatrix3[0][j][k].df_lev_score=dp->df_pathmatrix3[0][j][0].df_lev_score+dp->df_pathmatrix3[0][0][k].df_lev_score;
+	  dp->df_pathmatrix3[0][j][k].path_index=0;
+	  for(int _k=0;_k<j;_k++)dp->df_pathmatrix3[0][j][k].df_path3[dp->df_pathmatrix3[0][j][k].path_index++]=DFPATH3_SKIP1;
+	  for(int _k=0;_k<k;_k++)dp->df_pathmatrix3[0][j][k].df_path3[dp->df_pathmatrix3[0][j][k].path_index++]=DFPATH3_SKIP2;
+	}
+      }
+      for(i=1;i<=dp->df_count[dp->df_valid_buffers[0]];i++){
+	for(int k=1;k<=dp->df_count[dp->df_valid_buffers[2]];k++){
+	  dp->df_pathmatrix3[i][0][k].df_lev_score=dp->df_pathmatrix3[i][0][0].df_lev_score+dp->df_pathmatrix3[0][0][k].df_lev_score;
+	  dp->df_pathmatrix3[i][0][k].path_index=0;
+	  for(int _k=0;_k<i;_k++)dp->df_pathmatrix3[i][0][k].df_path3[dp->df_pathmatrix3[i][0][k].path_index++]=DFPATH3_SKIP0;
+	  for(int _k=0;_k<k;_k++)dp->df_pathmatrix3[i][0][k].df_path3[dp->df_pathmatrix3[i][0][k].path_index++]=DFPATH3_SKIP2;
+	}
+      }
+      for(i=1;i<=dp->df_count[dp->df_valid_buffers[0]];i++){
+	for(int j=1;j<=dp->df_count[dp->df_valid_buffers[1]];j++){
+	  for(int k=1;k<=dp->df_count[dp->df_valid_buffers[2]];k++){
+	    // state equation here
+	  }
+	}
+      }
 
     }
     dp->df_redraw=false;
