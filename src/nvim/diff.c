@@ -2371,10 +2371,14 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 	}
     }else if(dp->df_valid_buffers_max==3){
       // is the line added?
-      if(diffaddedr!=NULL&&dp->df_comparisonlines3[idx][lnum-dp->df_lnum[idx]].newline)
-	*diffaddedr=-2; // line was added
-      else if(diffaddedr!=NULL)*diffaddedr=-1; // line was compared
-      return dp->df_comparisonlines3[idx][lnum-dp->df_lnum[idx]].filler;
+      if(off<dp->df_count[idx]){
+	if(diffaddedr!=NULL&&dp->df_comparisonlines3[idx][lnum-dp->df_lnum[idx]].newline)
+	  *diffaddedr=-2; // line was added
+	else if(diffaddedr!=NULL)*diffaddedr=-1; // line was compared
+	return dp->df_comparisonlines3[idx][lnum-dp->df_lnum[idx]].filler;
+      }else{
+	return dp->df_comparisonlines3[idx][lnum-dp->df_lnum[idx]].filler;
+      }
     }
   }
   if (lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
