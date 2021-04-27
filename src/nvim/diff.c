@@ -1782,6 +1782,34 @@ void print_dp(diff_T *dp){
   }
   fclose(fp);
 }
+
+void print_dp3(diff_T*dp){
+  FILE*fp=fopen("debug.txt","a");
+  for(int k=0;k<=dp->df_count[dp->df_valid_buffers[2]];k++){
+    char_u nullstr[100]="";
+    char_u *str2=(k<(dp->df_count[dp->df_valid_buffers[2]]))?
+       ml_get_buf(curtab->tp_diffbuf[dp->df_valid_buffers[2]],dp->df_lnum[dp->df_valid_buffers[2]]+k,false)
+      :nullstr;
+    fprintf(fp,"======================\n");
+    fprintf(fp,"k:%-5i  line:%-40s \n",k,str2);
+    for(int i=0;i<=dp->df_count[dp->df_valid_buffers[0]];i++){
+      char_u *str0=(i<(dp->df_count[dp->df_valid_buffers[0]]))?
+	 ml_get_buf(curtab->tp_diffbuf[dp->df_valid_buffers[0]],dp->df_lnum[dp->df_valid_buffers[0]]+i,false)
+	:nullstr;
+      fprintf(fp,"i:%-5i  line:%-40s ",i,str0);
+      for(int j=0;j<=dp->df_count[dp->df_valid_buffers[1]];j++){
+	char_u *str1=(j<(dp->df_count[dp->df_valid_buffers[1]]))?
+	   ml_get_buf(curtab->tp_diffbuf[dp->df_valid_buffers[1]],dp->df_lnum[dp->df_valid_buffers[1]]+j,false)
+	  :nullstr;
+	fprintf(fp,"j:%-5i  line:%-40s ",j,str1);
+
+      }
+      fprintf(fp,"\n");
+    }
+    fprintf(fp,"\n");
+  }
+  fclose(fp);
+}
 void print_complines(diff_T *dp){
   // 0 compared to 1:
   FILE*fp=fopen("debug.txt","a");
@@ -2100,7 +2128,7 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 		ml_get_buf(curtab->tp_diffbuf[dp->df_valid_buffers[1]],dp->df_lnum[dp->df_valid_buffers[1]]+j-1,false),
 		ml_get_buf(curtab->tp_diffbuf[dp->df_valid_buffers[2]],dp->df_lnum[dp->df_valid_buffers[2]]+k-1,false)
 		);
-	    if(score4<dp->df_pathmatrix2[i][j].df_lev_score){
+	    if(score4<dp->df_pathmatrix3[i][j][k].df_lev_score){
 	      update_path3(dp,score4,i,j,k,
 		  i-1,j-1,k-1, // from
 		  DFPATH3_COMPARE012); // choice
