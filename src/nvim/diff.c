@@ -1804,7 +1804,7 @@ void print_complines(diff_T *dp){
 
 }
 
-void update_path2(diff_T* dp, int score,int i, int j, int _i, int _j, int choice){
+void update_path2(diff_T* dp, int score,int i, int j, int _i, int _j, enum path2_choice choice){
   dp->df_pathmatrix2[i][j].df_lev_score=score;
   for(int k=0;k<=dp->df_pathmatrix2[_i][_j].path_index;k++)
     dp->df_pathmatrix2[i][j].df_path2[k]=dp->df_pathmatrix2[_i][_j].df_path2[k];
@@ -1911,14 +1911,14 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 		:strlength
 		);
 	    dp->df_pathmatrix2[i][0].path_index=i;
-	    for(int k=0;k<i;k++)dp->df_pathmatrix2[i][0].df_path2[k]=1;
+	    for(int k=0;k<i;k++)dp->df_pathmatrix2[i][0].df_path2[k]=DFPATH2_SKIP0;
 	  }else if(idc==1){
 	    dp->df_pathmatrix2[0][i].df_lev_score=(
 		(i)?(dp->df_pathmatrix2[0][i-1].df_lev_score)+strlength
 		:strlength
 		);
 	    dp->df_pathmatrix2[0][i].path_index=i;
-	    for(int k=0;k<i;k++)dp->df_pathmatrix2[0][i].df_path2[k]=3;
+	    for(int k=0;k<i;k++)dp->df_pathmatrix2[0][i].df_path2[k]=DFPATH2_SKIP1;
 	  }
 	}
       }
@@ -1939,7 +1939,7 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 	  if(score1<dp->df_pathmatrix2[i][j].df_lev_score){
 	    update_path2(dp,score1,i,j,
 		i-1,j, // from
-		1); // choice
+		DFPATH2_SKIP0); // choice
 	  }
 	  // compare this line
 	  thisline=ml_get_buf(curtab->tp_diffbuf[dp->df_valid_buffers[0]],dp->df_lnum[dp->df_valid_buffers[0]]+i-1,false);
@@ -1948,7 +1948,7 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 	  if(score2<dp->df_pathmatrix2[i][j].df_lev_score){
 	    update_path2(dp,score2,i,j,
 		i-1,j-1, // from
-		2); // choice
+		DFPATH2_COMPARE01); // choice
 	  }
 	  // skip line
 	  strlength=0;
@@ -1958,7 +1958,7 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 	  if(score3<dp->df_pathmatrix2[i][j].df_lev_score){
 	    update_path2(dp,score3,i,j,
 		i,j-1, // from
-		3); // choice
+		DFPATH2_SKIP1); // choice
 	  }
 	}
       }
@@ -1970,14 +1970,14 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
       dp->df_comparisonlines2[dp->df_valid_buffers[1]][dp->df_valid_buffers[0]][p10][1]=0;
       for(i=0;i<dp->df_pathmatrix2[dp->df_count[dp->df_valid_buffers[0]]][dp->df_count[dp->df_valid_buffers[1]]].path_index;i++){
 	int p=dp->df_pathmatrix2[dp->df_count[dp->df_valid_buffers[0]]][dp->df_count[dp->df_valid_buffers[1]]].df_path2[i];
-	if(p==1){
+	if(p==DFPATH2_SKIP0){
 	  // line from buffer 0 was skipped
 	  dp->df_comparisonlines2[dp->df_valid_buffers[0]][dp->df_valid_buffers[1]][p01][0]=-1; // new line
 	  dp->df_comparisonlines2[dp->df_valid_buffers[1]][dp->df_valid_buffers[0]][p10][1]++; // increase filler
 	  p01++;
 	  dp->df_comparisonlines2[dp->df_valid_buffers[0]][dp->df_valid_buffers[1]][p01][0]=0;
 	  dp->df_comparisonlines2[dp->df_valid_buffers[0]][dp->df_valid_buffers[1]][p01][1]=0;
-	}else if(p==2){
+	}else if(p==DFPATH2_COMPARE01){
 	  // the lines were compared
 	  dp->df_comparisonlines2[dp->df_valid_buffers[0]][dp->df_valid_buffers[1]][p01][0]=p10; // compare
 	  dp->df_comparisonlines2[dp->df_valid_buffers[1]][dp->df_valid_buffers[0]][p10][0]=p01; // compare
@@ -1986,7 +1986,7 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 	  dp->df_comparisonlines2[dp->df_valid_buffers[0]][dp->df_valid_buffers[1]][p01][1]=0;
 	  dp->df_comparisonlines2[dp->df_valid_buffers[1]][dp->df_valid_buffers[0]][p10][0]=0;
 	  dp->df_comparisonlines2[dp->df_valid_buffers[1]][dp->df_valid_buffers[0]][p10][1]=0;
-	}else if(p==3){
+	}else if(p==DFPATH2_SKIP1){
 	  // line from buffer 1 was skipped
 	  dp->df_comparisonlines2[dp->df_valid_buffers[1]][dp->df_valid_buffers[0]][p10][0]=-1; // new line
 	  dp->df_comparisonlines2[dp->df_valid_buffers[0]][dp->df_valid_buffers[1]][p01][1]++; // increase filler

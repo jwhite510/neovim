@@ -902,9 +902,14 @@ struct file_buffer {
  * This is using a linked list, because the number of differences is expected
  * to be reasonable small.  The list is sorted on lnum.
  */
+enum path2_choice{
+  DFPATH2_COMPARE01,
+  DFPATH2_SKIP0,
+  DFPATH2_SKIP1,
+};
 typedef struct diffcomparisonpath2_S diffcomparisonpath2_T;
 struct diffcomparisonpath2_S{
-  int df_path2[2*(LINEMATCH_MAX_LINES+1)]; // TODO this would work for two buffers, raise to the power of the max number of buffers diffed
+  enum path2_choice df_path2[2*(LINEMATCH_MAX_LINES+1)]; // TODO this would work for two buffers, raise to the power of the max number of buffers diffed
   int df_lev_score; // to keep track of the total score of this path
   int path_index;
 };
