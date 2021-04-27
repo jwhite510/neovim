@@ -2106,6 +2106,33 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 		  DFPATH3_COMPARE012); // choice
 	    }
 	    // compare two lines
+	    int score5=dp->df_pathmatrix3[i-1][j-1][k].df_lev_score+levenshtein(
+		ml_get_buf(curtab->tp_diffbuf[dp->df_valid_buffers[0]],dp->df_lnum[dp->df_valid_buffers[0]]+i-1,false),
+		ml_get_buf(curtab->tp_diffbuf[dp->df_valid_buffers[1]],dp->df_lnum[dp->df_valid_buffers[1]]+j-1,false)
+		);
+	    if(score5<dp->df_pathmatrix3[i][j][k].df_lev_score){
+	      update_path3(dp,score5,i,j,k,
+		  i-1,j-1,k, // from
+		  DFPATH3_COMPARE01); // choice
+	    }
+	    int score6=dp->df_pathmatrix3[i-1][j][k-1].df_lev_score+levenshtein(
+		ml_get_buf(curtab->tp_diffbuf[dp->df_valid_buffers[0]],dp->df_lnum[dp->df_valid_buffers[0]]+i-1,false),
+		ml_get_buf(curtab->tp_diffbuf[dp->df_valid_buffers[2]],dp->df_lnum[dp->df_valid_buffers[2]]+k-1,false)
+		);
+	    if(score6<dp->df_pathmatrix3[i][j][k].df_lev_score){
+	      update_path3(dp,score6,i,j,k,
+		  i-1,j,k-1, // from
+		  DFPATH3_COMPARE02); // choice
+	    }
+	    int score7=dp->df_pathmatrix3[i][j-1][k-1].df_lev_score+levenshtein(
+		ml_get_buf(curtab->tp_diffbuf[dp->df_valid_buffers[1]],dp->df_lnum[dp->df_valid_buffers[1]]+j-1,false),
+		ml_get_buf(curtab->tp_diffbuf[dp->df_valid_buffers[2]],dp->df_lnum[dp->df_valid_buffers[2]]+k-1,false)
+		);
+	    if(score7<dp->df_pathmatrix3[i][j][k].df_lev_score){
+	      update_path3(dp,score7,i,j,k,
+		  i,j-1,k-1, // from
+		  DFPATH3_COMPARE12); // choice
+	    }
 
 
 	  }
