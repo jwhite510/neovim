@@ -2138,6 +2138,114 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 	  }
 	}
       }
+      // initialize to zero
+      int p0=0,p1=0,p2=0; // i, j
+      dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].compare[dp->df_valid_buffers[1]]=-1;
+      dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].compare[dp->df_valid_buffers[2]]=-1;
+      dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].newline=false;
+      dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].filler=0;
+      dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].compare[dp->df_valid_buffers[0]]=-1;
+      dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].compare[dp->df_valid_buffers[2]]=-1;
+      dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].newline=false;
+      dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].filler=0;
+      dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].compare[dp->df_valid_buffers[0]]=-1;
+      dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].compare[dp->df_valid_buffers[1]]=-1;
+      dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].newline=false;
+      dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].filler=0;
+      for(i=0;i<dp->df_pathmatrix3[dp->df_count[dp->df_valid_buffers[0]]]
+	  [dp->df_count[dp->df_valid_buffers[1]]]
+	  [dp->df_count[dp->df_valid_buffers[2]]].path_index;i++){
+	int p=dp->df_pathmatrix3[dp->df_count[dp->df_valid_buffers[0]]]
+	  [dp->df_count[dp->df_valid_buffers[1]]]
+	  [dp->df_count[dp->df_valid_buffers[2]]].df_path3[i];
+	if(p==DFPATH3_COMPARE01){
+ 	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].compare[dp->df_valid_buffers[1]]=p1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].compare[dp->df_valid_buffers[0]]=p0;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].filler++;
+	  p0++,p1++;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].compare[dp->df_valid_buffers[1]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].compare[dp->df_valid_buffers[2]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].newline=false;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].filler=0;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].compare[dp->df_valid_buffers[0]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].compare[dp->df_valid_buffers[2]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].newline=false;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].filler=0;
+	}else if(p==DFPATH3_COMPARE02){
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].compare[dp->df_valid_buffers[2]]=p2;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].compare[dp->df_valid_buffers[0]]=p0;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].filler++;
+	  p0++,p2++;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].compare[dp->df_valid_buffers[1]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].compare[dp->df_valid_buffers[2]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].newline=false;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].filler=0;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].compare[dp->df_valid_buffers[0]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].compare[dp->df_valid_buffers[1]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].newline=false;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].filler=0;
+	}else if(p==DFPATH3_COMPARE12){
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].compare[dp->df_valid_buffers[2]]=p2;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].compare[dp->df_valid_buffers[1]]=p1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].filler++;
+	  p1++,p2++;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].compare[dp->df_valid_buffers[0]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].compare[dp->df_valid_buffers[2]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].newline=false;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].filler=0;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].compare[dp->df_valid_buffers[0]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].compare[dp->df_valid_buffers[1]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].newline=false;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].filler=0;
+	}else if(p==DFPATH3_COMPARE012){
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].compare[dp->df_valid_buffers[1]]=p1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].compare[dp->df_valid_buffers[2]]=p2;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].compare[dp->df_valid_buffers[0]]=p0;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].compare[dp->df_valid_buffers[2]]=p2;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].compare[dp->df_valid_buffers[0]]=p0;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].compare[dp->df_valid_buffers[1]]=p1;
+	  p0++,p1++,p2++;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].compare[dp->df_valid_buffers[1]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].compare[dp->df_valid_buffers[2]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].newline=false;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].filler=0;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].compare[dp->df_valid_buffers[0]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].compare[dp->df_valid_buffers[2]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].newline=false;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].filler=0;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].compare[dp->df_valid_buffers[0]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].compare[dp->df_valid_buffers[1]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].newline=false;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].filler=0;
+	}else if (p==DFPATH3_SKIP0){
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].filler++;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].filler++;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].newline=true;
+	  p0++;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].compare[dp->df_valid_buffers[1]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].compare[dp->df_valid_buffers[2]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].filler=0;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].newline=false;
+	}else if(p==DFPATH3_SKIP1){
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].filler++;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].filler++;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].newline=true;
+	  p1++;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].compare[dp->df_valid_buffers[0]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].compare[dp->df_valid_buffers[2]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].filler=0;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].newline=false;
+	}else if(p==DFPATH3_SKIP2){
+	  dp->df_comparisonlines3[dp->df_valid_buffers[0]][p0].filler++;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[1]][p1].filler++;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].newline=true;
+	  p2++;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].compare[dp->df_valid_buffers[0]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].compare[dp->df_valid_buffers[1]]=-1;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].filler=0;
+	  dp->df_comparisonlines3[dp->df_valid_buffers[2]][p2].newline=false;
+	}
+      }
 
     }
     dp->df_redraw=false;

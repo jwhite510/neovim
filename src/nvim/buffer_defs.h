@@ -928,6 +928,12 @@ struct diffcomparisonpath3_S{
   int df_lev_score; // to keep track of the total score of this path
   int path_index;
 };
+typedef struct df_linecompare3_S df_linecompare3_T;
+struct df_linecompare3_S{
+  bool newline; // is this line skipped in other buffers?
+  int filler; // how many filler lines above this?
+  int compare[DB_COUNT]; // which line to compare to in other buffer
+};
 typedef struct diffblock_S diff_T;
 struct diffblock_S {
   diff_T      *df_next;
@@ -939,6 +945,7 @@ struct diffblock_S {
   diffcomparisonpath2_T df_pathmatrix2[LINEMATCH_MAX_LINES][LINEMATCH_MAX_LINES]; // for two buffers
   diffcomparisonpath3_T df_pathmatrix3[LINEMATCH_MAX_LINES][LINEMATCH_MAX_LINES][LINEMATCH_MAX_LINES]; // for two buffers
   int df_comparisonlines2[DB_COUNT][DB_COUNT][LINEMATCH_MAX_LINES][2];
+  df_linecompare3_T df_comparisonlines3[DB_COUNT][LINEMATCH_MAX_LINES];
 
 
 };
