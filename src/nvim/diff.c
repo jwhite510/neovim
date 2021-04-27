@@ -2948,10 +2948,18 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       // Skip lines that are not in the other change (filler lines).
       int comparl;
       if(diff_linematch(dp)){
-	comparl=dp->df_comparisonlines2[idx][i][ lnum - dp->df_lnum[idx]  ][0];
-	if(comparl!=-1)comparl+=dp->df_lnum[i];
-	if(comparl==-1){
-	  continue;
+	if(dp->df_valid_buffers_max==2){
+	  comparl=dp->df_comparisonlines2[idx][i][ lnum - dp->df_lnum[idx]  ][0];
+	  if(comparl!=-1)comparl+=dp->df_lnum[i];
+	  if(comparl==-1){
+	    continue;
+	  }
+	}else if(dp->df_valid_buffers_max==3){
+	  comparl=dp->df_comparisonlines3[idx][ lnum - dp->df_lnum[idx]  ].compare[i];
+	  if(comparl!=-1)comparl+=dp->df_lnum[i];
+	  if(comparl==-1){
+	    continue;
+	  }
 	}
       }else{
 	if (off >= dp->df_count[i]) {
