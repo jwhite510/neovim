@@ -2357,17 +2357,25 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
   }
   // fclose(fp);
   if(diff_linematch(dp)){
-    for(int j=0;j<DB_COUNT;j++)
-      if((curtab->tp_diffbuf[j]!=NULL)&&(j!=idx)) {
-	if(off<dp->df_count[idx]){
-	  if(diffaddedr!=NULL&&dp->df_comparisonlines2[idx][j][lnum-dp->df_lnum[idx]][0]==-1)
-	    *diffaddedr=-2; // line was added
-	  else if(diffaddedr!=NULL) *diffaddedr=-1; // line was compared
-	  return dp->df_comparisonlines2[idx][j][lnum-dp->df_lnum[idx]][1]; // the number of filler lines
-	}else{
-	  return dp->df_comparisonlines2[idx][j][lnum-dp->df_lnum[idx]][1]; // the number of filler lines
+    if(dp->df_valid_buffers_max==2){
+      for(int j=0;j<DB_COUNT;j++)
+	if((curtab->tp_diffbuf[j]!=NULL)&&(j!=idx)) {
+	  if(off<dp->df_count[idx]){
+	    if(diffaddedr!=NULL&&dp->df_comparisonlines2[idx][j][lnum-dp->df_lnum[idx]][0]==-1)
+	      *diffaddedr=-2; // line was added
+	    else if(diffaddedr!=NULL) *diffaddedr=-1; // line was compared
+	    return dp->df_comparisonlines2[idx][j][lnum-dp->df_lnum[idx]][1]; // the number of filler lines
+	  }else{
+	    return dp->df_comparisonlines2[idx][j][lnum-dp->df_lnum[idx]][1]; // the number of filler lines
+	  }
 	}
-      }
+    }else if(dp->df_valid_buffers_max==3){
+      // is the line added?
+      if(diffaddedr!=NULL&&dp->df_comparisonlines3[idx][lnum-dp->df_lnum[idx]].newline)
+	*diffaddedr=-2; // line was added
+      else if(diffaddedr!=NULL)*diffaddedr=-1; // line was compared
+      return dp->df_comparisonlines3[idx][lnum-dp->df_lnum[idx]].filler;
+    }
   }
   if (lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
     int zero = false;
