@@ -1804,6 +1804,14 @@ void print_complines(diff_T *dp){
 
 }
 
+void update_path3(diff_T* dp, int score,int i, int j, int k, int _i, int _j, int _k, enum path2_choice choice){
+  dp->df_pathmatrix3[i][j][k].df_lev_score=score;
+  for(int __k=0;__k<=dp->df_pathmatrix3[_i][_j][_k].path_index;__k++)
+    dp->df_pathmatrix3[i][j][k].df_path3[__k]=dp->df_pathmatrix3[_i][_j][_k].df_path3[__k];
+  dp->df_pathmatrix3[i][j][k].path_index=dp->df_pathmatrix3[_i][_j][_k].path_index;
+  dp->df_pathmatrix3[i][j][k].df_path3[dp->df_pathmatrix3[i][j][k].path_index]=choice; // this choice
+  dp->df_pathmatrix3[i][j][k].path_index++; 
+}
 void update_path2(diff_T* dp, int score,int i, int j, int _i, int _j, enum path2_choice choice){
   dp->df_pathmatrix2[i][j].df_lev_score=score;
   for(int k=0;k<=dp->df_pathmatrix2[_i][_j].path_index;k++)
@@ -2054,6 +2062,52 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 	for(int j=1;j<=dp->df_count[dp->df_valid_buffers[1]];j++){
 	  for(int k=1;k<=dp->df_count[dp->df_valid_buffers[2]];k++){
 	    // state equation here
+	    // choices
+	    dp->df_pathmatrix3[i][j][k].df_lev_score=INT_MAX;
+	    int strlength;
+	    char_u*thisline;
+
+	    strlength=0;
+	    thisline=ml_get_buf(curtab->tp_diffbuf[dp->df_valid_buffers[0]],dp->df_lnum[dp->df_valid_buffers[0]]+i-1,false);
+	    while(thisline[strlength]!='\0')strlength++;
+	    int score1=dp->df_pathmatrix3[i-1][j][k].df_lev_score + strlength;
+	    if(score1<dp->df_pathmatrix3[i][j][k].df_lev_score){
+	      update_path3(dp,score1,i,j,k,
+		  i-1,j,k, // from
+		  DFPATH3_SKIP0); // choice
+	    }
+	    strlength=0;
+	    thisline=ml_get_buf(curtab->tp_diffbuf[dp->df_valid_buffers[1]],dp->df_lnum[dp->df_valid_buffers[1]]+j-1,false);
+	    while(thisline[strlength]!='\0')strlength++;
+	    int score2=dp->df_pathmatrix3[i][j-1][k].df_lev_score + strlength;
+	    if(score2<dp->df_pathmatrix3[i][j][k].df_lev_score){
+	      update_path3(dp,score2,i,j,k,
+		  i,j-1,k, // from
+		  DFPATH3_SKIP1); // choice
+	    }
+	    strlength=0;
+	    thisline=ml_get_buf(curtab->tp_diffbuf[dp->df_valid_buffers[2]],dp->df_lnum[dp->df_valid_buffers[2]]+k-1,false);
+	    while(thisline[strlength]!='\0')strlength++;
+	    int score3=dp->df_pathmatrix3[i][j][k-1].df_lev_score + strlength;
+	    if(score3<dp->df_pathmatrix3[i][j][k].df_lev_score){
+	      update_path3(dp,score3,i,j,k,
+		  i,j,k-1, // from
+		  DFPATH3_SKIP2); // choice
+	    }
+	    // compare all three lines
+	    int score4=dp->df_pathmatrix3[i-1][j-1][k-1].df_lev_score+levenshtein3(
+		ml_get_buf(curtab->tp_diffbuf[dp->df_valid_buffers[0]],dp->df_lnum[dp->df_valid_buffers[0]]+i-1,false),
+		ml_get_buf(curtab->tp_diffbuf[dp->df_valid_buffers[1]],dp->df_lnum[dp->df_valid_buffers[1]]+j-1,false),
+		ml_get_buf(curtab->tp_diffbuf[dp->df_valid_buffers[2]],dp->df_lnum[dp->df_valid_buffers[2]]+k-1,false)
+		);
+	    if(score4<dp->df_pathmatrix2[i][j].df_lev_score){
+	      update_path3(dp,score4,i,j,k,
+		  i-1,j-1,k-1, // from
+		  DFPATH3_COMPARE012); // choice
+	    }
+	    // compare two lines
+
+
 	  }
 	}
       }
@@ -2568,6 +2622,16 @@ int min(int a, int b, int c)
 	return 0;
 }
 
+int levenshtein3(char_u*s1,char_u*s2,char_u*s3){
+  int distance=0;
+  int d1=levenshtein(s1,s2);
+  if(d1>distance)distance=d1;
+  int d2=levenshtein(s2,s3);
+  if(d2>distance)distance=d2;
+  int d3=levenshtein(s1,s3);
+  if(d3>distance)distance=d3;
+  return distance;
+}
 int levenshtein(char_u *s1, char_u *s2) {
     unsigned int x, y, s1len, s2len;
     s1len = strlen((char*)s1);
