@@ -2077,18 +2077,6 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 	for(int j=1;j<=dp->df_count[b1];j++){
 	  int k=0;
 	  dp->df_pathmatrix3[i][j][k].df_lev_score=-1;
-	  int score1=0;
-	  if(score1>dp->df_pathmatrix3[i][j][k].df_lev_score){
-	    update_path3(dp,score1,i,j,k,
-		i-1,j,k, // from
-		DFPATH3_SKIP0); // choice
-	  }
-	  int score2=0;
-	  if(score2>dp->df_pathmatrix3[i][j][k].df_lev_score){
-	    update_path3(dp,score2,i,j,k,
-		i,j-1,k, // from
-		DFPATH3_SKIP1); // choice
-	  }
 	  int score5=dp->df_pathmatrix3[i-1][j-1][k].df_lev_score+count_matched_chars(
 	      ml_get_buf(curtab->tp_diffbuf[b0],dp->df_lnum[b0]+i-1,false),
 	      ml_get_buf(curtab->tp_diffbuf[b1],dp->df_lnum[b1]+j-1,false)
@@ -2098,12 +2086,33 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 		i-1,j-1,k, // from
 		DFPATH3_COMPARE01); // choice
 	  }
+	  int score1=0;
+	  if(score1>dp->df_pathmatrix3[i][j][k].df_lev_score){
+	    update_path3(dp,score1,i,j,k,
+		i-1,j,k, // from
+		DFPATH3_SKIP0); // choice
+	  }
+	  int score2=0;
+	  if(score2>dp->df_pathmatrix3[i][j][k].df_lev_score){
+	    update_path3(dp,score2,i,j,k,
+		i,j-1,k, // from
+		DFPATH3_SKIP1); // choice
+	  }
 	}
       }
       for(int j=1;j<=dp->df_count[b1];j++){
 	for(int k=1;k<=dp->df_count[b2];k++){
 	  i=0;
 	  dp->df_pathmatrix3[i][j][k].df_lev_score=-1;
+	  int score7=dp->df_pathmatrix3[i][j-1][k-1].df_lev_score+count_matched_chars(
+	      ml_get_buf(curtab->tp_diffbuf[b1],dp->df_lnum[b1]+j-1,false),
+	      ml_get_buf(curtab->tp_diffbuf[b2],dp->df_lnum[b2]+k-1,false)
+	      );
+	  if(score7>dp->df_pathmatrix3[i][j][k].df_lev_score){
+	    update_path3(dp,score7,i,j,k,
+		i,j-1,k-1, // from
+		DFPATH3_COMPARE12); // choice
+	  }
 	  int score2=0;
 	  if(score2>dp->df_pathmatrix3[i][j][k].df_lev_score){
 	    update_path3(dp,score2,i,j,k,
@@ -2116,21 +2125,21 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 		i,j,k-1, // from
 		DFPATH3_SKIP2); // choice
 	  }
-	  int score7=dp->df_pathmatrix3[i][j-1][k-1].df_lev_score+count_matched_chars(
-	      ml_get_buf(curtab->tp_diffbuf[b1],dp->df_lnum[b1]+j-1,false),
-	      ml_get_buf(curtab->tp_diffbuf[b2],dp->df_lnum[b2]+k-1,false)
-	      );
-	  if(score7>dp->df_pathmatrix3[i][j][k].df_lev_score){
-	    update_path3(dp,score7,i,j,k,
-		i,j-1,k-1, // from
-		DFPATH3_COMPARE12); // choice
-	  }
 	}
       }
       for(i=1;i<=dp->df_count[b0];i++){
 	for(int k=1;k<=dp->df_count[b2];k++){
 	  int j=0;
 	  dp->df_pathmatrix3[i][j][k].df_lev_score=-1;
+	  int score6=dp->df_pathmatrix3[i-1][j][k-1].df_lev_score+count_matched_chars(
+	      ml_get_buf(curtab->tp_diffbuf[b0],dp->df_lnum[b0]+i-1,false),
+	      ml_get_buf(curtab->tp_diffbuf[b2],dp->df_lnum[b2]+k-1,false)
+	      );
+	  if(score6>dp->df_pathmatrix3[i][j][k].df_lev_score){
+	    update_path3(dp,score6,i,j,k,
+		i-1,j,k-1, // from
+		DFPATH3_COMPARE02); // choice
+	  }
 	  int score1=0;
 	  if(score1>dp->df_pathmatrix3[i][j][k].df_lev_score){
 	    update_path3(dp,score1,i,j,k,
@@ -2143,15 +2152,6 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 		i,j,k-1, // from
 		DFPATH3_SKIP2); // choice
 	  }
-	  int score6=dp->df_pathmatrix3[i-1][j][k-1].df_lev_score+count_matched_chars(
-	      ml_get_buf(curtab->tp_diffbuf[b0],dp->df_lnum[b0]+i-1,false),
-	      ml_get_buf(curtab->tp_diffbuf[b2],dp->df_lnum[b2]+k-1,false)
-	      );
-	  if(score6>dp->df_pathmatrix3[i][j][k].df_lev_score){
-	    update_path3(dp,score6,i,j,k,
-		i-1,j,k-1, // from
-		DFPATH3_COMPARE02); // choice
-	  }
 	}
       }
       for(i=1;i<=dp->df_count[b0];i++){
@@ -2160,24 +2160,6 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 	    // state equation here
 	    // choices
 	    dp->df_pathmatrix3[i][j][k].df_lev_score=-1;
-	    int score1=0;
-	    if(score1>dp->df_pathmatrix3[i][j][k].df_lev_score){
-	      update_path3(dp,score1,i,j,k,
-		  i-1,j,k, // from
-		  DFPATH3_SKIP0); // choice
-	    }
-	    int score2=0;
-	    if(score2>dp->df_pathmatrix3[i][j][k].df_lev_score){
-	      update_path3(dp,score2,i,j,k,
-		  i,j-1,k, // from
-		  DFPATH3_SKIP1); // choice
-	    }
-	    int score3=0;
-	    if(score3>dp->df_pathmatrix3[i][j][k].df_lev_score){
-	      update_path3(dp,score3,i,j,k,
-		  i,j,k-1, // from
-		  DFPATH3_SKIP2); // choice
-	    }
 	    // compare all three lines
 	    int score4=dp->df_pathmatrix3[i-1][j-1][k-1].df_lev_score+count_matched_chars3(
 		ml_get_buf(curtab->tp_diffbuf[b0],dp->df_lnum[b0]+i-1,false),
@@ -2217,8 +2199,24 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 		  i,j-1,k-1, // from
 		  DFPATH3_COMPARE12); // choice
 	    }
-
-
+	    int score1=0;
+	    if(score1>dp->df_pathmatrix3[i][j][k].df_lev_score){
+	      update_path3(dp,score1,i,j,k,
+		  i-1,j,k, // from
+		  DFPATH3_SKIP0); // choice
+	    }
+	    int score2=0;
+	    if(score2>dp->df_pathmatrix3[i][j][k].df_lev_score){
+	      update_path3(dp,score2,i,j,k,
+		  i,j-1,k, // from
+		  DFPATH3_SKIP1); // choice
+	    }
+	    int score3=0;
+	    if(score3>dp->df_pathmatrix3[i][j][k].df_lev_score){
+	      update_path3(dp,score3,i,j,k,
+		  i,j,k-1, // from
+		  DFPATH3_SKIP2); // choice
+	    }
 	  }
 	}
       }
