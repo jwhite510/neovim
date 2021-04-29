@@ -2033,35 +2033,32 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
       int b1=dp->df_valid_buffers[1];
       int b2=dp->df_valid_buffers[2];
       // define the boundaries
+      dp->df_pathmatrix3[0][0][0].df_lev_score=0;
+      dp->df_pathmatrix3[0][0][0].path_index=0;
       for(int idc=0;idc<dp->df_valid_buffers_max;idc++){
 	int chbuf=dp->df_valid_buffers[idc];
-	for(i=0;i<=dp->df_count[chbuf];i++){
-	  char_u* thisline=(i)?
-	    ml_get_buf( curtab->tp_diffbuf[chbuf], dp->df_lnum[chbuf]+i-1, false):
-	    (char_u*)"\0";
-	  int strlength=getlength(thisline);
+	for(i=1;i<=dp->df_count[chbuf];i++){
+	  char_u*thisline=ml_get_buf( curtab->tp_diffbuf[chbuf], dp->df_lnum[chbuf]+i-1, false);
 	  if(idc==0){
-	    dp->df_pathmatrix3[i][0][0].df_lev_score=(
-		(i)?(dp->df_pathmatrix3[i-1][0][0].df_lev_score)+3*strlength
-		:strlength
-		);
-	    dp->df_pathmatrix3[i][0][0].path_index=i;
-	    for(int k=0;k<i;k++)dp->df_pathmatrix3[i][0][0].df_path3[k]=DFPATH3_SKIP0;
+	    int score=dp->df_pathmatrix3[i-1][0][0].df_lev_score + 3*getlength(thisline);
+	    update_path3(
+		dp,score,i,0,0,
+		i-1,0,0,
+		DFPATH3_SKIP0);
 	  }else if(idc==1){
-	    dp->df_pathmatrix3[0][i][0].df_lev_score=(
-		(i)?(dp->df_pathmatrix3[0][i-1][0].df_lev_score)+3*strlength
-		:strlength
-		);
-	    dp->df_pathmatrix3[0][i][0].path_index=i;
-	    for(int k=0;k<i;k++)dp->df_pathmatrix3[0][i][0].df_path3[k]=DFPATH3_SKIP1;
+	    int score=dp->df_pathmatrix3[0][i-1][0].df_lev_score + 3*getlength( thisline);
+	    update_path3(
+		dp,score,0,i,0,
+		0,i-1,0,
+		DFPATH3_SKIP1);
 	  }else if(idc==2){
- 	    dp->df_pathmatrix3[0][0][i].df_lev_score=(
-		(i)?(dp->df_pathmatrix3[0][0][i-1].df_lev_score)+3*strlength
-		:strlength
-		);
-	    dp->df_pathmatrix3[0][0][i].path_index=i;
-	    for(int k=0;k<i;k++)dp->df_pathmatrix3[0][0][i].df_path3[k]=DFPATH3_SKIP2;
+	    int score=dp->df_pathmatrix3[0][0][i-1].df_lev_score + 3*getlength( thisline);
+	    update_path3(
+		dp,score,0,0,i,
+		0,0,i-1,
+		DFPATH3_SKIP2);
 	  }
+	  
 	}
       }
       for(i=1;i<=dp->df_count[b0];i++){
