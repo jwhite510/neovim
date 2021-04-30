@@ -944,7 +944,6 @@ struct diffblock_S {
   int df_valid_buffers_max;
   diffcomparisonpath2_T df_pathmatrix2[LINEMATCH_MAX_LINES][LINEMATCH_MAX_LINES]; // for two buffers
   diffcomparisonpath3_T df_pathmatrix3[LINEMATCH_MAX_LINES][LINEMATCH_MAX_LINES][LINEMATCH_MAX_LINES]; // for two buffers
-  int df_comparisonlines2[DB_COUNT][DB_COUNT][LINEMATCH_MAX_LINES][2];
   df_linecompare3_T df_comparisonlines3[DB_COUNT][LINEMATCH_MAX_LINES];
 
 
