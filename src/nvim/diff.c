@@ -2446,27 +2446,36 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
     if(diff_linematch(dp)){
 
       // get the number of added / skipped lines above the current top line (out of view)
-      int from_filler_lines=0;
-      int from_added_lines_above=0;
+      int virtual_lines_above_from=0;
+      int line_new_virtual=0;
+      int line_new=0;
       for(int k=dp->df_lnum[fromidx];k<=fromwin->w_topline;k++){
-        int diffaddedr=0;
-        int n = diff_check(fromwin, k, &diffaddedr);
-        if(n>0)from_filler_lines+=n; // a filler line
-        if(k<fromwin->w_topline && diffaddedr==-2)from_added_lines_above++; // a new line
+	int n = diff_check(fromwin, k, NULL);
+	if(n>0)virtual_lines_above_from+=n; // filler lines
+	virtual_lines_above_from++;
       }
-      towin->w_topline = lnum + (dp->df_lnum[toidx] - dp->df_lnum[fromidx]) + (from_filler_lines - fromwin->w_topfill) - from_added_lines_above;
-
-      // get the number of added lines below the topline of the current window
-      int from_added_lines_below=0;
-      int k=fromwin->w_topline;
-      int diffaddedr=0;
-      diff_check(fromwin,k,&diffaddedr);
-      while(k < dp->df_lnum[fromidx]+dp->df_count[fromidx] && diffaddedr==-2){
-        from_added_lines_below++, k++;
-	diff_check(fromwin,k,&diffaddedr);
+      virtual_lines_above_from-=fromwin->w_topfill;
+      if(virtual_lines_above_from)virtual_lines_above_from--;
+      // move this many lines below the df_lnum[toidx]
+      while(1){
+        int n = diff_check(curwin, dp->df_lnum[fromidx]+line_new+(dp->df_lnum[toidx] - dp->df_lnum[fromidx]), NULL);
+        line_new_virtual++;
+        if(n>0)line_new_virtual+=n; // filler lines
+        if(line_new_virtual>virtual_lines_above_from)break;
+        line_new++;
       }
-      towin->w_topfill=from_added_lines_below; // number of added lines in the top of from buffer
-
+      // FILE*fp=fopen("debug.txt","a");
+      // fprintf(fp,"--------------------\n");
+      // fprintf(fp,"toidx: %i \n",toidx);
+      // fprintf(fp,"virtual_lines_above_from: %i \n",virtual_lines_above_from);
+      // fprintf(fp,"line_new_virtual: %i \n",line_new_virtual);
+      // fclose(fp);
+      if(fromwin->w_topline>=dp->df_lnum[fromidx] ){
+	towin->w_topline = dp->df_lnum[fromidx]+line_new +(dp->df_lnum[toidx] - dp->df_lnum[fromidx]);
+	towin->w_topfill=line_new_virtual-virtual_lines_above_from-1; // number of added lines in the top of from buffer
+      }else{
+	towin->w_topline = lnum + (dp->df_lnum[toidx] - dp->df_lnum[fromidx]);
+      }
       return;
     }
     if (lnum >= dp->df_lnum[fromidx]) {
