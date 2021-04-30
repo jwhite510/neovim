@@ -2052,21 +2052,20 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
       for(int idc=0;idc<dp->df_valid_buffers_max;idc++){
 	int chbuf=dp->df_valid_buffers[idc];
 	for(i=1;i<=dp->df_count[chbuf];i++){
-	  char_u*thisline=ml_get_buf( curtab->tp_diffbuf[chbuf], dp->df_lnum[chbuf]+i-1, false);
 	  if(idc==0){
-	    int score=dp->df_pathmatrix3[i-1][0][0].df_lev_score + 0;
+	    int score=dp->df_pathmatrix3[i-1][0][0].df_lev_score;
 	    update_path3(
 		dp,score,i,0,0,
 		i-1,0,0,
 		DFPATH3_SKIP0);
 	  }else if(idc==1){
-	    int score=dp->df_pathmatrix3[0][i-1][0].df_lev_score + 0;
+	    int score=dp->df_pathmatrix3[0][i-1][0].df_lev_score;
 	    update_path3(
 		dp,score,0,i,0,
 		0,i-1,0,
 		DFPATH3_SKIP1);
 	  }else if(idc==2){
-	    int score=dp->df_pathmatrix3[0][0][i-1].df_lev_score + 0;
+	    int score=dp->df_pathmatrix3[0][0][i-1].df_lev_score;
 	    update_path3(
 		dp,score,0,0,i,
 		0,0,i-1,
