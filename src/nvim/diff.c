@@ -3425,17 +3425,22 @@ static linenr_T diff_get_corresponding_line_int(buf_T *buf1,win_T* win1, linenr_
       baseline = lnum1 - dp->df_lnum[idx1];
 
       if(diff_linematch(dp)){
-        // add the number of lines skipped (above, in this buffer)
-        int skipped_lines_above=0;
-        // subtract the number of lines added (above, in this buffer)
-        int added_lines_above=0;
+        int virtual_lines_above_from=0;
+	int line_new_virtual=0;
+	int line_new=0;
         for(int k=dp->df_lnum[idx1];k<=lnum1;k++){
-          int diffaddedr=0;
-          int n = diff_check(win1, k, &diffaddedr);
-          if(n>0)skipped_lines_above+=n;
-          if(diffaddedr==-2)added_lines_above++;
+          int n = diff_check(win1, k, NULL);
+          if(n>0)virtual_lines_above_from+=n; // filler lines
+	  virtual_lines_above_from++;
         }
-        return dp->df_lnum[idx2]+baseline+skipped_lines_above-added_lines_above;
+	while(1){
+	  int n = diff_check(curwin, dp->df_lnum[idx2]+line_new, NULL);
+	  line_new_virtual++;
+	  if(n>0)line_new_virtual+=n; // filler lines
+	  if(line_new_virtual>virtual_lines_above_from)break;
+	  line_new++;
+	}
+        return dp->df_lnum[idx2]+line_new-1;
       }
       if (baseline > dp->df_count[idx2]) {
         baseline = dp->df_count[idx2];
