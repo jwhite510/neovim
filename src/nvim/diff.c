@@ -1842,6 +1842,8 @@ int count_matched_chars3(const char_u* s1, const char_u* s2, const char_u* s3){
   matched_chars+=count_matched_chars(s1,s2);
   matched_chars+=count_matched_chars(s1,s3);
   matched_chars+=count_matched_chars(s2,s3);
+  matched_chars*=2;
+  matched_chars/=3; // prioritize equally to a 2 line match
   return matched_chars;
 }
 void update_path3(diff_T* dp, int score,int i, int j, int k, int _i, int _j, int _k, enum path2_choice choice){
