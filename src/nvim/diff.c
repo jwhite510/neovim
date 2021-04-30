@@ -1990,37 +1990,28 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 	  }
 	}
       }
-      int p01=0,p10=0; // i, j
+      int p0=0,p1=0; // i, j
       // initialize to zero
-      dp->df_comparisonlines2[b0][b1][p01][0]=0;
-      dp->df_comparisonlines2[b0][b1][p01][1]=0;
-      dp->df_comparisonlines2[b1][b0][p10][0]=0;
-      dp->df_comparisonlines2[b1][b0][p10][1]=0;
+      initialize_compareline2(dp,b0,p0,b1);
+      initialize_compareline2(dp,b1,p1,b0);
       for(i=0;i<dp->df_pathmatrix2[dp->df_count[b0]][dp->df_count[b1]].path_index;i++){
 	int p=dp->df_pathmatrix2[dp->df_count[b0]][dp->df_count[b1]].df_path2[i];
 	if(p==DFPATH2_SKIP0){
-	  // line from buffer 0 was skipped
-	  dp->df_comparisonlines2[b0][b1][p01][0]=-1; // new line
-	  dp->df_comparisonlines2[b1][b0][p10][1]++; // increase filler
-	  p01++;
-	  dp->df_comparisonlines2[b0][b1][p01][0]=0;
-	  dp->df_comparisonlines2[b0][b1][p01][1]=0;
+	  dp->df_comparisonlines3[b1][p1].filler++;
+	  dp->df_comparisonlines3[b0][p0].newline=true;
+	  p0++;
+	  initialize_compareline2(dp,b0,p0,b1);
 	}else if(p==DFPATH2_COMPARE01){
-	  // the lines were compared
-	  dp->df_comparisonlines2[b0][b1][p01][0]=p10; // compare
-	  dp->df_comparisonlines2[b1][b0][p10][0]=p01; // compare
-	  p10++,p01++;
-	  dp->df_comparisonlines2[b0][b1][p01][0]=0;
-	  dp->df_comparisonlines2[b0][b1][p01][1]=0;
-	  dp->df_comparisonlines2[b1][b0][p10][0]=0;
-	  dp->df_comparisonlines2[b1][b0][p10][1]=0;
+ 	  dp->df_comparisonlines3[b0][p0].compare[b1]=p1;
+	  dp->df_comparisonlines3[b1][p1].compare[b0]=p0;
+	  p1++,p0++;
+	  initialize_compareline2(dp,b0,p0,b1);
+	  initialize_compareline2(dp,b1,p1,b0);
 	}else if(p==DFPATH2_SKIP1){
-	  // line from buffer 1 was skipped
-	  dp->df_comparisonlines2[b1][b0][p10][0]=-1; // new line
-	  dp->df_comparisonlines2[b0][b1][p01][1]++; // increase filler
-	  p10++;
-	  dp->df_comparisonlines2[b1][b0][p10][0]=0;
-	  dp->df_comparisonlines2[b1][b0][p10][1]=0;
+	  dp->df_comparisonlines3[b0][p0].filler++;
+	  dp->df_comparisonlines3[b1][p1].newline=true;
+	  p1++;
+	  initialize_compareline2(dp,b1,p1,b0);
 	}
       }
       // dp->df_pathmatrix2[i][j]
@@ -2206,25 +2197,10 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 	}
       }
       // initialize to zero
-      int p0=0,p1=0,p2=0; // i, j
+      int p0=0,p1=0,p2=0; // i, j, k
       initialize_compareline3(dp,b0,p0,b1,b2);
-      dp->df_comparisonlines3[b0][p0].compare[b1]=-1;
-      dp->df_comparisonlines3[b0][p0].compare[b2]=-1;
-      dp->df_comparisonlines3[b0][p0].newline=false;
-      dp->df_comparisonlines3[b0][p0].filler=0;
-
       initialize_compareline3(dp,b1,p1,b0,b2);
-      dp->df_comparisonlines3[b1][p1].compare[b0]=-1;
-      dp->df_comparisonlines3[b1][p1].compare[b2]=-1;
-      dp->df_comparisonlines3[b1][p1].newline=false;
-      dp->df_comparisonlines3[b1][p1].filler=0;
-
       initialize_compareline3(dp,b2,p2,b0,b1);
-      dp->df_comparisonlines3[b2][p2].compare[b0]=-1;
-      dp->df_comparisonlines3[b2][p2].compare[b1]=-1;
-      dp->df_comparisonlines3[b2][p2].newline=false;
-      dp->df_comparisonlines3[b2][p2].filler=0;
-
       for(i=0;i<dp->df_pathmatrix3[dp->df_count[b0]] [dp->df_count[b1]] [dp->df_count[b2]].path_index;i++){
 	int p=dp->df_pathmatrix3[dp->df_count[b0]] [dp->df_count[b1]] [dp->df_count[b2]].df_path3[i];
 	if(p==DFPATH3_COMPARE01){
@@ -2833,6 +2809,11 @@ int levenshtein(const char_u *s1,const char_u *s2) {
 void initialize_compareline3(diff_T*dp,int thisb, int thisp, int otherb1, int otherb2){
   dp->df_comparisonlines3[thisb][thisp].compare[otherb1]=-1;
   dp->df_comparisonlines3[thisb][thisp].compare[otherb2]=-1;
+  dp->df_comparisonlines3[thisb][thisp].newline=false;
+  dp->df_comparisonlines3[thisb][thisp].filler=0;
+}
+void initialize_compareline2(diff_T*dp,int thisb, int thisp,int otherb){
+  dp->df_comparisonlines3[thisb][thisp].compare[otherb]=-1;
   dp->df_comparisonlines3[thisb][thisp].newline=false;
   dp->df_comparisonlines3[thisb][thisp].filler=0;
 }
