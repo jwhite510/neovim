@@ -886,7 +886,7 @@ struct file_buffer {
  */
 # define DB_COUNT 8     // up to four buffers can be diff'ed
 
-# define LINEMATCH_MAX_LINES 200
+# define LINEMATCH_MAX_LINES 100
 
 /*
  * Each diffblock defines where a block of lines starts in each of the buffers
@@ -918,13 +918,13 @@ enum path3_choice{
 };
 typedef struct diffcomparisonpath2_S diffcomparisonpath2_T;
 struct diffcomparisonpath2_S{
-  enum path2_choice df_path2[2*(LINEMATCH_MAX_LINES+1)]; // TODO this would work for two buffers, raise to the power of the max number of buffers diffed
+  enum path2_choice df_path2[2*(LINEMATCH_MAX_LINES+1)]; // to keep track of this path traveled
   int df_lev_score; // to keep track of the total score of this path
   int path_index;
 };
 typedef struct diffcomparisonpath3_S diffcomparisonpath3_T;
 struct diffcomparisonpath3_S{
-  enum path3_choice df_path3[3*(LINEMATCH_MAX_LINES+1)]; // TODO this would work for two buffers, raise to the power of the max number of buffers diffed
+  enum path3_choice df_path3[3*(LINEMATCH_MAX_LINES+1)]; // to keep track of this path traveled
   int df_lev_score; // to keep track of the total score of this path
   int path_index;
 };
@@ -943,7 +943,7 @@ struct diffblock_S {
   int df_valid_buffers[DB_COUNT];
   int df_valid_buffers_max;
   diffcomparisonpath2_T df_pathmatrix2[LINEMATCH_MAX_LINES][LINEMATCH_MAX_LINES]; // for two buffers
-  diffcomparisonpath3_T df_pathmatrix3[LINEMATCH_MAX_LINES][LINEMATCH_MAX_LINES][LINEMATCH_MAX_LINES]; // for two buffers
+  diffcomparisonpath3_T df_pathmatrix3[LINEMATCH_MAX_LINES][LINEMATCH_MAX_LINES][LINEMATCH_MAX_LINES]; // for three buffers
   df_linecompare3_T df_comparisonlines3[DB_COUNT][LINEMATCH_MAX_LINES];
 
 

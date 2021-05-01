@@ -2441,11 +2441,9 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
       // safety check
       return;
     }
-      towin->w_topline = lnum + (dp->df_lnum[toidx] - dp->df_lnum[fromidx]);
+    towin->w_topline = lnum + (dp->df_lnum[toidx] - dp->df_lnum[fromidx]);
 
     if(diff_linematch(dp)){
-
-      // get the number of added / skipped lines above the current top line (out of view)
       int virtual_lines_above_from=0;
       int line_new_virtual=0;
       int line_new=0;
@@ -2456,7 +2454,6 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
       }
       virtual_lines_above_from-=fromwin->w_topfill;
       if(virtual_lines_above_from)virtual_lines_above_from--;
-      // move this many lines below the df_lnum[toidx]
       while(1){
         int n = diff_check(curwin, dp->df_lnum[fromidx]+line_new+(dp->df_lnum[toidx] - dp->df_lnum[fromidx]), NULL);
         line_new_virtual++;
@@ -2464,15 +2461,9 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
         if(line_new_virtual>virtual_lines_above_from)break;
         line_new++;
       }
-      // FILE*fp=fopen("debug.txt","a");
-      // fprintf(fp,"--------------------\n");
-      // fprintf(fp,"toidx: %i \n",toidx);
-      // fprintf(fp,"virtual_lines_above_from: %i \n",virtual_lines_above_from);
-      // fprintf(fp,"line_new_virtual: %i \n",line_new_virtual);
-      // fclose(fp);
       if(fromwin->w_topline>=dp->df_lnum[fromidx] ){
 	towin->w_topline = dp->df_lnum[fromidx]+line_new +(dp->df_lnum[toidx] - dp->df_lnum[fromidx]);
-	towin->w_topfill=line_new_virtual-virtual_lines_above_from-1; // number of added lines in the top of from buffer
+	towin->w_topfill=line_new_virtual-virtual_lines_above_from-1;
       }else{
 	towin->w_topline = lnum + (dp->df_lnum[toidx] - dp->df_lnum[fromidx]);
       }
@@ -3454,7 +3445,6 @@ static linenr_T diff_get_corresponding_line_int(buf_T *buf1,win_T* win1, linenr_
       if (baseline > dp->df_count[idx2]) {
         baseline = dp->df_count[idx2];
       }
-
 
       return dp->df_lnum[idx2] + baseline;
     }
