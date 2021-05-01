@@ -736,10 +736,6 @@ bool win_cursorline_standout(const win_T *wp)
  */
 static void win_update(win_T *wp, Providers *providers)
 {
-  // reset all the threshholds for diff comparions
-  for(diff_T*dp=curtab->tp_first_diff;dp!=NULL;dp=dp->df_next){
-	  dp->df_redraw=true;
-  }
   buf_T       *buf = wp->w_buffer;
   int type;
   int top_end = 0;              /* Below last row of the top area that needs
