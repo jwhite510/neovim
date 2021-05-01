@@ -1869,6 +1869,7 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
     }
     // assume for now that it is two buffers
     if(dp->df_valid_buffers_max==2){
+      // allocate array to run algorithm
       int b0=dp->df_valid_buffers[0];
       int b1=dp->df_valid_buffers[1];
       // define the boundaries
@@ -1918,26 +1919,32 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 	  }
 	}
       }
+      // allocate array of correct size
       int p0=0,p1=0; // i, j
+      int maxlines=0;
+      if(dp->df_count[b0]>maxlines)maxlines=dp->df_count[b0];
+      if(dp->df_count[b1]>maxlines)maxlines=dp->df_count[b1];
+      dp->df_arr_col_size=maxlines+1;
+      dp->df_comparisonlines3=xmalloc(DB_COUNT*(dp->df_arr_col_size)*sizeof(df_linecompare3_T));
       // initialize to zero
       initialize_compareline2(dp,b0,p0,b1);
       initialize_compareline2(dp,b1,p1,b0);
       for(i=0;i<dp->df_pathmatrix2[dp->df_count[b0]][dp->df_count[b1]].path_index;i++){
 	int p=dp->df_pathmatrix2[dp->df_count[b0]][dp->df_count[b1]].df_path2[i];
 	if(p==DFPATH2_SKIP0){
-	  dp->df_comparisonlines3[b1][p1].filler++;
-	  dp->df_comparisonlines3[b0][p0].newline=true;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b1 + p1].filler++;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b0 + p0].newline=true;
 	  p0++;
 	  initialize_compareline2(dp,b0,p0,b1);
 	}else if(p==DFPATH2_COMPARE01){
- 	  dp->df_comparisonlines3[b0][p0].compare[b1]=p1;
-	  dp->df_comparisonlines3[b1][p1].compare[b0]=p0;
+ 	  dp->df_comparisonlines3[dp->df_arr_col_size*b0 + p0].compare[b1]=p1;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b1 + p1].compare[b0]=p0;
 	  p1++,p0++;
 	  initialize_compareline2(dp,b0,p0,b1);
 	  initialize_compareline2(dp,b1,p1,b0);
 	}else if(p==DFPATH2_SKIP1){
-	  dp->df_comparisonlines3[b0][p0].filler++;
-	  dp->df_comparisonlines3[b1][p1].newline=true;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b0 + p0].filler++;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b1 + p1].newline=true;
 	  p1++;
 	  initialize_compareline2(dp,b1,p1,b0);
 	}
@@ -2132,53 +2139,53 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
       for(i=0;i<dp->df_pathmatrix3[dp->df_count[b0]] [dp->df_count[b1]] [dp->df_count[b2]].path_index;i++){
 	int p=dp->df_pathmatrix3[dp->df_count[b0]] [dp->df_count[b1]] [dp->df_count[b2]].df_path3[i];
 	if(p==DFPATH3_COMPARE01){
- 	  dp->df_comparisonlines3[b0][p0].compare[b1]=p1;
-	  dp->df_comparisonlines3[b1][p1].compare[b0]=p0;
-	  dp->df_comparisonlines3[b2][p2].filler++;
+ 	  dp->df_comparisonlines3[dp->df_arr_col_size*b0 + p0].compare[b1]=p1;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b1 + p1].compare[b0]=p0;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b2 + p2].filler++;
 	  p0++,p1++;
 	  initialize_compareline3(dp,b0,p0,b1,b2);
 	  initialize_compareline3(dp,b1,p1,b0,b2);
 	}else if(p==DFPATH3_COMPARE02){
-	  dp->df_comparisonlines3[b0][p0].compare[b2]=p2;
-	  dp->df_comparisonlines3[b2][p2].compare[b0]=p0;
-	  dp->df_comparisonlines3[b1][p1].filler++;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b0 + p0].compare[b2]=p2;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b2 + p2].compare[b0]=p0;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b1 + p1].filler++;
 	  p0++,p2++;
 	  initialize_compareline3(dp,b0,p0,b1,b2);
 	  initialize_compareline3(dp,b2,p2,b0,b1);
 	}else if(p==DFPATH3_COMPARE12){
-	  dp->df_comparisonlines3[b1][p1].compare[b2]=p2;
-	  dp->df_comparisonlines3[b2][p2].compare[b1]=p1;
-	  dp->df_comparisonlines3[b0][p0].filler++;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b1 + p1].compare[b2]=p2;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b2 + p2].compare[b1]=p1;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b0 + p0].filler++;
 	  p1++,p2++;
 	  initialize_compareline3(dp,b1,p1,b0,b2);
 	  initialize_compareline3(dp,b2,p2,b0,b1);
 	}else if(p==DFPATH3_COMPARE012){
-	  dp->df_comparisonlines3[b0][p0].compare[b1]=p1;
-	  dp->df_comparisonlines3[b0][p0].compare[b2]=p2;
-	  dp->df_comparisonlines3[b1][p1].compare[b0]=p0;
-	  dp->df_comparisonlines3[b1][p1].compare[b2]=p2;
-	  dp->df_comparisonlines3[b2][p2].compare[b0]=p0;
-	  dp->df_comparisonlines3[b2][p2].compare[b1]=p1;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b0 + p0].compare[b1]=p1;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b0 + p0].compare[b2]=p2;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b1 + p1].compare[b0]=p0;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b1 + p1].compare[b2]=p2;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b2 + p2].compare[b0]=p0;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b2 + p2].compare[b1]=p1;
 	  p0++,p1++,p2++;
 	  initialize_compareline3(dp,b0,p0,b1,b2);
 	  initialize_compareline3(dp,b1,p1,b0,b2);
 	  initialize_compareline3(dp,b2,p2,b0,b1);
 	}else if (p==DFPATH3_SKIP0){
-	  dp->df_comparisonlines3[b2][p2].filler++;
-	  dp->df_comparisonlines3[b1][p1].filler++;
-	  dp->df_comparisonlines3[b0][p0].newline=true;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b2 + p2].filler++;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b1 + p1].filler++;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b0 + p0].newline=true;
 	  p0++;
 	  initialize_compareline3(dp,b0,p0,b1,b2);
 	}else if(p==DFPATH3_SKIP1){
-	  dp->df_comparisonlines3[b0][p0].filler++;
-	  dp->df_comparisonlines3[b2][p2].filler++;
-	  dp->df_comparisonlines3[b1][p1].newline=true;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b0 + p0].filler++;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b2 + p2].filler++;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b1 + p1].newline=true;
 	  p1++;
 	  initialize_compareline3(dp,b1,p1,b0,b2);
 	}else if(p==DFPATH3_SKIP2){
-	  dp->df_comparisonlines3[b0][p0].filler++;
-	  dp->df_comparisonlines3[b1][p1].filler++;
-	  dp->df_comparisonlines3[b2][p2].newline=true;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b0 + p0].filler++;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b1 + p1].filler++;
+	  dp->df_comparisonlines3[dp->df_arr_col_size*b2 + p2].newline=true;
 	  p2++;
 	  initialize_compareline3(dp,b2,p2,b0,b1);
 	}
@@ -2191,12 +2198,12 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
   if(diff_linematch(dp)){
      // is the line added?
     if(off<dp->df_count[idx]){
-      if(diffaddedr!=NULL&&dp->df_comparisonlines3[idx][lnum-dp->df_lnum[idx]].newline)
+      if(diffaddedr!=NULL&&dp->df_comparisonlines3[dp->df_arr_col_size*idx + lnum-dp->df_lnum[idx]].newline)
 	*diffaddedr=-2; // line was added
       else if(diffaddedr!=NULL)*diffaddedr=-1; // line was compared
-      return dp->df_comparisonlines3[idx][lnum-dp->df_lnum[idx]].filler;
+      return dp->df_comparisonlines3[dp->df_arr_col_size*idx + lnum-dp->df_lnum[idx]].filler;
     }else{
-      return dp->df_comparisonlines3[idx][lnum-dp->df_lnum[idx]].filler;
+      return dp->df_comparisonlines3[dp->df_arr_col_size*idx + lnum-dp->df_lnum[idx]].filler;
     }
   }
   if (lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
@@ -2721,15 +2728,15 @@ int levenshtein(const char_u *s1,const char_u *s2) {
     return(matrix[s2len][s1len]);
 }
 void initialize_compareline3(diff_T*dp,int thisb, int thisp, int otherb1, int otherb2){
-  dp->df_comparisonlines3[thisb][thisp].compare[otherb1]=-1;
-  dp->df_comparisonlines3[thisb][thisp].compare[otherb2]=-1;
-  dp->df_comparisonlines3[thisb][thisp].newline=false;
-  dp->df_comparisonlines3[thisb][thisp].filler=0;
+  dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].compare[otherb1]=-1;
+  dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].compare[otherb2]=-1;
+  dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].newline=false;
+  dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].filler=0;
 }
 void initialize_compareline2(diff_T*dp,int thisb, int thisp,int otherb){
-  dp->df_comparisonlines3[thisb][thisp].compare[otherb]=-1;
-  dp->df_comparisonlines3[thisb][thisp].newline=false;
-  dp->df_comparisonlines3[thisb][thisp].filler=0;
+  dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].compare[otherb]=-1;
+  dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].newline=false;
+  dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].filler=0;
 }
 int getlength(const char_u* str){
   int strlength=0;
@@ -2786,7 +2793,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       // Skip lines that are not in the other change (filler lines).
       int comparl;
       if(diff_linematch(dp)){
-	comparl=dp->df_comparisonlines3[idx][ lnum - dp->df_lnum[idx]  ].compare[i];
+	comparl=dp->df_comparisonlines3[dp->df_arr_col_size*idx +  lnum - dp->df_lnum[idx]  ].compare[i];
 	if(comparl!=-1)comparl+=dp->df_lnum[i];
 	if(comparl==-1){
 	  continue;
