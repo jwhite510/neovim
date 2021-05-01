@@ -922,9 +922,12 @@ struct diffcomparisonpath2_S{
   int df_lev_score; // to keep track of the total score of this path
   int path_index;
 };
+
+
 typedef struct diffcomparisonpath3_S diffcomparisonpath3_T;
 struct diffcomparisonpath3_S{
-  enum path3_choice df_path3[3*(LINEMATCH_MAX_LINES+1)]; // to keep track of this path traveled
+  // enum path3_choice df_path3[3*(LINEMATCH_MAX_LINES+1)]; // to keep track of this path traveled
+  enum path3_choice* df_path3; // to keep track of this path traveled
   int df_lev_score; // to keep track of the total score of this path
   int path_index;
 };
@@ -943,7 +946,7 @@ struct diffblock_S {
   int df_valid_buffers[DB_COUNT];
   int df_valid_buffers_max;
   diffcomparisonpath2_T df_pathmatrix2[LINEMATCH_MAX_LINES][LINEMATCH_MAX_LINES]; // for two buffers
-  diffcomparisonpath3_T df_pathmatrix3[LINEMATCH_MAX_LINES][LINEMATCH_MAX_LINES][LINEMATCH_MAX_LINES]; // for three buffers
+  // diffcomparisonpath3_T df_pathmatrix3[LINEMATCH_MAX_LINES][LINEMATCH_MAX_LINES][LINEMATCH_MAX_LINES]; // for three buffers
   // allocate this only when needed
   // df_linecompare3_T* df_comparisonlines3[DB_COUNT][LINEMATCH_MAX_LINES];
   int df_arr_col_size; // used for referencing 2d array
