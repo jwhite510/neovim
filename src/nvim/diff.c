@@ -2259,7 +2259,7 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
       maxcount = dp->df_count[i];
     }
   }
-  return (diff_linematch(dp))?0:maxcount - dp->df_count[idx];
+  return maxcount - dp->df_count[idx];
 }
 
 /// Compare two entries in diff "dp" and return true if they are equal.
