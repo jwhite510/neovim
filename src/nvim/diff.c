@@ -454,6 +454,8 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
         }
       }
       dprev->df_next = dp->df_next;
+      if(dp->df_comparisonlines3)
+	xfree(dp->df_comparisonlines3);
       xfree(dp);
       dp = dprev->df_next;
     } else {
@@ -477,6 +479,8 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
 
     if (i == DB_COUNT) {
       diff_T *dnext = dp->df_next;
+      if(dp->df_comparisonlines3)
+	xfree(dp->df_comparisonlines3);
       xfree(dp);
       dp = dnext;
 
@@ -1684,6 +1688,8 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
 
       while (dn != dp->df_next) {
         dpl = dn->df_next;
+	if(dn->df_comparisonlines3)
+	  xfree(dn->df_comparisonlines3);
         xfree(dn);
         dn = dpl;
       }
@@ -1754,6 +1760,8 @@ void diff_clear(tabpage_T *tp)
   diff_T *next_p;
   for (p = tp->tp_first_diff; p != NULL; p = next_p) {
     next_p = p->df_next;
+    if(p->df_comparisonlines3)
+      xfree(p->df_comparisonlines3);
     xfree(p);
   }
   tp->tp_first_diff = NULL;
@@ -2133,6 +2141,12 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
       }
       // initialize to zero
       int p0=0,p1=0,p2=0; // i, j, k
+      int maxlines=0;
+      if(dp->df_count[b0]>maxlines)maxlines=dp->df_count[b0];
+      if(dp->df_count[b1]>maxlines)maxlines=dp->df_count[b1];
+      if(dp->df_count[b2]>maxlines)maxlines=dp->df_count[b2];
+      dp->df_arr_col_size=maxlines+1;
+      dp->df_comparisonlines3=xmalloc(DB_COUNT*(dp->df_arr_col_size)*sizeof(df_linecompare3_T));
       initialize_compareline3(dp,b0,p0,b1,b2);
       initialize_compareline3(dp,b1,p1,b0,b2);
       initialize_compareline3(dp,b2,p2,b0,b1);
@@ -3248,6 +3262,8 @@ void ex_diffgetput(exarg_T *eap)
       if (dfree != NULL) {
         // Diff is deleted, update folds in other windows.
         diff_fold_update(dfree, idx_to);
+	if(dfree->df_comparisonlines3)
+	  xfree(dfree->df_comparisonlines3);
         xfree(dfree);
       } else {
         // mark_adjust() may have changed the count in a wrong way
