@@ -2749,9 +2749,11 @@ int levenshtein(const char_u *s1,const char_u *s2) {
     unsigned int x, y, s1len, s2len;
     s1len = strlen((char*)s1);
     s2len = strlen((char*)s2);
-    if(s2len>1000 || s2len>1000)return INT_MAX;
-    // unsigned int matrix[s2len+1][s1len+1];
-    unsigned int matrix[1000][1000];
+    unsigned int** matrix=xmalloc(sizeof(int*)*(s2len+1));
+    for(uint i=0;i<(s2len+1);i++){
+	matrix[i]=xmalloc(sizeof(int)*(s1len+1));
+    }
+
     matrix[0][0] = 0;
     for (x = 1; x <= s2len; x++)
         matrix[x][0] = matrix[x-1][0] + 1;
@@ -2761,7 +2763,12 @@ int levenshtein(const char_u *s1,const char_u *s2) {
         for (y = 1; y <= s1len; y++)
             matrix[x][y] = min(matrix[x-1][y] + 1, matrix[x][y-1] + 1, matrix[x-1][y-1] + (s1[y-1] == s2[x-1] ? 0 : 1));
 
-    return(matrix[s2len][s1len]);
+    int rvalue=matrix[s2len][s1len];
+    for(uint i=0;i<(s2len+1);i++){
+	xfree(matrix[i]);
+    }
+    xfree(matrix);
+    return(rvalue);
 }
 void initialize_compareline3(diff_T*dp,int thisb, int thisp, int otherb1, int otherb2){
   dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].compare[otherb1]=-1;
