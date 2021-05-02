@@ -1782,7 +1782,7 @@ int count_matched_chars3(const char_u* s1, const char_u* s2, const char_u* s3){
   matched_chars/=3; // prioritize equally to a 2 line match
   return matched_chars;
 }
-void update_path3(int b1,int b2,diff_T* dp, diffcomparisonpath3_T*** df_pathmatrix3, int score,int i, int j, int k, int _i, int _j, int _k, enum path2_choice choice){
+void update_path3(diff_T* dp, diffcomparisonpath3_T*** df_pathmatrix3, int score,int i, int j, int k, int _i, int _j, int _k, enum path2_choice choice){
   df_pathmatrix3[i][j][k].df_lev_score=score;
   for(int __k=0;__k<=df_pathmatrix3[_i][_j][_k].path_index;__k++)
     df_pathmatrix3[i][j][k].df_path3[__k]=df_pathmatrix3[_i][_j][_k].df_path3[__k];
@@ -1999,21 +1999,18 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 	  if(idc==0){
 	    int score=df_pathmatrix3[i-1][0][0].df_lev_score;
 	    update_path3(
-		b1,b2,
 		dp,df_pathmatrix3,score,i,0,0,
 		i-1,0,0,
 		DFPATH3_SKIP0);
 	  }else if(idc==1){
 	    int score=df_pathmatrix3[0][i-1][0].df_lev_score;
 	    update_path3(
-		b1,b2,
 		dp,df_pathmatrix3,score,0,i,0,
 		0,i-1,0,
 		DFPATH3_SKIP1);
 	  }else if(idc==2){
 	    int score=df_pathmatrix3[0][0][i-1].df_lev_score;
 	    update_path3(
-		b1,b2,
 		dp,df_pathmatrix3,score,0,0,i,
 		0,0,i-1,
 		DFPATH3_SKIP2);
@@ -2030,19 +2027,19 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 	      ml_get_buf(curtab->tp_diffbuf[b1],dp->df_lnum[b1]+j-1,false)
 	      );
 	  if(score5>df_pathmatrix3[i][j][k].df_lev_score){
-	    update_path3(b1,b2,dp,df_pathmatrix3,score5,i,j,k,
+	    update_path3(dp,df_pathmatrix3,score5,i,j,k,
 		i-1,j-1,k, // from
 		DFPATH3_COMPARE01); // choice
 	  }
 	  int score1=df_pathmatrix3[i-1][j][k].df_lev_score;
 	  if(score1>df_pathmatrix3[i][j][k].df_lev_score){
-	    update_path3(b1,b2,dp,df_pathmatrix3,score1,i,j,k,
+	    update_path3(dp,df_pathmatrix3,score1,i,j,k,
 		i-1,j,k, // from
 		DFPATH3_SKIP0); // choice
 	  }
 	  int score2=df_pathmatrix3[i][j-1][k].df_lev_score;
 	  if(score2>df_pathmatrix3[i][j][k].df_lev_score){
-	    update_path3(b1,b2,dp,df_pathmatrix3,score2,i,j,k,
+	    update_path3(dp,df_pathmatrix3,score2,i,j,k,
 		i,j-1,k, // from
 		DFPATH3_SKIP1); // choice
 	  }
@@ -2057,19 +2054,19 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 	      ml_get_buf(curtab->tp_diffbuf[b2],dp->df_lnum[b2]+k-1,false)
 	      );
 	  if(score7>df_pathmatrix3[i][j][k].df_lev_score){
-	    update_path3(b1,b2,dp,df_pathmatrix3,score7,i,j,k,
+	    update_path3(dp,df_pathmatrix3,score7,i,j,k,
 		i,j-1,k-1, // from
 		DFPATH3_COMPARE12); // choice
 	  }
 	  int score2=df_pathmatrix3[i][j-1][k].df_lev_score;
 	  if(score2>df_pathmatrix3[i][j][k].df_lev_score){
-	    update_path3(b1,b2,dp,df_pathmatrix3,score2,i,j,k,
+	    update_path3(dp,df_pathmatrix3,score2,i,j,k,
 		i,j-1,k, // from
 		DFPATH3_SKIP1); // choice
 	  }
 	  int score3=df_pathmatrix3[i][j][k-1].df_lev_score;
 	  if(score3>df_pathmatrix3[i][j][k].df_lev_score){
-	    update_path3(b1,b2,dp,df_pathmatrix3,score3,i,j,k,
+	    update_path3(dp,df_pathmatrix3,score3,i,j,k,
 		i,j,k-1, // from
 		DFPATH3_SKIP2); // choice
 	  }
@@ -2084,19 +2081,19 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 	      ml_get_buf(curtab->tp_diffbuf[b2],dp->df_lnum[b2]+k-1,false)
 	      );
 	  if(score6>df_pathmatrix3[i][j][k].df_lev_score){
-	    update_path3(b1,b2,dp,df_pathmatrix3,score6,i,j,k,
+	    update_path3(dp,df_pathmatrix3,score6,i,j,k,
 		i-1,j,k-1, // from
 		DFPATH3_COMPARE02); // choice
 	  }
 	  int score1=df_pathmatrix3[i-1][j][k].df_lev_score;
 	  if(score1>df_pathmatrix3[i][j][k].df_lev_score){
-	    update_path3(b1,b2,dp,df_pathmatrix3,score1,i,j,k,
+	    update_path3(dp,df_pathmatrix3,score1,i,j,k,
 		i-1,j,k, // from
 		DFPATH3_SKIP0); // choice
 	  }
 	  int score3=df_pathmatrix3[i][j][k-1].df_lev_score;
 	  if(score3>df_pathmatrix3[i][j][k].df_lev_score){
-	    update_path3(b1,b2,dp,df_pathmatrix3,score3,i,j,k,
+	    update_path3(dp,df_pathmatrix3,score3,i,j,k,
 		i,j,k-1, // from
 		DFPATH3_SKIP2); // choice
 	  }
@@ -2115,7 +2112,7 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 		ml_get_buf(curtab->tp_diffbuf[b2],dp->df_lnum[b2]+k-1,false)
 		);
 	    if(score4>df_pathmatrix3[i][j][k].df_lev_score){
-	      update_path3(b1,b2,dp,df_pathmatrix3,score4,i,j,k,
+	      update_path3(dp,df_pathmatrix3,score4,i,j,k,
 		  i-1,j-1,k-1, // from
 		  DFPATH3_COMPARE012); // choice
 	    }
@@ -2125,7 +2122,7 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 		ml_get_buf(curtab->tp_diffbuf[b1],dp->df_lnum[b1]+j-1,false)
 		);
 	    if(score5>df_pathmatrix3[i][j][k].df_lev_score){
-	      update_path3(b1,b2,dp,df_pathmatrix3,score5,i,j,k,
+	      update_path3(dp,df_pathmatrix3,score5,i,j,k,
 		  i-1,j-1,k, // from
 		  DFPATH3_COMPARE01); // choice
 	    }
@@ -2134,7 +2131,7 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 		ml_get_buf(curtab->tp_diffbuf[b2],dp->df_lnum[b2]+k-1,false)
 		);
 	    if(score6>df_pathmatrix3[i][j][k].df_lev_score){
-	      update_path3(b1,b2,dp,df_pathmatrix3,score6,i,j,k,
+	      update_path3(dp,df_pathmatrix3,score6,i,j,k,
 		  i-1,j,k-1, // from
 		  DFPATH3_COMPARE02); // choice
 	    }
@@ -2143,25 +2140,25 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 		ml_get_buf(curtab->tp_diffbuf[b2],dp->df_lnum[b2]+k-1,false)
 		);
 	    if(score7>df_pathmatrix3[i][j][k].df_lev_score){
-	      update_path3(b1,b2,dp,df_pathmatrix3,score7,i,j,k,
+	      update_path3(dp,df_pathmatrix3,score7,i,j,k,
 		  i,j-1,k-1, // from
 		  DFPATH3_COMPARE12); // choice
 	    }
 	    int score1=df_pathmatrix3[i-1][j][k].df_lev_score;
 	    if(score1>df_pathmatrix3[i][j][k].df_lev_score){
-	      update_path3(b1,b2,dp,df_pathmatrix3,score1,i,j,k,
+	      update_path3(dp,df_pathmatrix3,score1,i,j,k,
 		  i-1,j,k, // from
 		  DFPATH3_SKIP0); // choice
 	    }
 	    int score2=df_pathmatrix3[i][j-1][k].df_lev_score;
 	    if(score2>df_pathmatrix3[i][j][k].df_lev_score){
-	      update_path3(b1,b2,dp,df_pathmatrix3,score2,i,j,k,
+	      update_path3(dp,df_pathmatrix3,score2,i,j,k,
 		  i,j-1,k, // from
 		  DFPATH3_SKIP1); // choice
 	    }
 	    int score3=df_pathmatrix3[i][j][k-1].df_lev_score;
 	    if(score3>df_pathmatrix3[i][j][k].df_lev_score){
-	      update_path3(b1,b2,dp,df_pathmatrix3,score3,i,j,k,
+	      update_path3(dp,df_pathmatrix3,score3,i,j,k,
 		  i,j,k-1, // from
 		  DFPATH3_SKIP2); // choice
 	    }
