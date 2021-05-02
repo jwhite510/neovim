@@ -1790,13 +1790,13 @@ void update_path3(diff_T* dp, diffcomparisonpath3_T*** df_pathmatrix3, int score
   df_pathmatrix3[i][j][k].df_path3[df_pathmatrix3[i][j][k].path_index]=choice; // this choice
   df_pathmatrix3[i][j][k].path_index++; 
 }
-void update_path2(int b1, diff_T* dp, diffcomparisonpath2_T* df_pathmatrix2, int score,int i, int j, int _i, int _j, enum path2_choice choice){
-  df_pathmatrix2[(dp->df_count[b1]+1)*(i) + (j)].df_lev_score=score;
-  for(int k=0;k<=df_pathmatrix2[(dp->df_count[b1]+1)*(_i) + (_j)].path_index;k++)
-    df_pathmatrix2[(dp->df_count[b1]+1)*(i) + (j)].df_path2[k]=df_pathmatrix2[(dp->df_count[b1]+1)*(_i) + (_j)].df_path2[k];
-  df_pathmatrix2[(dp->df_count[b1]+1)*(i) + (j)].path_index=df_pathmatrix2[(dp->df_count[b1]+1)*(_i) + (_j)].path_index;
-  df_pathmatrix2[(dp->df_count[b1]+1)*(i) + (j)].df_path2[df_pathmatrix2[(dp->df_count[b1]+1)*(i) + (j)].path_index]=choice; // this choice
-  df_pathmatrix2[(dp->df_count[b1]+1)*(i) + (j)].path_index++; 
+void update_path2(diff_T* dp, diffcomparisonpath2_T** df_pathmatrix2, int score,int i, int j, int _i, int _j, enum path2_choice choice){
+  df_pathmatrix2[i][j].df_lev_score=score;
+  for(int k=0;k<=df_pathmatrix2[_i][_j].path_index;k++)
+    df_pathmatrix2[i][j].df_path2[k]=df_pathmatrix2[_i][_j].df_path2[k];
+  df_pathmatrix2[i][j].path_index=df_pathmatrix2[_i][_j].path_index;
+  df_pathmatrix2[i][j].df_path2[df_pathmatrix2[i][j].path_index]=choice; // this choice
+  df_pathmatrix2[i][j].path_index++; 
 }
 
 /// Check diff status for line "lnum" in buffer "buf":
@@ -1881,25 +1881,26 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
       int b0=dp->df_valid_buffers[0];
       int b1=dp->df_valid_buffers[1];
       // define the boundaries
-      diffcomparisonpath2_T*df_pathmatrix2=xmalloc(
-	  (dp->df_count[b0]+1)* (dp->df_count[b1]+1)
-	  *sizeof(diffcomparisonpath2_T));
-      for(i=0;i<(dp->df_count[b0]+1)* (dp->df_count[b1]+1);i++){
-	df_pathmatrix2[i].df_path2=xmalloc((dp->df_count[b0]+dp->df_count[b1])*sizeof(enum path2_choice));
+      diffcomparisonpath2_T**df_pathmatrix2=xmalloc((dp->df_count[b0]+1)*sizeof(diffcomparisonpath2_T*));
+      for(i=0;i<(dp->df_count[b0]+1);i++){
+	df_pathmatrix2[i]=xmalloc((dp->df_count[b1]+1)*sizeof(diffcomparisonpath2_T));
+	for(int j=0;j<(dp->df_count[b1]+1);j++){
+	  df_pathmatrix2[i][j].df_path2=xmalloc((dp->df_count[b0]+dp->df_count[b1])*sizeof(enum path2_choice));
+	}
       }
-      df_pathmatrix2[(dp->df_count[b1]+1)*(0) + (0)].df_lev_score=0;
-      df_pathmatrix2[(dp->df_count[b1]+1)*(0) + (0)].path_index=0;
+      df_pathmatrix2[0][0].df_lev_score=0;
+      df_pathmatrix2[0][0].path_index=0;
       for(int idc=0;idc<dp->df_valid_buffers_max;idc++){
 	int chbuf=dp->df_valid_buffers[idc];
 	for(i=1;i<=dp->df_count[chbuf];i++){
 	  if(idc==0){
-	    int score=df_pathmatrix2[(dp->df_count[b1]+1)*(i-1) + (0)].df_lev_score;
-	    update_path2(b1,dp,df_pathmatrix2,score,i,0, // to
+	    int score=df_pathmatrix2[i-1][0].df_lev_score;
+	    update_path2(dp,df_pathmatrix2,score,i,0, // to
 		i-1,0, // from 
 		DFPATH2_SKIP0); // choice
 	  }else if(idc==1){
-	    int score=df_pathmatrix2[(dp->df_count[b1]+1)*(0) + (i-1)].df_lev_score;
-	    update_path2(b1,dp,df_pathmatrix2,score,0,i, // to
+	    int score=df_pathmatrix2[0][i-1].df_lev_score;
+	    update_path2(dp,df_pathmatrix2,score,0,i, // to
 		0,i-1, // from 
 		DFPATH2_SKIP1); // choice
 	  }
@@ -1907,27 +1908,27 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
       }
       for(i=1;i<=dp->df_count[b0];i++){
 	for(int j=1;j<=dp->df_count[b1];j++){
-	  df_pathmatrix2[(dp->df_count[b1]+1)*(i) + (j)].df_lev_score=-1;
+	  df_pathmatrix2[i][j].df_lev_score=-1;
 
 	  // compare this line
-	  int score2=df_pathmatrix2[(dp->df_count[b1]+1)*(i-1) + (j-1)].df_lev_score+count_matched_chars(
+	  int score2=df_pathmatrix2[i-1][j-1].df_lev_score+count_matched_chars(
 	    ml_get_buf(curtab->tp_diffbuf[b0],dp->df_lnum[b0]+i-1,false),
 	    ml_get_buf(curtab->tp_diffbuf[b1],dp->df_lnum[b1]+j-1,false)
 	      );
-	  if(score2>df_pathmatrix2[(dp->df_count[b1]+1)*(i) + (j)].df_lev_score){
-	    update_path2(b1,dp,df_pathmatrix2,score2,i,j,
+	  if(score2>df_pathmatrix2[i][j].df_lev_score){
+	    update_path2(dp,df_pathmatrix2,score2,i,j,
 		i-1,j-1, // from
 		DFPATH2_COMPARE01); // choice
 	  }
-	  int score1=df_pathmatrix2[(dp->df_count[b1]+1)*(i-1) + (j)].df_lev_score;
-	  if(score1>df_pathmatrix2[(dp->df_count[b1]+1)*(i) + (j)].df_lev_score){
-	    update_path2(b1,dp,df_pathmatrix2,score1,i,j,
+	  int score1=df_pathmatrix2[i-1][j].df_lev_score;
+	  if(score1>df_pathmatrix2[i][j].df_lev_score){
+	    update_path2(dp,df_pathmatrix2,score1,i,j,
 		i-1,j, // from
 		DFPATH2_SKIP0); // choice
 	  }
-	  int score3=df_pathmatrix2[(dp->df_count[b1]+1)*(i) + (j-1)].df_lev_score;
-	  if(score3>df_pathmatrix2[(dp->df_count[b1]+1)*(i) + (j)].df_lev_score){
-	    update_path2(b1,dp,df_pathmatrix2,score3,i,j,
+	  int score3=df_pathmatrix2[i][j-1].df_lev_score;
+	  if(score3>df_pathmatrix2[i][j].df_lev_score){
+	    update_path2(dp,df_pathmatrix2,score3,i,j,
 		i,j-1, // from
 		DFPATH2_SKIP1); // choice
 	  }
@@ -1943,8 +1944,8 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
       // initialize to zero
       initialize_compareline2(dp,b0,p0,b1);
       initialize_compareline2(dp,b1,p1,b0);
-      for(i=0;i<df_pathmatrix2[(dp->df_count[b1]+1)*(dp->df_count[b0]) + (dp->df_count[b1])].path_index;i++){
-	int p=df_pathmatrix2[(dp->df_count[b1]+1)*(dp->df_count[b0]) + (dp->df_count[b1])].df_path2[i];
+      for(i=0;i<df_pathmatrix2[dp->df_count[b0]][dp->df_count[b1]].path_index;i++){
+	int p=df_pathmatrix2[dp->df_count[b0]][dp->df_count[b1]].df_path2[i];
 	if(p==DFPATH2_SKIP0){
 	  dp->df_comparisonlines3[dp->df_arr_col_size*b1 + p1].filler++;
 	  dp->df_comparisonlines3[dp->df_arr_col_size*b0 + p0].newline=true;
@@ -1963,8 +1964,11 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
 	  initialize_compareline2(dp,b1,p1,b0);
 	}
       }
-      for(i=0;i<(dp->df_count[b0]+1)* (dp->df_count[b1]+1);i++){
-	xfree(df_pathmatrix2[i].df_path2);
+      for(i=0;i<(dp->df_count[b0]+1);i++){
+	for(int j=0;j<(dp->df_count[b1]+1);j++){
+	  xfree(df_pathmatrix2[i][j].df_path2);
+	}
+	xfree(df_pathmatrix2[i]);
       }
       xfree(df_pathmatrix2);
       // df_pathmatrix2[i][j]
