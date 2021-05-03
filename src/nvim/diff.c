@@ -861,26 +861,6 @@ int diff_internal(void)
   return (diff_flags & DIFF_INTERNAL) != 0 && *p_dex == NUL;
 }
 
-// return true of can use line match diff mode
-bool diff_linematch(diff_T*dp)
-{
-  // are there more than two diff buffers?
-  int diffbuffers=0;
-  int maxlines=0;
-  for(int i=0;i<DB_COUNT;++i){
-    if(curtab->tp_diffbuf[i]!=NULL){
-      diffbuffers++;
-      if(dp->df_count[i]>maxlines)
-	maxlines=dp->df_count[i];
-    }
-  }
-  if(maxlines > LINEMATCH_MAX_LINES)return 0;
-  if(diffbuffers<=3){ // can diff up to 3 buffers
-    return (diff_flags & DIFF_LINEMATCH);
-  }
-  return 0;
-}
-
 ///
 /// Return true if the internal diff failed for one of the diff buffers.
 ///
@@ -1767,6 +1747,26 @@ void diff_clear(tabpage_T *tp)
   tp->tp_first_diff = NULL;
 }
 
+// return true of can use line match diff mode
+bool diff_linematch(diff_T*dp)
+{
+  // are there more than two diff buffers?
+  int diffbuffers=0;
+  int maxlines=0;
+  for(int i=0;i<DB_COUNT;++i){
+    if(curtab->tp_diffbuf[i]!=NULL){
+      diffbuffers++;
+      if(dp->df_count[i]>maxlines)
+	maxlines=dp->df_count[i];
+    }
+  }
+  if(maxlines > LINEMATCH_MAX_LINES)return 0;
+  if(diffbuffers<=3){ // can diff up to 3 buffers
+    return (diff_flags & DIFF_LINEMATCH);
+  }
+  return 0;
+}
+
 // count the number of virtual lines between startline and endline
 int count_virtual_lines(win_T* win, linenr_T start, linenr_T endline){
   int virtual_lines=0;
@@ -1825,6 +1825,75 @@ void update_path2(diff_T* dp, diffcomparisonpath2_T** df_pathmatrix2, int score,
   df_pathmatrix2[i][j].df_path2[df_pathmatrix2[i][j].path_index]=choice; // this choice
   df_pathmatrix2[i][j].path_index++; 
 }
+int min(int a, int b, int c)
+{
+	if(a <= b && a <= c)
+	{
+		return a;
+	}
+	else if(b <= a && b <= c)
+	{
+		return b;
+	}
+	else if(c <= a && c <= b)
+	{
+		return c;
+	}
+	return 0;
+}
+
+int levenshtein3(char_u*s1,char_u*s2,char_u*s3){
+  int distance=0;
+  int d1=levenshtein(s1,s2);
+  if(d1>distance)distance=d1;
+  int d2=levenshtein(s2,s3);
+  if(d2>distance)distance=d2;
+  int d3=levenshtein(s1,s3);
+  if(d3>distance)distance=d3;
+  return distance;
+}
+int levenshtein(const char_u *s1,const char_u *s2) {
+    unsigned int x, y, s1len, s2len;
+    s1len = strlen((char*)s1);
+    s2len = strlen((char*)s2);
+    unsigned int** matrix=xmalloc(sizeof(int*)*(s2len+1));
+    for(uint i=0;i<(s2len+1);i++){
+	matrix[i]=xmalloc(sizeof(int)*(s1len+1));
+    }
+
+    matrix[0][0] = 0;
+    for (x = 1; x <= s2len; x++)
+        matrix[x][0] = matrix[x-1][0] + 1;
+    for (y = 1; y <= s1len; y++)
+        matrix[0][y] = matrix[0][y-1] + 1;
+    for (x = 1; x <= s2len; x++)
+        for (y = 1; y <= s1len; y++)
+            matrix[x][y] = min(matrix[x-1][y] + 1, matrix[x][y-1] + 1, matrix[x-1][y-1] + (s1[y-1] == s2[x-1] ? 0 : 1));
+
+    int rvalue=matrix[s2len][s1len];
+    for(uint i=0;i<(s2len+1);i++){
+	xfree(matrix[i]);
+    }
+    xfree(matrix);
+    return(rvalue);
+}
+void initialize_compareline3(diff_T*dp,int thisb, int thisp, int otherb1, int otherb2){
+  dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].compare[otherb1]=-1;
+  dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].compare[otherb2]=-1;
+  dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].newline=false;
+  dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].filler=0;
+}
+void initialize_compareline2(diff_T*dp,int thisb, int thisp,int otherb){
+  dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].compare[otherb]=-1;
+  dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].newline=false;
+  dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].filler=0;
+}
+int getlength(const char_u* str){
+  int strlength=0;
+  while(str[strlength]!='\0')strlength++;
+  return strlength;
+}
+
 
 /// Check diff status for line "lnum" in buffer "buf":
 ///
@@ -2754,75 +2823,6 @@ bool diffopt_closeoff(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return (diff_flags & DIFF_CLOSE_OFF) != 0;
-}
-
-int min(int a, int b, int c)
-{
-	if(a <= b && a <= c)
-	{
-		return a;
-	}
-	else if(b <= a && b <= c)
-	{
-		return b;
-	}
-	else if(c <= a && c <= b)
-	{
-		return c;
-	}
-	return 0;
-}
-
-int levenshtein3(char_u*s1,char_u*s2,char_u*s3){
-  int distance=0;
-  int d1=levenshtein(s1,s2);
-  if(d1>distance)distance=d1;
-  int d2=levenshtein(s2,s3);
-  if(d2>distance)distance=d2;
-  int d3=levenshtein(s1,s3);
-  if(d3>distance)distance=d3;
-  return distance;
-}
-int levenshtein(const char_u *s1,const char_u *s2) {
-    unsigned int x, y, s1len, s2len;
-    s1len = strlen((char*)s1);
-    s2len = strlen((char*)s2);
-    unsigned int** matrix=xmalloc(sizeof(int*)*(s2len+1));
-    for(uint i=0;i<(s2len+1);i++){
-	matrix[i]=xmalloc(sizeof(int)*(s1len+1));
-    }
-
-    matrix[0][0] = 0;
-    for (x = 1; x <= s2len; x++)
-        matrix[x][0] = matrix[x-1][0] + 1;
-    for (y = 1; y <= s1len; y++)
-        matrix[0][y] = matrix[0][y-1] + 1;
-    for (x = 1; x <= s2len; x++)
-        for (y = 1; y <= s1len; y++)
-            matrix[x][y] = min(matrix[x-1][y] + 1, matrix[x][y-1] + 1, matrix[x-1][y-1] + (s1[y-1] == s2[x-1] ? 0 : 1));
-
-    int rvalue=matrix[s2len][s1len];
-    for(uint i=0;i<(s2len+1);i++){
-	xfree(matrix[i]);
-    }
-    xfree(matrix);
-    return(rvalue);
-}
-void initialize_compareline3(diff_T*dp,int thisb, int thisp, int otherb1, int otherb2){
-  dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].compare[otherb1]=-1;
-  dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].compare[otherb2]=-1;
-  dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].newline=false;
-  dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].filler=0;
-}
-void initialize_compareline2(diff_T*dp,int thisb, int thisp,int otherb){
-  dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].compare[otherb]=-1;
-  dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].newline=false;
-  dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].filler=0;
-}
-int getlength(const char_u* str){
-  int strlength=0;
-  while(str[strlength]!='\0')strlength++;
-  return strlength;
 }
 
 /// Find the difference within a changed line.
