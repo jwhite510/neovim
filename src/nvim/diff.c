@@ -2320,9 +2320,13 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
       if(diffaddedr!=NULL&&dp->df_comparisonlines3[dp->df_arr_col_size*idx + lnum-dp->df_lnum[idx]].newline)
 	*diffaddedr=-2; // line was added
       else if(diffaddedr!=NULL)*diffaddedr=-1; // line was compared
-      return dp->df_comparisonlines3[dp->df_arr_col_size*idx + lnum-dp->df_lnum[idx]].filler;
+      return (
+	  diff_flags&DIFF_FILLER?
+	  dp->df_comparisonlines3[dp->df_arr_col_size*idx + lnum-dp->df_lnum[idx]].filler:0);
     }else{
-      return dp->df_comparisonlines3[dp->df_arr_col_size*idx + lnum-dp->df_lnum[idx]].filler;
+      return (
+	  diff_flags&DIFF_FILLER?
+	  dp->df_comparisonlines3[dp->df_arr_col_size*idx + lnum-dp->df_lnum[idx]].filler:0);
     }
   }
   if (lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
@@ -2569,7 +2573,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
     }
     towin->w_topline = lnum + (dp->df_lnum[toidx] - dp->df_lnum[fromidx]);
 
-    if(diff_linematch()){
+    if(diff_linematch()&&(diff_flags&DIFF_FILLER)){
 
       // count the number of virtual lines from top of diff block to top line
       int virtual_lines_above_from=count_virtual_lines(fromwin,
@@ -3488,7 +3492,7 @@ static linenr_T diff_get_corresponding_line_int(buf_T *buf1,win_T* win1, linenr_
       // Inside the diffblock
       baseline = lnum1 - dp->df_lnum[idx1];
 
-      if(diff_linematch()){
+      if(diff_linematch()&&(diff_flags&DIFF_FILLER)){
 	// count the number of virtual lines from top of diff block to cursor
 	int virtual_lines_above_from=count_virtual_lines(
 	    win1,dp->df_lnum[idx1],lnum1);
