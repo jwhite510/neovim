@@ -1790,14 +1790,14 @@ int count_virtual_to_real(win_T* win, const linenr_T lnum, const int virtual_lin
   return real_offset;
 }
 
-int count_matched_chars(const char_u* s1, const char_u* s2){
+long count_matched_chars(const char_u* s1, const char_u* s2){
    // max length - lev distance
-   int l1=getlength(s1),l2=getlength(s2);
-   int maxlength=l1>l2?l1:l2;
+   long l1=(long)STRLEN(s1),l2=(long)STRLEN(s2);
+   long maxlength=l1>l2?l1:l2;
    return maxlength-levenshtein(s1,s2);
 }
-int count_matched_chars3(const char_u* s1, const char_u* s2, const char_u* s3){
-  int matched_chars=0;
+long count_matched_chars3(const char_u* s1, const char_u* s2, const char_u* s3){
+  long matched_chars=0;
   matched_chars+=count_matched_chars(s1,s2);
   matched_chars+=count_matched_chars(s1,s3);
   matched_chars+=count_matched_chars(s2,s3);
@@ -1821,7 +1821,7 @@ void update_path2(diff_T* dp, diffcomparisonpath2_T** df_pathmatrix2, int score,
   df_pathmatrix2[i][j].df_path2[df_pathmatrix2[i][j].path_index]=choice; // this choice
   df_pathmatrix2[i][j].path_index++; 
 }
-int min(int a, int b, int c)
+long min(long a, long b, long c)
 {
 	if(a <= b && a <= c)
 	{
@@ -1838,23 +1838,12 @@ int min(int a, int b, int c)
 	return 0;
 }
 
-int levenshtein3(char_u*s1,char_u*s2,char_u*s3){
-  int distance=0;
-  int d1=levenshtein(s1,s2);
-  if(d1>distance)distance=d1;
-  int d2=levenshtein(s2,s3);
-  if(d2>distance)distance=d2;
-  int d3=levenshtein(s1,s3);
-  if(d3>distance)distance=d3;
-  return distance;
-}
-int levenshtein(const char_u *s1,const char_u *s2) {
-    unsigned int x, y, s1len, s2len;
-    s1len = strlen((char*)s1);
-    s2len = strlen((char*)s2);
-    unsigned int** matrix=xmalloc(sizeof(int*)*(s2len+1));
-    for(uint i=0;i<(s2len+1);i++){
-	matrix[i]=xmalloc(sizeof(int)*(s1len+1));
+long levenshtein(const char_u *s1,const char_u *s2) {
+    long x, y;
+    long s1len=(long)STRLEN(s1),s2len=(long)STRLEN(s2);
+    unsigned long** matrix=xmalloc(sizeof(long*)*(s2len+1));
+    for(long i=0;i<(s2len+1);i++){
+	matrix[i]=xmalloc(sizeof(long)*(s1len+1));
     }
 
     matrix[0][0] = 0;
@@ -1866,8 +1855,8 @@ int levenshtein(const char_u *s1,const char_u *s2) {
         for (y = 1; y <= s1len; y++)
             matrix[x][y] = min(matrix[x-1][y] + 1, matrix[x][y-1] + 1, matrix[x-1][y-1] + (s1[y-1] == s2[x-1] ? 0 : 1));
 
-    int rvalue=matrix[s2len][s1len];
-    for(uint i=0;i<(s2len+1);i++){
+    long rvalue=matrix[s2len][s1len];
+    for(long i=0;i<(s2len+1);i++){
 	xfree(matrix[i]);
     }
     xfree(matrix);
@@ -1883,11 +1872,6 @@ void initialize_compareline2(diff_T*dp,int thisb, int thisp,int otherb){
   dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].compare[otherb]=-1;
   dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].newline=false;
   dp->df_comparisonlines3[dp->df_arr_col_size*thisb + thisp].filler=0;
-}
-int getlength(const char_u* str){
-  int strlength=0;
-  while(str[strlength]!='\0')strlength++;
-  return strlength;
 }
 
 
@@ -1951,7 +1935,7 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
     return 0;
   }
 
-  int off = lnum - dp->df_lnum[idx];
+  long off = lnum - dp->df_lnum[idx];
   // FILE*fp=fopen("debug.txt","a");
   // fprintf(fp,"pointer: %p off:%i \n",(void*)dp,off);
   if(dp->df_redraw && diff_linematch(dp)){
@@ -2868,7 +2852,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
   for (i = 0; i < DB_COUNT; ++i) {
     if ((curtab->tp_diffbuf[i] != NULL) && (i != idx)) {
       // Skip lines that are not in the other change (filler lines).
-      int comparl;
+      long comparl;
       if(diff_linematch(dp)){
 	comparl=dp->df_comparisonlines3[dp->df_arr_col_size*idx +  lnum - dp->df_lnum[idx]  ].compare[i];
 	if(comparl!=-1)comparl+=dp->df_lnum[i];
