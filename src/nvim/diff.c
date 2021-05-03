@@ -1793,6 +1793,29 @@ int count_virtual_to_real(win_T* win, const linenr_T lnum, const int virtual_lin
 long count_matched_chars(const char_u* s1, const char_u* s2){
    // max length - lev distance
    long l1=(long)STRLEN(s1),l2=(long)STRLEN(s2);
+   if(diff_flags&DIFF_IWHITE){
+     char_u* s1_nowhite=xmalloc(STRLEN(s1)*sizeof(char_u));
+     char_u* s2_nowhite=xmalloc(STRLEN(s2)*sizeof(char_u));
+     int d=0,i=0;
+     // delete the white space characters
+     while(d+i < l1){
+       if(s1[i+d]!=' ' && s1[i+d]!='\t') s1_nowhite[i]=s1[i+d],i++;
+       else d++;
+     }
+     s1_nowhite[i]='\0';
+     d=0,i=0;
+     while(d+i < l2){
+       if(s2[i+d]!=' ' && s2[i+d]!='\t') s2_nowhite[i]=s2[i+d],i++;
+       else d++;
+     }
+     s2_nowhite[i]='\0';
+     long l1_nowhite=(long)STRLEN(s1_nowhite),l2_nowhite=(long)STRLEN(s2_nowhite);
+     long maxlength=l1_nowhite>l2_nowhite?l1_nowhite:l2_nowhite;
+     long lev = levenshtein(s1_nowhite,s2_nowhite);
+     xfree(s1_nowhite),xfree(s2_nowhite);
+     return maxlength-lev;
+   }
+   // compare strings without considering the white space
    long maxlength=l1>l2?l1:l2;
    return maxlength-levenshtein(s1,s2);
 }
