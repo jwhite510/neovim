@@ -1767,6 +1767,33 @@ void diff_clear(tabpage_T *tp)
   tp->tp_first_diff = NULL;
 }
 
+// count the number of virtual lines between startline and endline
+int count_virtual_lines(win_T* win, linenr_T start, linenr_T endline){
+  int virtual_lines=0;
+  for(int k=start;k<=endline;k++){
+    int n = diff_check(win, k, NULL);
+    if(n>0)virtual_lines+=n; // filler lines
+    virtual_lines++;
+  }
+  return virtual_lines;
+}
+// move from lnum down by the amount virtual_lines and return the number of real lines moved
+int count_virtual_to_real(win_T* win, const linenr_T lnum, const int virtual_lines, int* line_new_virtualp ){
+  int real_offset=0;
+  int virtual_offset=0;
+  while(1){
+    int n = diff_check(win, lnum+real_offset, NULL);
+    virtual_offset++;
+    if(n>0)virtual_offset+=n; // filler lines
+    if(virtual_offset>virtual_lines)break;
+    real_offset++;
+  }
+  if( line_new_virtualp !=NULL){
+    (*line_new_virtualp)=virtual_offset;
+  }
+  return real_offset;
+}
+
 int count_matched_chars(const char_u* s1, const char_u* s2){
    // max length - lev distance
    int l1=getlength(s1),l2=getlength(s2);
@@ -2500,26 +2527,24 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
     towin->w_topline = lnum + (dp->df_lnum[toidx] - dp->df_lnum[fromidx]);
 
     if(diff_linematch(dp)){
-      int virtual_lines_above_from=0;
-      int line_new_virtual=0;
-      int line_new=0;
-      for(int k=dp->df_lnum[fromidx];k<=fromwin->w_topline;k++){
-	int n = diff_check(fromwin, k, NULL);
-	if(n>0)virtual_lines_above_from+=n; // filler lines
-	virtual_lines_above_from++;
-      }
+
+      // count the number of virtual lines from top of diff block to top line
+      int virtual_lines_above_from=count_virtual_lines(fromwin,
+	  dp->df_lnum[fromidx],
+	  fromwin->w_topline);
+
+      // subtract existing topfill
       virtual_lines_above_from-=fromwin->w_topfill;
       if(virtual_lines_above_from)virtual_lines_above_from--;
-      while(1){
-        int n = diff_check(curwin, dp->df_lnum[fromidx]+line_new+(dp->df_lnum[toidx] - dp->df_lnum[fromidx]), NULL);
-        line_new_virtual++;
-        if(n>0)line_new_virtual+=n; // filler lines
-        if(line_new_virtual>virtual_lines_above_from)break;
-        line_new++;
-      }
+
+      // count same amount of virtual lines from top of this window
+      int virtual_offset;
+      int offset=count_virtual_to_real(curwin,dp->df_lnum[toidx],
+	  virtual_lines_above_from,&virtual_offset);
+
       if(fromwin->w_topline>=dp->df_lnum[fromidx] ){
-	towin->w_topline = dp->df_lnum[fromidx]+line_new +(dp->df_lnum[toidx] - dp->df_lnum[fromidx]);
-	towin->w_topfill=line_new_virtual-virtual_lines_above_from-1;
+	towin->w_topline = offset+dp->df_lnum[toidx];
+	towin->w_topfill=virtual_offset-virtual_lines_above_from-1;
       }else{
 	towin->w_topline = lnum + (dp->df_lnum[toidx] - dp->df_lnum[fromidx]);
       }
@@ -3490,22 +3515,15 @@ static linenr_T diff_get_corresponding_line_int(buf_T *buf1,win_T* win1, linenr_
       baseline = lnum1 - dp->df_lnum[idx1];
 
       if(diff_linematch(dp)){
-        int virtual_lines_above_from=0;
-	int line_new_virtual=0;
-	int line_new=0;
-        for(int k=dp->df_lnum[idx1];k<=lnum1;k++){
-          int n = diff_check(win1, k, NULL);
-          if(n>0)virtual_lines_above_from+=n; // filler lines
-	  virtual_lines_above_from++;
-        }
-	while(1){
-	  int n = diff_check(curwin, dp->df_lnum[idx2]+line_new, NULL);
-	  line_new_virtual++;
-	  if(n>0)line_new_virtual+=n; // filler lines
-	  if(line_new_virtual>virtual_lines_above_from)break;
-	  line_new++;
-	}
-        return dp->df_lnum[idx2]+line_new-1;
+	// count the number of virtual lines from top of diff block to cursor
+	int virtual_lines_above_from=count_virtual_lines(
+	    win1,dp->df_lnum[idx1],lnum1);
+
+	// count the corresponding real lines in this buffer
+	int offset=count_virtual_to_real(curwin,dp->df_lnum[idx2],
+	    virtual_lines_above_from,NULL);
+
+        return dp->df_lnum[idx2]+offset-1;
       }
       if (baseline > dp->df_count[idx2]) {
         baseline = dp->df_count[idx2];
