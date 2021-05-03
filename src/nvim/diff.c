@@ -1750,17 +1750,13 @@ void diff_clear(tabpage_T *tp)
 // return true of can use line match diff mode
 bool diff_linematch(diff_T*dp)
 {
-  // are there more than two diff buffers?
+  // are there more than three diff buffers?
   int diffbuffers=0;
-  int maxlines=0;
   for(int i=0;i<DB_COUNT;++i){
     if(curtab->tp_diffbuf[i]!=NULL){
       diffbuffers++;
-      if(dp->df_count[i]>maxlines)
-	maxlines=dp->df_count[i];
     }
   }
-  if(maxlines > LINEMATCH_MAX_LINES)return 0;
   if(diffbuffers<=3){ // can diff up to 3 buffers
     return (diff_flags & DIFF_LINEMATCH);
   }
@@ -2074,10 +2070,6 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
       int b0=dp->df_valid_buffers[0];
       int b1=dp->df_valid_buffers[1];
       int b2=dp->df_valid_buffers[2];
-      int maxlines=0;
-      if(dp->df_count[b0]>maxlines)maxlines=dp->df_count[b0];
-      if(dp->df_count[b1]>maxlines)maxlines=dp->df_count[b1];
-      if(dp->df_count[b2]>maxlines)maxlines=dp->df_count[b2];
       diffcomparisonpath3_T*** df_pathmatrix3=xmalloc(sizeof(diffcomparisonpath3_T**)*(dp->df_count[b0]+1));
       for(i=0;i<(dp->df_count[b0]+1);i++){
         df_pathmatrix3[i]=xmalloc(sizeof(diffcomparisonpath3_T*)*(dp->df_count[b1]+1));
@@ -2267,6 +2259,10 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
       }
       // initialize to zero
       int p0=0,p1=0,p2=0; // i, j, k
+      int maxlines=0;
+      if(dp->df_count[b0]>maxlines)maxlines=dp->df_count[b0];
+      if(dp->df_count[b1]>maxlines)maxlines=dp->df_count[b1];
+      if(dp->df_count[b2]>maxlines)maxlines=dp->df_count[b2];
       dp->df_arr_col_size=maxlines+1;
       dp->df_comparisonlines3=xmalloc(DB_COUNT*(dp->df_arr_col_size)*sizeof(df_linecompare3_T));
       initialize_compareline3(dp,b0,p0,b1,b2);
