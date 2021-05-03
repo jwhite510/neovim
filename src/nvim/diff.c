@@ -1812,11 +1812,23 @@ long count_matched_chars(const char_u* s1, const char_u* s2){
      long l1_nowhite=(long)STRLEN(s1_nowhite),l2_nowhite=(long)STRLEN(s2_nowhite);
      long maxlength=l1_nowhite>l2_nowhite?l1_nowhite:l2_nowhite;
      long lev = levenshtein(s1_nowhite,s2_nowhite);
+     FILE*fp=fopen("debug.txt","a");
+     fprintf(fp,"-------------------\n");
+     fprintf(fp,"%s \n",s1_nowhite);
+     fprintf(fp,"%s \n",s2_nowhite);
+     fprintf(fp,"score:%li \n",maxlength-lev);
+     fclose(fp);
      xfree(s1_nowhite),xfree(s2_nowhite);
      return maxlength-lev;
    }
    // compare strings without considering the white space
    long maxlength=l1>l2?l1:l2;
+   FILE*fp=fopen("debug.txt","a");
+   fprintf(fp,"-------------------\n");
+   fprintf(fp,"%s \n",s1);
+   fprintf(fp,"%s \n",s2);
+   fprintf(fp,"score:%li \n",maxlength-levenshtein(s1,s2));
+   fclose(fp);
    return maxlength-levenshtein(s1,s2);
 }
 long count_matched_chars3(const char_u* s1, const char_u* s2, const char_u* s3){
