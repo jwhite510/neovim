@@ -1747,9 +1747,12 @@ void diff_clear(tabpage_T *tp)
   tp->tp_first_diff = NULL;
 }
 
-// return true of can use line match diff mode
+///
+/// return true if the options are set to use diff linematch
+///
 bool diff_linematch(void)
 {
+  if(!(diff_flags & DIFF_LINEMATCH))return 0;
   // are there more than three diff buffers?
   int diffbuffers=0;
   for(int i=0;i<DB_COUNT;++i){
@@ -1758,12 +1761,18 @@ bool diff_linematch(void)
     }
   }
   if(diffbuffers<=3){ // can diff up to 3 buffers
-    return (diff_flags & DIFF_LINEMATCH);
+    return 1;
   }
   return 0;
 }
 
-// count the number of virtual lines between startline and endline
+///
+/// Count the number of virtual (filler + non filler) lines between "start" and
+/// "endline" in "win"
+///
+/// @param win
+/// @param start
+/// @param endline
 int count_virtual_lines(win_T* win, linenr_T start, linenr_T endline){
   int virtual_lines=0;
   for(int k=start;k<=endline;k++){
@@ -1773,7 +1782,14 @@ int count_virtual_lines(win_T* win, linenr_T start, linenr_T endline){
   }
   return virtual_lines;
 }
-// move from lnum down by the amount virtual_lines and return the number of real lines moved
+/// in "win" window, move from "lnum" down by the amount "virtual_lines" and return
+/// the number of real lines moved. if a non null pointer is passed to
+/// "line_new_virtualp", it will be set to the number of virtual lines moved
+///
+/// @param win
+/// @param lnum
+/// @param virtual_lines
+/// @param line_new_virtualp
 int count_virtual_to_real(win_T* win, const linenr_T lnum, const int virtual_lines, int* line_new_virtualp ){
   int real_offset=0;
   int virtual_offset=0;
@@ -1790,8 +1806,11 @@ int count_virtual_to_real(win_T* win, const linenr_T lnum, const int virtual_lin
   return real_offset;
 }
 
+/// return the number of matching characters between two strings
+///
+/// @param s1
+/// @param s2
 long count_matched_chars(const char_u* s1, const char_u* s2){
-   // max length - lev distance
    long l1=(long)STRLEN(s1),l2=(long)STRLEN(s2);
    if(diff_flags&DIFF_IWHITE){
      char_u* s1_nowhite=xmalloc(STRLEN(s1)*sizeof(char_u));
@@ -1819,6 +1838,11 @@ long count_matched_chars(const char_u* s1, const char_u* s2){
    long maxlength=l1>l2?l1:l2;
    return maxlength-levenshtein(s1,s2);
 }
+/// count the number of matching characters for a three string comparison
+///
+/// @param s1
+/// @param s2
+/// @param s3
 long count_matched_chars3(const char_u* s1, const char_u* s2, const char_u* s3){
   long matched_chars=0;
   matched_chars+=count_matched_chars(s1,s2);
@@ -1828,23 +1852,57 @@ long count_matched_chars3(const char_u* s1, const char_u* s2, const char_u* s3){
   matched_chars/=3; // prioritize equally to a 2 line match
   return matched_chars;
 }
-void update_path3(diff_T* dp, diffcomparisonpath3_T*** df_pathmatrix3, int score,int i, int j, int k, int _i, int _j, int _k, enum path2_choice choice){
+/// helper function for the diff alignment algorithm copy the newly found optimal
+/// path to an index in the tensor for more detailed algorith description, see
+/// "linematch_3buffers" for the current diff hunk "dp", the "score" and path at
+/// index "i","j","k" is updated from the path from "_i","_j","_k" choice is
+/// represented by enum value "choice"
+///
+/// @param dp
+/// @param df_pathmatrix3
+/// @param score
+/// @param i
+/// @param j
+/// @param k
+/// @param _i
+/// @param _j
+/// @param _k
+/// @param choice
+void update_path3(diff_T* dp, diffcomparisonpath3_T*** df_pathmatrix3, int score,int i, int j, int k, int _i, int _j, int _k, enum path3_choice choice){
   df_pathmatrix3[i][j][k].df_lev_score=score;
   for(int __k=0;__k<=df_pathmatrix3[_i][_j][_k].path_index;__k++)
     df_pathmatrix3[i][j][k].df_path3[__k]=df_pathmatrix3[_i][_j][_k].df_path3[__k];
   df_pathmatrix3[i][j][k].path_index=df_pathmatrix3[_i][_j][_k].path_index;
   df_pathmatrix3[i][j][k].df_path3[df_pathmatrix3[i][j][k].path_index]=choice; // this choice
-  df_pathmatrix3[i][j][k].path_index++; 
+  df_pathmatrix3[i][j][k].path_index++;
 }
+/// helper function for the diff alignment algorithm copy the newly found optimal
+/// path to an index in the tensor for more detailed algorith description, see
+/// "linematch_2buffers" for the current diff hunk "dp", the "score" and path at
+/// index "i","j"is updated from the path from "_i","_j",choice is
+/// represented by enum value "choice"
+///
+/// @param dp
+/// @param df_pathmatrix2
+/// @param score
+/// @param i
+/// @param j
+/// @param _i
+/// @param _j
+/// @param choice
 void update_path2(diff_T* dp, diffcomparisonpath2_T** df_pathmatrix2, int score,int i, int j, int _i, int _j, enum path2_choice choice){
   df_pathmatrix2[i][j].df_lev_score=score;
   for(int k=0;k<=df_pathmatrix2[_i][_j].path_index;k++)
     df_pathmatrix2[i][j].df_path2[k]=df_pathmatrix2[_i][_j].df_path2[k];
   df_pathmatrix2[i][j].path_index=df_pathmatrix2[_i][_j].path_index;
   df_pathmatrix2[i][j].df_path2[df_pathmatrix2[i][j].path_index]=choice; // this choice
-  df_pathmatrix2[i][j].path_index++; 
+  df_pathmatrix2[i][j].path_index++;
 }
-long min(long a, long b, long c)
+/// helper function for the calculation of the levenshtein distance
+///
+/// @param s1
+/// @param s2
+long levmin(long a, long b, long c)
 {
 	if(a <= b && a <= c)
 	{
@@ -1860,7 +1918,11 @@ long min(long a, long b, long c)
 	}
 	return 0;
 }
-
+/// levenshtein distance calculation. Return the calculated levenshtein distance
+/// between string "s1" and "s2".
+///
+/// @param s1
+/// @param s2
 long levenshtein(const char_u *s1,const char_u *s2) {
     long x, y;
     long s1len=(long)STRLEN(s1),s2len=(long)STRLEN(s2);
@@ -1876,7 +1938,7 @@ long levenshtein(const char_u *s1,const char_u *s2) {
         matrix[0][y] = matrix[0][y-1] + 1;
     for (x = 1; x <= s2len; x++)
         for (y = 1; y <= s1len; y++)
-            matrix[x][y] = min(matrix[x-1][y] + 1, matrix[x][y-1] + 1, matrix[x-1][y-1] + (s1[y-1] == s2[x-1] ? 0 : 1));
+            matrix[x][y] = levmin(matrix[x-1][y] + 1, matrix[x][y-1] + 1, matrix[x-1][y-1] + (s1[y-1] == s2[x-1] ? 0 : 1));
 
     long rvalue=matrix[s2len][s1len];
     for(long i=0;i<(s2len+1);i++){
@@ -1885,23 +1947,46 @@ long levenshtein(const char_u *s1,const char_u *s2) {
     xfree(matrix);
     return(rvalue);
 }
+/// Helper function for the diff alignment algorithm. "dp->df_comparisonlines"
+/// represents a 2d array. indexed as [buffer][line number] where the line number
+/// index represents the offset from the start of the diff block indicated by
+/// dp->lnum[id]. The comparison line in the other buffers is initialized to -1. It
+/// may remain as -1 if the line is not compared.
+///
+/// @param dp
+/// @param thisb
+/// @param thisp
+/// @param otherb1
+/// @param otherb2
 void initialize_compareline3(diff_T*dp,int thisb, int thisp, int otherb1, int otherb2){
   dp->df_comparisonlines[dp->df_arr_col_size*thisb + thisp].compare[otherb1]=-1;
   dp->df_comparisonlines[dp->df_arr_col_size*thisb + thisp].compare[otherb2]=-1;
   dp->df_comparisonlines[dp->df_arr_col_size*thisb + thisp].newline=false;
   dp->df_comparisonlines[dp->df_arr_col_size*thisb + thisp].filler=0;
 }
+/// Helper function for the diff alignment algorithm. "dp->df_comparisonlines"
+/// represents a 2d array. indexed as [buffer][line number] where the line number
+/// index represents the offset from the start of the diff block indicated by
+/// dp->lnum[id]. The comparison line in the other buffers is initialized to -1. It
+/// may remain as -1 if the line is not compared.
+///
+/// @param dp
+/// @param thisb
+/// @param thisp
+/// @param otherb
 void initialize_compareline2(diff_T*dp,int thisb, int thisp,int otherb){
   dp->df_comparisonlines[dp->df_arr_col_size*thisb + thisp].compare[otherb]=-1;
   dp->df_comparisonlines[dp->df_arr_col_size*thisb + thisp].newline=false;
   dp->df_comparisonlines[dp->df_arr_col_size*thisb + thisp].filler=0;
 }
-
+/// the 2d implementation of the linematch diff algorithm for aligning the most
+/// similar lines when constructing diff views. For a general description of the
+/// algorithm, see linematch_3buffers
+///
+/// @param dp
 void linematch_2buffers(diff_T*dp){
-   // allocate array to run algorithm
   int b0=dp->df_valid_buffers[0];
   int b1=dp->df_valid_buffers[1];
-  // define the boundaries
   diffcomparisonpath2_T**df_pathmatrix2=xmalloc((dp->df_count[b0]+1)*sizeof(diffcomparisonpath2_T*));
   for(int i=0;i<(dp->df_count[b0]+1);i++){
     df_pathmatrix2[i]=xmalloc((dp->df_count[b1]+1)*sizeof(diffcomparisonpath2_T));
@@ -1930,8 +2015,6 @@ void linematch_2buffers(diff_T*dp){
   for(int i=1;i<=dp->df_count[b0];i++){
     for(int j=1;j<=dp->df_count[b1];j++){
       df_pathmatrix2[i][j].df_lev_score=-1;
-
-      // compare this line
       int score2=df_pathmatrix2[i-1][j-1].df_lev_score+count_matched_chars(
 	ml_get_buf(curtab->tp_diffbuf[b0],dp->df_lnum[b0]+i-1,false),
 	ml_get_buf(curtab->tp_diffbuf[b1],dp->df_lnum[b1]+j-1,false)
@@ -1955,14 +2038,12 @@ void linematch_2buffers(diff_T*dp){
       }
     }
   }
-  // allocate array of correct size
   int p0=0,p1=0; // i, j
   int maxlines=0;
   if(dp->df_count[b0]>maxlines)maxlines=dp->df_count[b0];
   if(dp->df_count[b1]>maxlines)maxlines=dp->df_count[b1];
   dp->df_arr_col_size=maxlines+1;
   dp->df_comparisonlines=xmalloc(DB_COUNT*(dp->df_arr_col_size)*sizeof(df_linecompare_T));
-  // initialize to zero
   initialize_compareline2(dp,b0,p0,b1);
   initialize_compareline2(dp,b1,p1,b0);
   for(int i=0;i<df_pathmatrix2[dp->df_count[b0]][dp->df_count[b1]].path_index;i++){
@@ -1992,9 +2073,6 @@ void linematch_2buffers(diff_T*dp){
     xfree(df_pathmatrix2[i]);
   }
   xfree(df_pathmatrix2);
-  // df_pathmatrix2[i][j]
-  // print_complines(dp);
-  // print_dp(dp); 
 }
 
 void linematch_3buffers(diff_T*dp){
@@ -2013,7 +2091,6 @@ void linematch_3buffers(diff_T*dp){
       }
     }
   }
-  // define the boundaries
   df_pathmatrix3[0][0][0].df_lev_score=0;
   df_pathmatrix3[0][0][0].path_index=0;
   for(int idc=0;idc<dp->df_valid_buffers_max;idc++){
@@ -2038,7 +2115,6 @@ void linematch_3buffers(diff_T*dp){
 	    0,0,i-1,
 	    DFPATH3_SKIP2);
       }
-      
     }
   }
   for(int i=1;i<=dp->df_count[b0];i++){
@@ -2125,10 +2201,7 @@ void linematch_3buffers(diff_T*dp){
   for(int i=1;i<=dp->df_count[b0];i++){
     for(int j=1;j<=dp->df_count[b1];j++){
       for(int k=1;k<=dp->df_count[b2];k++){
-	// state equation here
-	// choices
 	df_pathmatrix3[i][j][k].df_lev_score=-1;
-	// compare all three lines
 	int score4=df_pathmatrix3[i-1][j-1][k-1].df_lev_score+count_matched_chars3(
 	    ml_get_buf(curtab->tp_diffbuf[b0],dp->df_lnum[b0]+i-1,false),
 	    ml_get_buf(curtab->tp_diffbuf[b1],dp->df_lnum[b1]+j-1,false),
@@ -2139,7 +2212,6 @@ void linematch_3buffers(diff_T*dp){
 	      i-1,j-1,k-1, // from
 	      DFPATH3_COMPARE012); // choice
 	}
-	// compare two lines
 	int score5=df_pathmatrix3[i-1][j-1][k].df_lev_score+count_matched_chars(
 	    ml_get_buf(curtab->tp_diffbuf[b0],dp->df_lnum[b0]+i-1,false),
 	    ml_get_buf(curtab->tp_diffbuf[b1],dp->df_lnum[b1]+j-1,false)
@@ -2188,7 +2260,6 @@ void linematch_3buffers(diff_T*dp){
       }
     }
   }
-  // initialize to zero
   int p0=0,p1=0,p2=0; // i, j, k
   int maxlines=0;
   if(dp->df_count[b0]>maxlines)maxlines=dp->df_count[b0];
@@ -2334,14 +2405,12 @@ int diff_check(win_T *wp, linenr_T lnum, int* linestatus)
 
   if(dp->df_redraw && diff_linematch()){
     dp->df_valid_buffers_max=0;
-    // make a nd array for all these buffers
     for(i=0;i<DB_COUNT;++i){
       if(curtab->tp_diffbuf[i]!=NULL){
 	dp->df_valid_buffers[dp->df_valid_buffers_max]=i;
 	dp->df_valid_buffers_max++;
       }
     }
-    // assume for now that it is two buffers
     if(dp->df_valid_buffers_max==2){
       linematch_2buffers(dp);
     }else if(dp->df_valid_buffers_max==3){
@@ -2349,9 +2418,7 @@ int diff_check(win_T *wp, linenr_T lnum, int* linestatus)
     }
     dp->df_redraw=false;
   }
-  // fclose(fp);
   if(diff_linematch()){
-     // is the line added?
     long off = lnum - dp->df_lnum[idx];
     if(off<dp->df_count[idx]){
       if(linestatus!=NULL&&dp->df_comparisonlines[dp->df_arr_col_size*idx + lnum-dp->df_lnum[idx]].newline)
@@ -3495,6 +3562,10 @@ int diff_move_to(int dir, long count)
 
 /// Return the line number in the current window that is closest to "lnum1" in
 /// "buf1" in diff mode.
+///
+/// @param buf1
+/// @param win1
+/// @param lnum1
 static linenr_T diff_get_corresponding_line_int(buf_T *buf1,win_T* win1, linenr_T lnum1)
 {
   int idx1;
@@ -3569,6 +3640,7 @@ static linenr_T diff_get_corresponding_line_int(buf_T *buf1,win_T* win1, linenr_
 /// Finds the corresponding line in a diff.
 ///
 /// @param buf1
+/// @param win1
 /// @param lnum1
 ///
 /// @return The corresponding line.
