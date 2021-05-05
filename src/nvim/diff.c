@@ -2274,12 +2274,18 @@ void linematch_3buffers(diff_T*dp){
 /// Returns > 0 for inserting that many filler lines above it (never happens
 /// when 'diffopt' doesn't contain "filler").
 /// This should only be used for windows where 'diff' is set.
+/// When diffopt contains linematch, a changed/added/deleted line may also have
+/// filler lines above it. In such a case, the possibilities are no longer mutually
+/// exclusive. The number of filler lines is returned from diff_check, and the
+/// integer 'linestatus' passed by pointer is set to -1 to indicate a changed line,
+/// and -2 to indicate an added line
 ///
 /// @param wp
 /// @param lnum
+/// @param linestatus
 ///
 /// @return diff status.
-int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
+int diff_check(win_T *wp, linenr_T lnum, int* linestatus)
 {
   int idx; // index in tp_diffbuf[] for this buffer
   diff_T *dp;
@@ -2348,9 +2354,9 @@ int diff_check(win_T *wp, linenr_T lnum, int* diffaddedr)
      // is the line added?
     long off = lnum - dp->df_lnum[idx];
     if(off<dp->df_count[idx]){
-      if(diffaddedr!=NULL&&dp->df_comparisonlines[dp->df_arr_col_size*idx + lnum-dp->df_lnum[idx]].newline)
-	*diffaddedr=-2; // line was added
-      else if(diffaddedr!=NULL)*diffaddedr=-1; // line was compared
+      if(linestatus!=NULL&&dp->df_comparisonlines[dp->df_arr_col_size*idx + lnum-dp->df_lnum[idx]].newline)
+	*linestatus=-2; // line was added
+      else if(linestatus!=NULL)*linestatus=-1; // line was changed
       return (
 	  diff_flags&DIFF_FILLER?
 	  dp->df_comparisonlines[dp->df_arr_col_size*idx + lnum-dp->df_lnum[idx]].filler:0);
