@@ -1979,7 +1979,7 @@ void initialize_compareline2(diff_T*dp,int thisb, int thisp,int otherb){
   dp->df_comparisonlines[dp->df_arr_col_size*thisb + thisp].newline=false;
   dp->df_comparisonlines[dp->df_arr_col_size*thisb + thisp].filler=0;
 }
-/// the 2d implementation of the linematch diff algorithm for aligning the most
+/// the 2d (for two buffers) implementation of the linematch diff algorithm for aligning the most
 /// similar lines when constructing diff views. For a general description of the
 /// algorithm, see linematch_3buffers
 ///
@@ -2075,6 +2075,39 @@ void linematch_2buffers(diff_T*dp){
   xfree(df_pathmatrix2);
 }
 
+/// the 3d case (for 3 buffers) of the algorithm implemented when diffopt
+/// 'linematch' is enabled. The algorithm constructs a 3d tensor to compare a diff
+/// between 3 buffers. The dimmensions of the tensor are the length of the diff in
+/// each buffer plus 1 A path is constructed by moving from one edge of the cube/3d
+/// tensor to the opposite edge. Motions from one cell of the cube to the next
+/// represent decisions. In a 3d cube, there are a total of 7 decisions that can be
+/// made, represented by the enum path3_choice which is defined in buffer_defs.h a
+/// comparison of buffer 0 and 1 represents a motion toward the opposite edge of
+/// the cube with components along the 0 and 1 axes.  a comparison of buffer 0, 1,
+/// and 2 represents a motion toward the opposite edge of the cube with
+/// components along the 0, 1, and 2 axes. A skip of buffer 0 represents a
+/// motion along only the 0 axis. For each action, a point value is awarded, and
+/// the path is saved for reference later, if it is found to have been the optimal
+/// path. The optimal path has the highest score. The score is calculated as the
+/// summation of the total characters matching between all of the lines which were
+/// compared. The structure of the algorithm is that of a dynamic programming problem.
+/// We can calculate a point i,j,k in the cube as a function of i-1, j-1, and k-1.
+/// To find the score and path at point i,j,k, we must determine which path we want
+/// to use, out of the possibilities To find the score and path at point i,j,k, we
+/// must determine which path we want to use, this is done by looking at the
+/// possibilities and choosing the one which results in the local highest score.
+/// The total highest scored path is, then in the end represented by the cell in
+/// the opposite corner from the start location.
+///
+/// The entire algorithm consits of populating the 3d cube with the optimal paths
+/// from which it may have came.  However, we cannot apply the general 3d case
+/// before first populating the edges and the surfaces of the cube. Therefore, 3
+/// sets of for loops. The first type populates the three edges of the cube nearest
+/// the start point (index 0,0,0), the second populates the three surfaces nearest
+/// the start point. The third is the general 3d equation, which populates the
+/// remainder of the cube.
+///
+/// @param dp
 void linematch_3buffers(diff_T*dp){
   int b0=dp->df_valid_buffers[0];
   int b1=dp->df_valid_buffers[1];
