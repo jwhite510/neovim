@@ -1984,6 +1984,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 				Use the indent heuristic for the internal
 				diff library.
 
+		linematch
+				Align and mark changes between the most
+				similar lines between the buffers. Works for 2
+				or 3 buffer diffs.
+
                 algorithm:{text} Use the specified diff algorithm with the
 				internal diff engine. Currently supported
 				algorithms are:
