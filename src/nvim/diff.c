@@ -67,6 +67,8 @@ static long diff_algorithm = 0;
 
 #define LBUFLEN 50               // length of line in diff file
 
+#define MAX_LINEMATCH_ARRAY_SIZE 60000
+
 // kTrue when "diff -a" works, kFalse when it doesn't work,
 // kNone when not checked yet
 static TriState diff_a_works = kNone;
@@ -1754,17 +1756,23 @@ void diff_clear(tabpage_T *tp)
 ///
 /// return true if the options are set to use diff linematch
 ///
-bool diff_linematch(void)
+bool diff_linematch(diff_T *dp)
 {
   if (!(diff_flags & DIFF_LINEMATCH)) {
         return 0;
   }
   // are there more than three diff buffers?
   int diffbuffers = 0;
+  int tsize = 1;
   for (int i = 0; i < DB_COUNT; i++) {
     if ( curtab->tp_diffbuf[i] != NULL ) {
       diffbuffers++;
+      tsize *= dp->df_count[i];
     }
+  }
+  // avoid allocating a huge array because it will crash
+  if (tsize > MAX_LINEMATCH_ARRAY_SIZE) {
+    return 0;
   }
   if (diffbuffers <= 3) {  // can diff up to 3 buffers
     return 1;
@@ -2508,7 +2516,7 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
     return 0;
   }
 
-  if (dp->df_redraw && diff_linematch()) {
+  if (dp->df_redraw && diff_linematch(dp)) {
     dp->df_valid_buffers_max = 0;
     for (i = 0; i < DB_COUNT; i++) {
       if (curtab->tp_diffbuf[i] != NULL) {
@@ -2523,7 +2531,7 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
     }
     dp->df_redraw = false;
   }
-  if (diff_linematch()) {
+  if (diff_linematch(dp)) {
     long off = lnum - dp->df_lnum[idx];
     if (off < dp->df_count[idx]) {
       if (linestatus != NULL&&dp->df_comparisonlines[
@@ -2785,7 +2793,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
     }
     towin->w_topline = lnum + (dp->df_lnum[toidx] - dp->df_lnum[fromidx]);
 
-    if (diff_linematch()&&(diff_flags&DIFF_FILLER)) {
+    if (diff_linematch(dp)&&(diff_flags&DIFF_FILLER)) {
       // count the number of virtual lines from top of diff block to top line
       int virtual_lines_above_from =
         count_virtual_lines(fromwin,
@@ -3064,7 +3072,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
     if ((curtab->tp_diffbuf[i] != NULL) && (i != idx)) {
       // Skip lines that are not in the other change (filler lines).
       long comparl;
-      if (diff_linematch()) {
+      if (diff_linematch(dp)) {
         comparl = dp->df_comparisonlines[
             dp->df_arr_col_size * idx +  lnum - dp->df_lnum[idx]  ].compare[i];
         if (comparl != -1) { comparl+=dp->df_lnum[i]; }
@@ -3076,7 +3084,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       }
       added = false;
       line_new = ml_get_buf(curtab->tp_diffbuf[i],
-                            (diff_linematch())?
+                            (diff_linematch(dp))?
                             comparl:dp->df_lnum[i]+off, false);
 
       // Search for start of difference
@@ -3712,7 +3720,7 @@ static linenr_T diff_get_corresponding_line_int(buf_T *buf1,
       // Inside the diffblock
       baseline = lnum1 - dp->df_lnum[idx1];
 
-      if ( diff_linematch() && (diff_flags & DIFF_FILLER) ) {
+      if ( diff_linematch(dp) && (diff_flags & DIFF_FILLER) ) {
         // count the number of virtual lines from top of diff block to cursor
         int virtual_lines_above_from = count_virtual_lines(
             win1, dp->df_lnum[idx1], lnum1);
