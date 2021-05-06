@@ -907,7 +907,7 @@ enum path3_choice{
 // linematch_2buffers
 typedef struct diffcomparisonpath2_S diffcomparisonpath2_T;
 struct diffcomparisonpath2_S{
-  enum path2_choice* df_path2; // to keep track of this path traveled
+  enum path2_choice *df_path2; // to keep track of this path traveled
   int df_lev_score; // to keep track of the total score of this path
   int path_index; // current index of this path
 };
@@ -916,7 +916,7 @@ struct diffcomparisonpath2_S{
 // linematch_3buffers
 typedef struct diffcomparisonpath3_S diffcomparisonpath3_T;
 struct diffcomparisonpath3_S{
-  enum path3_choice* df_path3; // to keep track of this path traveled
+  enum path3_choice *df_path3; // to keep track of this path traveled
   int df_lev_score; // to keep track of the total score of this path
   int path_index; // current index of this path
 };
@@ -967,7 +967,7 @@ struct diffblock_S {
   // buffer in the diff (axis 1), contains the information which lines in the
   // other buffers should this line be compared to, how many filler lines
   // should be drawn above this line, and is this a new line
-  df_linecompare_T* df_comparisonlines;
+  df_linecompare_T *df_comparisonlines;
   int df_arr_col_size; // used for referencing 2d array
 
 
