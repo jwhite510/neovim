@@ -1083,7 +1083,7 @@ ccca]]
       ]])
     end)
   end)
-  describe('line matching diff algorithm with iwhite', function()
+  describe('line matching diff algorithm with iwhiteall', function()
     setup(function()
       local f1 = [[BB
    AAA]]
@@ -1093,7 +1093,7 @@ ccca]]
 AAAB]]
       write_file(fname_2, f2, false)
     end)
-    it('diffopt+=linematch,icase', function()
+    it('diffopt+=linematch,iwhiteall', function()
       reread()
       feed(':set diffopt=internal,filler,linematch<cr>')
       screen:expect{grid=[[
