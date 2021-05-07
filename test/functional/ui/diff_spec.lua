@@ -1029,6 +1029,112 @@ int main(int argc, char **argv)
       ]])
     end)
   end)
+  describe('line matching diff algorithm with icase', function()
+    setup(function()
+      local f1 = [[DDD
+aaa]]
+      write_file(fname, f1, false)
+      local f2 = [[DDD
+AAA
+ccca]]
+      write_file(fname_2, f2, false)
+    end)
+    it('diffopt+=linematch,icase', function()
+      reread()
+      feed(':set diffopt=internal,filler,linematch<cr>')
+      screen:expect([[
+        {1:  }^DDD               {3:│}{1:  }DDD              |
+        {1:  }{2:------------------}{3:│}{1:  }{4:AAA              }|
+        {1:  }{8:aa}{9:a               }{3:│}{1:  }{8:ccc}{9:a             }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        :set diffopt=internal,filler,linematch  |
+      ]])
+      -- screen:snapshot_util()
+      feed(':set diffopt+=icase<cr>')
+      -- screen:snapshot_util()
+      screen:expect([[
+        {1:  }^DDD               {3:│}{1:  }DDD              |
+        {1:  }aaa               {3:│}{1:  }AAA              |
+        {1:  }{2:------------------}{3:│}{1:  }{4:ccca             }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        :set diffopt+=icase                     |
+      ]])
+    end)
+  end)
+  describe('line matching diff algorithm with iwhite', function()
+    setup(function()
+      local f1 = [[BB
+   AAA]]
+      write_file(fname, f1, false)
+      local f2 = [[BB
+   AAB
+AAAB]]
+      write_file(fname_2, f2, false)
+    end)
+    it('diffopt+=linematch,icase', function()
+      reread()
+      feed(':set diffopt=internal,filler,linematch<cr>')
+      screen:expect{grid=[[
+	{1:  }^BB                {3:│}{1:  }BB               |
+	{1:  }{9:   AA}{8:A}{9:            }{3:│}{1:  }{9:   AA}{8:B}{9:           }|
+	{1:  }{2:------------------}{3:│}{1:  }{4:AAAB             }|
+	{6:~                   }{3:│}{6:~                  }|
+	{6:~                   }{3:│}{6:~                  }|
+	{6:~                   }{3:│}{6:~                  }|
+	{6:~                   }{3:│}{6:~                  }|
+	{6:~                   }{3:│}{6:~                  }|
+	{6:~                   }{3:│}{6:~                  }|
+	{6:~                   }{3:│}{6:~                  }|
+	{6:~                   }{3:│}{6:~                  }|
+	{6:~                   }{3:│}{6:~                  }|
+	{6:~                   }{3:│}{6:~                  }|
+	{6:~                   }{3:│}{6:~                  }|
+	{7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+	:set diffopt=internal,filler,linematch  |
+      ]]}
+      feed(':set diffopt+=iwhiteall<cr>')
+      screen:expect{grid=[[
+	{1:  }^BB                {3:│}{1:  }BB               |
+	{1:  }{2:------------------}{3:│}{1:  }{4:   AAB           }|
+	{1:  }{9:   AAA            }{3:│}{1:  }{9:AAA}{8:B}{9:             }|
+	{6:~                   }{3:│}{6:~                  }|
+	{6:~                   }{3:│}{6:~                  }|
+	{6:~                   }{3:│}{6:~                  }|
+	{6:~                   }{3:│}{6:~                  }|
+	{6:~                   }{3:│}{6:~                  }|
+	{6:~                   }{3:│}{6:~                  }|
+	{6:~                   }{3:│}{6:~                  }|
+	{6:~                   }{3:│}{6:~                  }|
+	{6:~                   }{3:│}{6:~                  }|
+	{6:~                   }{3:│}{6:~                  }|
+	{6:~                   }{3:│}{6:~                  }|
+	{7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+	:set diffopt+=iwhiteall                 |
+      ]]}
+    end)
+  end)
 end)
 
 it('win_update redraws lines properly', function()
