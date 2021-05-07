@@ -2042,7 +2042,8 @@ void linematch_2buffers(diff_T *dp)
   int b0 = dp->df_valid_buffers[0];
   int b1 = dp->df_valid_buffers[1];
   diffcomparisonpath2_T **df_pathmatrix2 =
-    xmalloc( (2) * sizeof( diffcomparisonpath2_T * )); // for previous and next row
+    // for previous and next row
+    xmalloc( (2) * sizeof( diffcomparisonpath2_T * ));
   for (int i = 0; i < (2); i++) {
     df_pathmatrix2[i]=
       xmalloc((dp->df_count[b1]+1) * sizeof(diffcomparisonpath2_T));
@@ -2052,26 +2053,26 @@ void linematch_2buffers(diff_T *dp)
                 sizeof(enum path2_choice));
     }
   }
-  bool icur=1;
+  bool icur = 1;
   int score;
-  for (int i=0; i <= dp->df_count[b0]; i++) {
+  for (int i = 0; i <= dp->df_count[b0]; i++) {
     icur=!icur;
-    for (int j=0; j <= dp->df_count[b1]; j++) {
-      if(i==0 && j==0){
+    for (int j = 0; j <= dp->df_count[b1]; j++) {
+      if (i == 0 && j == 0) {
         df_pathmatrix2[0][0].df_lev_score = 0;
         df_pathmatrix2[0][0].path_index = 0;
-      }else if(i==0){
+      } else if (i == 0) {
         score = df_pathmatrix2[0][j-1].df_lev_score;
         update_path2(dp, df_pathmatrix2, score, 0, j,  // to
                      0, j-1,  // from
                      DFPATH2_SKIP1);  // choice
-      }else if(j==0){
+      } else if (j == 0) {
         score = df_pathmatrix2[!icur][0].df_lev_score;
         update_path2(dp, df_pathmatrix2, score, icur, 0,  // to
                      !icur, 0,  // from
                      DFPATH2_SKIP0);  // choice
-      }else{
-         df_pathmatrix2[icur][j].df_lev_score=-1;
+      } else {
+         df_pathmatrix2[icur][j].df_lev_score = -1;
         score =
           df_pathmatrix2[!icur][j-1].df_lev_score+
           count_matched_chars(
@@ -2194,38 +2195,39 @@ void linematch_3buffers(diff_T * dp)
       }
     }
   }
-  bool icur=1;
+  bool icur = 1;
   int score;
-  for ( int i = 0; i <= dp->df_count[b0]; i++) {
+  for (int i = 0; i <= dp->df_count[b0]; i++) {
     icur=!icur;
-    for ( int j = 0; j <= dp->df_count[b1]; j++) {
+    for (int j = 0; j <= dp->df_count[b1]; j++) {
       for (int k = 0; k<= dp->df_count[b2]; k++) {
-        if(i==0 && j==0 && k==0){
+        if (i == 0 && j == 0 && k == 0) {
           df_pathmatrix3[0][0][0].df_lev_score = 0;
           df_pathmatrix3[0][0][0].path_index = 0;
-        }else if(j==0 && k==0){
+        } else if (j == 0 && k == 0) {
          score = df_pathmatrix3[!icur][0][0].df_lev_score;
          update_path3(
              dp, df_pathmatrix3, score, icur, 0, 0,
              !icur, 0, 0,
              DFPATH3_SKIP0);
-        }else if(i==0 && k==0){
+        } else if (i == 0 && k == 0) {
           score = df_pathmatrix3[0][j-1][0].df_lev_score;
           update_path3(
               dp, df_pathmatrix3, score, 0, j, 0,
               0, j-1, 0,
               DFPATH3_SKIP1);
-        }else if (i==0 && j==0){
+        } else if (i == 0 && j == 0) {
           score = df_pathmatrix3[0][0][k-1].df_lev_score;
           update_path3(
               dp, df_pathmatrix3, score, 0, 0, k,
               0, 0, k-1,
               DFPATH3_SKIP2);
-        }else if (k==0){
+        } else if (k == 0) {
           df_pathmatrix3[icur][j][k].df_lev_score = -1;
-          score = df_pathmatrix3[!icur][j-1][k].df_lev_score+count_matched_chars(
-              ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
-              ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false));
+          score = df_pathmatrix3[!icur][j-1][k].df_lev_score+
+            count_matched_chars(
+                ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
+                ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false));
           if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
             update_path3(
                 dp, df_pathmatrix3, score, icur, j, k,
@@ -2246,11 +2248,12 @@ void linematch_3buffers(diff_T * dp)
                 icur, j-1, k,  // from
                 DFPATH3_SKIP1);  // choice
           }
-        }else if (j==0){
+        } else if (j == 0) {
           df_pathmatrix3[icur][j][k].df_lev_score = -1;
-          score = df_pathmatrix3[!icur][j][k-1].df_lev_score+count_matched_chars(
-              ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
-              ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
+          score = df_pathmatrix3[!icur][j][k-1].df_lev_score+
+            count_matched_chars(
+                ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
+                ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
           if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
             update_path3(
                 dp, df_pathmatrix3, score, icur, j, k,
@@ -2270,12 +2273,13 @@ void linematch_3buffers(diff_T * dp)
                 dp, df_pathmatrix3, score, icur, j, k,
                 icur, j, k-1,  // from
                 DFPATH3_SKIP2);  // choice
-          } 
-        }else if(i==0){
+          }
+        } else if ( i == 0 ) {
           df_pathmatrix3[icur][j][k].df_lev_score = -1;
-          score = df_pathmatrix3[icur][j-1][k-1].df_lev_score+count_matched_chars(
-              ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false),
-              ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
+          score = df_pathmatrix3[icur][j-1][k-1].df_lev_score+
+            count_matched_chars(
+                ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false),
+                ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
           if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
             update_path3(
                 dp, df_pathmatrix3, score, icur, j, k,
@@ -2296,7 +2300,7 @@ void linematch_3buffers(diff_T * dp)
                 icur, j, k-1,  // from
                 DFPATH3_SKIP2);  // choice
           }
-        }else{
+        } else {
           df_pathmatrix3[icur][j][k].df_lev_score = -1;
           score =
             df_pathmatrix3[!icur][j-1][k-1].df_lev_score+count_matched_chars3(
