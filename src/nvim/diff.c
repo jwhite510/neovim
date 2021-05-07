@@ -1847,9 +1847,10 @@ long count_matched_chars(const char_u *s1, const char_u *s2)
     // and/or replace all upper case with lower
     char_u *strsproc[2] = { s1_proc, s2_proc };
     const char_u *strsorig[2] = { s1, s2 };
+    long slen[2] = { l1, l2 };
     for (int k = 0; k < 2; k++) {
       int d = 0, i = 0;
-      while (d+i < l1) {
+      while (d+i < slen[k]) {
         if ((iwhite)?(strsorig[k][i+d] != ' ' && strsorig[k][i+d] != '\t'):1) {
           strsproc[k][i] = (diff_flags & DIFF_ICASE)?
            (tolower(strsorig[k][i+d])):(strsorig[k][i+d]);
