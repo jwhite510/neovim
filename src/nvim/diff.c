@@ -2195,6 +2195,8 @@ void linematch_3buffers(diff_T * dp)
       }
     }
   }
+  // memory for avoiding repetitive calculations of score
+  int* mem=xmalloc(((dp->df_count[b1]+1)*(dp->df_count[b2]+1))*sizeof(int));
   bool icur = 1;
   int score;
   for (int i = 0; i <= dp->df_count[b0]; i++) {
@@ -2276,10 +2278,12 @@ void linematch_3buffers(diff_T * dp)
           }
         } else if ( i == 0 ) {
           df_pathmatrix3[icur][j][k].df_lev_score = -1;
-          score = df_pathmatrix3[icur][j-1][k-1].df_lev_score+
-            count_matched_chars(
+          long matched_chars=count_matched_chars(
                 ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false),
                 ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
+          // store in memory for later
+          mem[j * (dp->df_count[b2]+1) + k] = matched_chars;
+          score = df_pathmatrix3[icur][j-1][k-1].df_lev_score + matched_chars;
           if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
             update_path3(
                 dp, df_pathmatrix3, score, icur, j, k,
@@ -2333,10 +2337,12 @@ void linematch_3buffers(diff_T * dp)
                 !icur, j, k-1,  // from
                 DFPATH3_COMPARE02);  // choice
           }
+          // score =
+          //   df_pathmatrix3[icur][j-1][k-1].df_lev_score+count_matched_chars(
+          //       ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false),
+          //       ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
           score =
-            df_pathmatrix3[icur][j-1][k-1].df_lev_score+count_matched_chars(
-                ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false),
-                ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
+            df_pathmatrix3[icur][j-1][k-1].df_lev_score+mem[j * (dp->df_count[b2]+1) + k];
           if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
             update_path3(
                 dp, df_pathmatrix3, score, icur, j, k,
@@ -2445,6 +2451,7 @@ void linematch_3buffers(diff_T * dp)
     xfree(df_pathmatrix3[i]);
   }
   xfree(df_pathmatrix3);
+  xfree(mem);
 }
 
 
