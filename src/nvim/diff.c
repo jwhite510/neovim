@@ -1870,21 +1870,6 @@ long count_matched_chars(const char_u *s1, const char_u *s2)
   long maxlength = l1 > l2?l1:l2;
   return maxlength - levenshtein(s1, s2);
 }
-/// count the number of matching characters for a three string comparison
-///
-/// @param s1
-/// @param s2
-/// @param s3
-long count_matched_chars3(const char_u *s1, const char_u *s2, const char_u *s3)
-{
-  long matched_chars = 0;
-  matched_chars+=count_matched_chars(s1, s2);
-  matched_chars+=count_matched_chars(s1, s3);
-  matched_chars+=count_matched_chars(s2, s3);
-  matched_chars *= 2;
-  matched_chars /= 3;  // prioritize equally to a 2 line match
-  return matched_chars;
-}
 /// helper function for the diff alignment algorithm copy the newly found
 /// optimal path to an index in the tensor for more detailed algorith
 /// description, see "linematch_3buffers" for the current diff hunk "dp",
@@ -2306,31 +2291,20 @@ void linematch_3buffers(diff_T * dp)
           }
         } else {
           df_pathmatrix3[icur][j][k].df_lev_score = -1;
-          score =
-            df_pathmatrix3[!icur][j-1][k-1].df_lev_score+count_matched_chars3(
-                ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
-                ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false),
-                ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
-          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
-            update_path3(
-                dp, df_pathmatrix3, score, icur, j, k,
-                !icur, j-1, k-1,  // from
-                DFPATH3_COMPARE012);  // choice
-          }
-          score =
-            df_pathmatrix3[!icur][j-1][k].df_lev_score+count_matched_chars(
-                ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
-                ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false));
+          long matched_01=count_matched_chars(
+              ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
+              ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false));
+          score = df_pathmatrix3[!icur][j-1][k].df_lev_score+matched_01;
           if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
             update_path3(
                 dp, df_pathmatrix3, score, icur, j, k,
                 !icur, j-1, k,  // from
                 DFPATH3_COMPARE01);  // choice
           }
-          score =
-            df_pathmatrix3[!icur][j][k-1].df_lev_score+count_matched_chars(
-                ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
-                ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
+          long matched_02=count_matched_chars(
+              ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
+              ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
+          score = df_pathmatrix3[!icur][j][k-1].df_lev_score+matched_02;
           if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
             update_path3(
                 dp, df_pathmatrix3, score, icur, j, k,
@@ -2341,13 +2315,23 @@ void linematch_3buffers(diff_T * dp)
           //   df_pathmatrix3[icur][j-1][k-1].df_lev_score+count_matched_chars(
           //       ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false),
           //       ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
-          score =
-            df_pathmatrix3[icur][j-1][k-1].df_lev_score+mem[j * (dp->df_count[b2]+1) + k];
+          long matched_12=mem[j * (dp->df_count[b2]+1) + k];
+          score = df_pathmatrix3[icur][j-1][k-1].df_lev_score+matched_12;
           if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
             update_path3(
                 dp, df_pathmatrix3, score, icur, j, k,
                 icur, j-1, k-1,  // from
                 DFPATH3_COMPARE12);  // choice
+          }
+          long matched_012=matched_01+matched_02+matched_12;
+          // prioritize equally to a 2 line match
+          matched_012 *= 2, matched_012 /= 3;
+          score = df_pathmatrix3[!icur][j-1][k-1].df_lev_score+matched_012;
+          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
+            update_path3(
+                dp, df_pathmatrix3, score, icur, j, k,
+                !icur, j-1, k-1,  // from
+                DFPATH3_COMPARE012);  // choice
           }
           score = df_pathmatrix3[!icur][j][k].df_lev_score;
           if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
