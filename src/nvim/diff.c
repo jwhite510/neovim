@@ -2276,8 +2276,8 @@ void linematch_3buffers(diff_T * dp)
         } else if ( i == 0 ) {
           df_pathmatrix3[icur][j][k].df_lev_score = -1;
           long matched_chars=count_matched_chars(
-                ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false),
-                ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
+              ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false),
+              ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
           // store in memory for later
           mem12[j * (dp->df_count[b2]+1) + k] = matched_chars;
           score = df_pathmatrix3[icur][j-1][k-1].df_lev_score + matched_chars;
@@ -2303,9 +2303,6 @@ void linematch_3buffers(diff_T * dp)
           }
         } else {
           df_pathmatrix3[icur][j][k].df_lev_score = -1;
-          // long matched_01=count_matched_chars(
-          //     ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
-          //     ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false));
           long matched_01=mem01[i * (dp->df_count[b1]+1) + j];
           score = df_pathmatrix3[!icur][j-1][k].df_lev_score+matched_01;
           if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
@@ -2314,9 +2311,6 @@ void linematch_3buffers(diff_T * dp)
                 !icur, j-1, k,  // from
                 DFPATH3_COMPARE01);  // choice
           }
-          // long matched_02=count_matched_chars(
-          //     ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
-          //     ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
           long matched_02=mem02[i * (dp->df_count[b2]+1) + k];
           score = df_pathmatrix3[!icur][j][k-1].df_lev_score+matched_02;
           if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
@@ -2325,10 +2319,6 @@ void linematch_3buffers(diff_T * dp)
                 !icur, j, k-1,  // from
                 DFPATH3_COMPARE02);  // choice
           }
-          // score =
-          //   df_pathmatrix3[icur][j-1][k-1].df_lev_score+count_matched_chars(
-          //       ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false),
-          //       ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
           long matched_12=mem12[j * (dp->df_count[b2]+1) + k];
           score = df_pathmatrix3[icur][j-1][k-1].df_lev_score+matched_12;
           if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
