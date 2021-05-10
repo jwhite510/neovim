@@ -67,8 +67,6 @@ static long diff_algorithm = 0;
 
 #define LBUFLEN 50               // length of line in diff file
 
-#define MAX_LINEMATCH_ARRAY_SIZE 60000
-
 // kTrue when "diff -a" works, kFalse when it doesn't work,
 // kNone when not checked yet
 static TriState diff_a_works = kNone;
