@@ -985,7 +985,7 @@ int main(int argc, char **argv)
       write_file(fname_2, f2, false)
     end)
 
-    it('diffopt+=linematch', function()
+    it('diffopt+=linematch:20', function()
       reread()
       feed(':set diffopt=internal,filler<cr>')
       screen:expect([[
@@ -1008,7 +1008,7 @@ int main(int argc, char **argv)
       ]])
 
       feed('G')
-      feed(':set diffopt+=linematch<cr>')
+      feed(':set diffopt+=linematch:20<cr>')
       screen:expect([[
         {1:  }if __name__ == "__{3:│}{1:  }if __name__ == "_|
         {1:  }    import sys    {3:│}{1:  }    import sys   |
@@ -1025,7 +1025,7 @@ int main(int argc, char **argv)
         {6:~                   }{3:│}{6:~                  }|
         {6:~                   }{3:│}{6:~                  }|
         {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
-        :set diffopt+=linematch                 |
+        :set diffopt+=linematch:20              |
       ]])
     end)
   end)
@@ -1039,9 +1039,9 @@ AAA
 ccca]]
       write_file(fname_2, f2, false)
     end)
-    it('diffopt+=linematch,icase', function()
+    it('diffopt+=linematch:20,icase', function()
       reread()
-      feed(':set diffopt=internal,filler,linematch<cr>')
+      feed(':set diffopt=internal,filler,linematch:20<cr>')
       screen:expect([[
         {1:  }^DDD               {3:│}{1:  }DDD              |
         {1:  }{2:------------------}{3:│}{1:  }{4:AAA              }|
@@ -1058,7 +1058,7 @@ ccca]]
         {6:~                   }{3:│}{6:~                  }|
         {6:~                   }{3:│}{6:~                  }|
         {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
-        :set diffopt=internal,filler,linematch  |
+                                                |
       ]])
       -- screen:snapshot_util()
       feed(':set diffopt+=icase<cr>')
@@ -1093,45 +1093,45 @@ ccca]]
 AAAB]]
       write_file(fname_2, f2, false)
     end)
-    it('diffopt+=linematch,iwhiteall', function()
+    it('diffopt+=linematch:20,iwhiteall', function()
       reread()
-      feed(':set diffopt=internal,filler,linematch<cr>')
+      feed(':set diffopt=internal,filler,linematch:20<cr>')
       screen:expect{grid=[[
-	{1:  }^BB                {3:│}{1:  }BB               |
-	{1:  }{9:   AA}{8:A}{9:            }{3:│}{1:  }{9:   AA}{8:B}{9:           }|
-	{1:  }{2:------------------}{3:│}{1:  }{4:AAAB             }|
-	{6:~                   }{3:│}{6:~                  }|
-	{6:~                   }{3:│}{6:~                  }|
-	{6:~                   }{3:│}{6:~                  }|
-	{6:~                   }{3:│}{6:~                  }|
-	{6:~                   }{3:│}{6:~                  }|
-	{6:~                   }{3:│}{6:~                  }|
-	{6:~                   }{3:│}{6:~                  }|
-	{6:~                   }{3:│}{6:~                  }|
-	{6:~                   }{3:│}{6:~                  }|
-	{6:~                   }{3:│}{6:~                  }|
-	{6:~                   }{3:│}{6:~                  }|
-	{7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
-	:set diffopt=internal,filler,linematch  |
+        {1:  }^BB                {3:│}{1:  }BB               |
+        {1:  }{9:   AA}{8:A}{9:            }{3:│}{1:  }{9:   AA}{8:B}{9:           }|
+        {1:  }{2:------------------}{3:│}{1:  }{4:AAAB             }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+                                                |
       ]]}
       feed(':set diffopt+=iwhiteall<cr>')
       screen:expect{grid=[[
-	{1:  }^BB                {3:│}{1:  }BB               |
-	{1:  }{2:------------------}{3:│}{1:  }{4:   AAB           }|
-	{1:  }{9:   AAA            }{3:│}{1:  }{9:AAA}{8:B}{9:             }|
-	{6:~                   }{3:│}{6:~                  }|
-	{6:~                   }{3:│}{6:~                  }|
-	{6:~                   }{3:│}{6:~                  }|
-	{6:~                   }{3:│}{6:~                  }|
-	{6:~                   }{3:│}{6:~                  }|
-	{6:~                   }{3:│}{6:~                  }|
-	{6:~                   }{3:│}{6:~                  }|
-	{6:~                   }{3:│}{6:~                  }|
-	{6:~                   }{3:│}{6:~                  }|
-	{6:~                   }{3:│}{6:~                  }|
-	{6:~                   }{3:│}{6:~                  }|
-	{7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
-	:set diffopt+=iwhiteall                 |
+        {1:  }^BB                {3:│}{1:  }BB               |
+        {1:  }{2:------------------}{3:│}{1:  }{4:   AAB           }|
+        {1:  }{9:   AAA            }{3:│}{1:  }{9:AAA}{8:B}{9:             }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {6:~                   }{3:│}{6:~                  }|
+        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+        :set diffopt+=iwhiteall                 |
       ]]}
     end)
   end)
