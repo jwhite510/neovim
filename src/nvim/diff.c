@@ -1836,6 +1836,9 @@ int count_virtual_to_real(win_T *win, const linenr_T lnum,
 /// @param s2
 long count_matched_chars(const char_u *s1, const char_u *s2)
 {
+  FILE*fp=fopen("debug.txt","a");
+  fprintf(fp,"compare: %s, %s \n", s1,s2);
+  fclose(fp);
   long l1=(long)STRLEN(s1), l2=(long)STRLEN(s2);
   if ( diff_flags & DIFF_IWHITE || diff_flags & DIFF_IWHITEALL
       || diff_flags & DIFF_ICASE ) {
@@ -2161,6 +2164,11 @@ void linematch_2buffers(diff_T *dp)
 /// @param dp
 void linematch_3buffers(diff_T * dp)
 {
+  FILE*fp=fopen("debug.txt","a");
+  fprintf(fp,"-------------------\n");
+  fprintf(fp,"start algorithm 3 buffers\n");
+  fprintf(fp,"-------------------\n");
+  fclose(fp);
   int b0 = dp->df_valid_buffers[0];
   int b1 = dp->df_valid_buffers[1];
   int b2 = dp->df_valid_buffers[2];
@@ -2181,7 +2189,9 @@ void linematch_3buffers(diff_T * dp)
     }
   }
   // memory for avoiding repetitive calculations of score
-  int* mem=xmalloc(((dp->df_count[b1]+1)*(dp->df_count[b2]+1))*sizeof(int));
+  int* mem12=xmalloc(((dp->df_count[b1]+1)*(dp->df_count[b2]+1))*sizeof(int));
+  int* mem01=xmalloc(((dp->df_count[b0]+1)*(dp->df_count[b1]+1))*sizeof(int));
+  int* mem02=xmalloc(((dp->df_count[b0]+1)*(dp->df_count[b2]+1))*sizeof(int));
   bool icur = 1;
   int score;
   for (int i = 0; i <= dp->df_count[b0]; i++) {
@@ -2211,10 +2221,11 @@ void linematch_3buffers(diff_T * dp)
               DFPATH3_SKIP2);
         } else if (k == 0) {
           df_pathmatrix3[icur][j][k].df_lev_score = -1;
-          score = df_pathmatrix3[!icur][j-1][k].df_lev_score+
-            count_matched_chars(
-                ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
-                ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false));
+          long matched_chars=count_matched_chars(
+              ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
+              ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false));
+          mem01[i * (dp->df_count[b1]+1) + j] = matched_chars;
+          score = df_pathmatrix3[!icur][j-1][k].df_lev_score+matched_chars;
           if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
             update_path3(
                 dp, df_pathmatrix3, score, icur, j, k,
@@ -2237,10 +2248,11 @@ void linematch_3buffers(diff_T * dp)
           }
         } else if (j == 0) {
           df_pathmatrix3[icur][j][k].df_lev_score = -1;
-          score = df_pathmatrix3[!icur][j][k-1].df_lev_score+
-            count_matched_chars(
-                ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
-                ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
+          long matched_chars=count_matched_chars(
+              ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
+              ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
+          mem02[i * (dp->df_count[b2]+1) + k] = matched_chars;
+          score = df_pathmatrix3[!icur][j][k-1].df_lev_score+matched_chars;
           if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
             update_path3(
                 dp, df_pathmatrix3, score, icur, j, k,
@@ -2267,7 +2279,7 @@ void linematch_3buffers(diff_T * dp)
                 ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false),
                 ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
           // store in memory for later
-          mem[j * (dp->df_count[b2]+1) + k] = matched_chars;
+          mem12[j * (dp->df_count[b2]+1) + k] = matched_chars;
           score = df_pathmatrix3[icur][j-1][k-1].df_lev_score + matched_chars;
           if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
             update_path3(
@@ -2291,9 +2303,10 @@ void linematch_3buffers(diff_T * dp)
           }
         } else {
           df_pathmatrix3[icur][j][k].df_lev_score = -1;
-          long matched_01=count_matched_chars(
-              ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
-              ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false));
+          // long matched_01=count_matched_chars(
+          //     ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
+          //     ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false));
+          long matched_01=mem01[i * (dp->df_count[b1]+1) + j];
           score = df_pathmatrix3[!icur][j-1][k].df_lev_score+matched_01;
           if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
             update_path3(
@@ -2301,9 +2314,10 @@ void linematch_3buffers(diff_T * dp)
                 !icur, j-1, k,  // from
                 DFPATH3_COMPARE01);  // choice
           }
-          long matched_02=count_matched_chars(
-              ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
-              ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
+          // long matched_02=count_matched_chars(
+          //     ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
+          //     ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
+          long matched_02=mem02[i * (dp->df_count[b2]+1) + k];
           score = df_pathmatrix3[!icur][j][k-1].df_lev_score+matched_02;
           if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
             update_path3(
@@ -2315,7 +2329,7 @@ void linematch_3buffers(diff_T * dp)
           //   df_pathmatrix3[icur][j-1][k-1].df_lev_score+count_matched_chars(
           //       ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false),
           //       ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
-          long matched_12=mem[j * (dp->df_count[b2]+1) + k];
+          long matched_12=mem12[j * (dp->df_count[b2]+1) + k];
           score = df_pathmatrix3[icur][j-1][k-1].df_lev_score+matched_12;
           if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
             update_path3(
@@ -2435,7 +2449,7 @@ void linematch_3buffers(diff_T * dp)
     xfree(df_pathmatrix3[i]);
   }
   xfree(df_pathmatrix3);
-  xfree(mem);
+  xfree(mem12),xfree(mem01),xfree(mem02);
 }
 
 
