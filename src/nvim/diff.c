@@ -2951,7 +2951,7 @@ int diffopt_changed(void)
       } else {
         return FAIL;
       }
-    } else if (STRNCMP(p, "linematch:", 10) == 0) {
+    } else if ((STRNCMP(p, "linematch:", 10) == 0) && ascii_isdigit(p[11])) {
       p+=10;
       linematch_lines_new = getdigits_int(&p, false, linematch_lines_new);
       diff_flags_new |= DIFF_LINEMATCH;
