@@ -1836,9 +1836,6 @@ int count_virtual_to_real(win_T *win, const linenr_T lnum,
 /// @param s2
 long count_matched_chars(const char_u *s1, const char_u *s2)
 {
-  FILE*fp=fopen("debug.txt","a");
-  fprintf(fp,"compare: %s, %s \n", s1,s2);
-  fclose(fp);
   long l1=(long)STRLEN(s1), l2=(long)STRLEN(s2);
   if ( diff_flags & DIFF_IWHITE || diff_flags & DIFF_IWHITEALL
       || diff_flags & DIFF_ICASE ) {
@@ -2164,11 +2161,6 @@ void linematch_2buffers(diff_T *dp)
 /// @param dp
 void linematch_3buffers(diff_T * dp)
 {
-  FILE*fp=fopen("debug.txt","a");
-  fprintf(fp,"-------------------\n");
-  fprintf(fp,"start algorithm 3 buffers\n");
-  fprintf(fp,"-------------------\n");
-  fclose(fp);
   int b0 = dp->df_valid_buffers[0];
   int b1 = dp->df_valid_buffers[1];
   int b2 = dp->df_valid_buffers[2];
