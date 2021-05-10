@@ -1763,15 +1763,15 @@ bool diff_linematch(diff_T *dp)
   }
   // are there more than three diff buffers?
   int diffbuffers = 0;
-  int tsize = 1;
+  int tsize = 0;
   for (int i = 0; i < DB_COUNT; i++) {
     if ( curtab->tp_diffbuf[i] != NULL ) {
       diffbuffers++;
-      tsize *= dp->df_count[i];
+      tsize += dp->df_count[i];
     }
   }
-  // avoid allocating a huge array because it will crash
-  if (tsize > MAX_LINEMATCH_ARRAY_SIZE) {
+  // avoid allocating a huge array because it will lag
+  if (tsize > linematch_lines) {
     return 0;
   }
   if (diffbuffers <= 3) {  // can diff up to 3 buffers
@@ -2881,6 +2881,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
 int diffopt_changed(void)
 {
   int diff_context_new = 6;
+  int linematch_lines_new = 0;
   int diff_flags_new = 0;
   int diff_foldcolumn_new = 2;
   long diff_algorithm_new = 0;
@@ -2950,8 +2951,9 @@ int diffopt_changed(void)
       } else {
         return FAIL;
       }
-    } else if (STRNCMP(p, "linematch", 9) == 0) {
-      p+=9;
+    } else if (STRNCMP(p, "linematch:", 10) == 0) {
+      p+=10;
+      linematch_lines_new = getdigits_int(&p, false, linematch_lines_new);
       diff_flags_new |= DIFF_LINEMATCH;
     }
 
@@ -2981,6 +2983,7 @@ int diffopt_changed(void)
 
   diff_flags = diff_flags_new;
   diff_context = diff_context_new == 0 ? 1 : diff_context_new;
+  linematch_lines = linematch_lines_new;
   diff_foldcolumn = diff_foldcolumn_new;
   diff_algorithm = diff_algorithm_new;
 
