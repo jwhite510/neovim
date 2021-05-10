@@ -1484,14 +1484,21 @@ int do_set(
               /* locate newval[] in origval[] when removing it
                * and when adding to avoid duplicates */
               i = 0;                    // init for GCC
+              int j = 0; // length up to the :
+              bool subparam = false;
               if (removing || (flags & P_NODUP)) {
                 i = (int)STRLEN(newval);
+                // compare up to the :, if so adjust the number
+                while(j < i){
+                  if ( newval[j]!=':' ){ j++;
+                  }else break;
+                }
                 bs = 0;
                 for (s = origval; *s; s++) {
                   if ((!(flags & P_COMMA)
                        || s == origval
                        || (s[-1] == ',' && !(bs & 1)))
-                      && STRNCMP(s, newval, i) == 0
+                      && (STRNCMP(s, newval, i) == 0 || STRNCMP(s, newval, j) == 0)
                       && (!(flags & P_COMMA)
                           || s[i] == ','
                           || s[i] == NUL)) {
@@ -1510,10 +1517,17 @@ int do_set(
 
                 // do not add if already there
                 if ((adding || prepending) && *s) {
+                  if(i != j) subparam = true;
+                  else STRCPY(newval, origval);
                   prepending = false;
                   adding = false;
-                  STRCPY(newval, origval);
                 }
+              }
+              // replace the value in the sub parameter
+              if (subparam) {
+                bool a = true;
+                // STRMOVE(newval, )
+
               }
 
               /* concatenate the two strings; add a ',' if
