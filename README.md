@@ -6,22 +6,22 @@ are made in a more useful way to show which lines are actually being added,
 changed, and deleted.
 
 ## 2 files Before:
-<img src="images/2files_before.png" width="750" height="400">  
+<img src="images/2files_before.png" width="800" height="400">  
 
 ## 2 files After:
-<img src="images/2files_after.png" width="750" height="400">  
+<img src="images/2files_after.png" width="800" height="400">  
 
 ## 3 files Before:
-<img src="images/3files_before.png" width="750" height="400">  
+<img src="images/3files_before.png" width="800" height="400">  
 
 ## 3 files After:
-<img src="images/3files_after.png" width="750" height="400">  
+<img src="images/3files_after.png" width="800" height="400">  
 
 ## Fugitive merge conflict before:
-<img src="images/mergeconflict_before.png" width="750" height="400">  
+<img src="images/mergeconflict_before.png" width="800" height="400">  
 
 ## Fugitive merge conflict after:
-<img src="images/mergeconflict_after.png" width="750" height="400">  
+<img src="images/mergeconflict_after.png" width="800" height="400">  
 
 ## How to use:
 enable this enhanced diff mode by using :set diffopt+=linematch:{n}. Where n is
