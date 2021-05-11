@@ -81,6 +81,18 @@ from which it may have came.  However, we cannot apply the general 3d case
 before first populating the edges and the surfaces of the cube. Therefore, there
 are several sets of if / else statements inside the main loops which determine
 which case to evaluate.
+
+## optimizations
+As the function to calculate the cell of a tensor at point i,j,k is a function
+of the cells at i-1, j-1, k-1, the whole tensor doesn't need to be stored in
+memory at once. In the case of the 3d cube, only slices (along k and j axis) are
+stored in memory. For the 2d matrix (for 2 files), only two rows are stored at a
+time.
+
+In the 3d case, 3 arrays are populated to memorize the score (matched
+characters) of the 3 buffers, so a redundant calculation of the scores does not
+occur
+
 ## original neovim documentation:
 [![Neovim](https://raw.githubusercontent.com/neovim/neovim.github.io/master/logos/neovim-logo-300x87.png)](https://neovim.io)
 
