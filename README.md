@@ -1,3 +1,56 @@
+## linematch diff mode: Improved Diff Mode Fork for neovim
+
+This fork was created to improve the diff mode of neovim to show more useful
+information when comparing lines between files in diff view. Line comparisons
+are made in a more useful way to show which lines are actually being added,
+changed, and deleted.
+
+## 2 files Before:
+<img src="images/2files_before.png" width="700" height="400">  
+
+## 2 files After:
+<img src="images/2files_after.png" width="700" height="400">  
+
+## 3 files Before:
+<img src="images/3files_before.png" width="700" height="400">  
+
+## 3 files After:
+<img src="images/3files_after.png" width="700" height="400">  
+
+## Fugitive merge conflict before:
+<img src="images/mergeconflict_before.png" width="700" height="400">  
+
+## Fugitive merge conflict after:
+<img src="images/mergeconflict_after.png" width="700" height="400">  
+
+## How to use:
+enable this enhanced diff mode by using :set diffopt+=linematch:{n}. Where n is
+the maximum total number of lines of the diff hunk. The line match diff opt is
+disabled automatically when diffing more than three files at once. A reasonable
+setting is ":set diffopt+=linematch:50", this will align the most similar lines
+for a diff hunk in two buffers, 25 lines long in each, or a diff hunk between 3
+files, 20 lines, 20 lines, and 10 lines. The limit is placed to prevent lag when
+a very diff hunk is present, in the case that the specified line number is
+exceeded, the default diff behaviour is resumed.
+
+## Why is this not a plugin?
+This may be able to be converted to a plugin, but doing so would take much more
+work because the original diff mode would first need to be completely hidden.
+All the locations with diffs would need to be overwritten with the text from the
+linematch diff output. This would include writing text over locations which are
+marked as filler lines, which I don't believe is possible to do. Changing lines
+would need to be done on different "fake lines", because part of the
+functionality here moves around the lines to align them between the diff
+buffers. Additionally, By default the diff mode in vim is very bad compared to
+other editors like Emacs and vs-code, so by default VIM should have a comparable
+high quality diff view because other editors do.
+
+## How it works:
+<img src="images/figure.png" width="700" height="600">  
+<img src="images/simple_before.png" width="700" height="400">  
+<img src="images/simple_after.png" width="700" height="400">  
+
+## original neovim documentation:
 [![Neovim](https://raw.githubusercontent.com/neovim/neovim.github.io/master/logos/neovim-logo-300x87.png)](https://neovim.io)
 
 [Documentation](https://neovim.io/doc) |
