@@ -47,8 +47,10 @@ high quality diff view because other editors do.
 
 ## How it works:
 <img src="images/figure.png" width="700" height="600">  
+
 ## before:
 <img src="images/simple_before.png" width="400" height="200">  
+
 ## after:
 <img src="images/simple_after.png" width="400" height="200">  
 
