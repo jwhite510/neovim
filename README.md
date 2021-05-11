@@ -47,8 +47,8 @@ high quality diff view because other editors do.
 
 ## How it works:
 <img src="images/figure.png" width="700" height="600">  
-<img src="images/simple_before.png" width="233" height="133">  
-<img src="images/simple_after.png" width="233" height="133">  
+<img src="images/simple_before.png" width="350" height="200">  
+<img src="images/simple_after.png" width="350" height="200">  
 
 ## original neovim documentation:
 [![Neovim](https://raw.githubusercontent.com/neovim/neovim.github.io/master/logos/neovim-logo-300x87.png)](https://neovim.io)
