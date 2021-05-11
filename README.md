@@ -47,8 +47,10 @@ high quality diff view because other editors do.
 
 ## How it works:
 <img src="images/figure.png" width="700" height="600">  
-<img src="images/simple_before.png" width="350" height="200">  
-<img src="images/simple_after.png" width="350" height="200">  
+## before:
+<img src="images/simple_before.png" width="400" height="200">  
+## after:
+<img src="images/simple_after.png" width="400" height="200">  
 
 The 3d case (for 3 buffers) of the algorithm implemented when diffopt
 'linematch' is enabled. The algorithm constructs a 3d tensor to compare a diff
