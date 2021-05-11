@@ -6,22 +6,22 @@ are made in a more useful way to show which lines are actually being added,
 changed, and deleted.
 
 ## 2 files Before:
-<img src="images/2files_before.png" width="700" height="400">  
+<img src="images/2files_before.png" width="750" height="400">  
 
 ## 2 files After:
-<img src="images/2files_after.png" width="700" height="400">  
+<img src="images/2files_after.png" width="750" height="400">  
 
 ## 3 files Before:
-<img src="images/3files_before.png" width="700" height="400">  
+<img src="images/3files_before.png" width="750" height="400">  
 
 ## 3 files After:
-<img src="images/3files_after.png" width="700" height="400">  
+<img src="images/3files_after.png" width="750" height="400">  
 
 ## Fugitive merge conflict before:
-<img src="images/mergeconflict_before.png" width="700" height="400">  
+<img src="images/mergeconflict_before.png" width="750" height="400">  
 
 ## Fugitive merge conflict after:
-<img src="images/mergeconflict_after.png" width="700" height="400">  
+<img src="images/mergeconflict_after.png" width="750" height="400">  
 
 ## How to use:
 enable this enhanced diff mode by using :set diffopt+=linematch:{n}. Where n is
@@ -47,8 +47,8 @@ high quality diff view because other editors do.
 
 ## How it works:
 <img src="images/figure.png" width="700" height="600">  
-<img src="images/simple_before.png" width="700" height="400">  
-<img src="images/simple_after.png" width="700" height="400">  
+<img src="images/simple_before.png" width="233" height="133">  
+<img src="images/simple_after.png" width="233" height="133">  
 
 ## original neovim documentation:
 [![Neovim](https://raw.githubusercontent.com/neovim/neovim.github.io/master/logos/neovim-logo-300x87.png)](https://neovim.io)
