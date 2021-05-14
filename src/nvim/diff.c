@@ -1886,16 +1886,16 @@ long count_matched_chars(const char_u *s1, const char_u *s2)
 /// @param choice
 void update_path3(diff_T *dp, diffcomparisonpath3_T ***df_pathmatrix3,
                   int score, int i, int j, int k, int _i, int _j, int _k,
-                  enum path3_choice choice)
+                  enum df_path3_choice choice)
 {
   df_pathmatrix3[i][j][k].df_lev_score = score;
-  for (int __k = 0; __k <= df_pathmatrix3[_i][_j][_k].path_index; __k++) {
+  for (int __k = 0; __k <= df_pathmatrix3[_i][_j][_k].df_path_index; __k++) {
     df_pathmatrix3[i][j][k].df_path3[__k]=
       df_pathmatrix3[_i][_j][_k].df_path3[__k]; }
-  df_pathmatrix3[i][j][k].path_index = df_pathmatrix3[_i][_j][_k].path_index;
+  df_pathmatrix3[i][j][k].df_path_index = df_pathmatrix3[_i][_j][_k].df_path_index;
   df_pathmatrix3[i][j][k].df_path3
-    [df_pathmatrix3[i][j][k].path_index] = choice;  // this choice
-  df_pathmatrix3[i][j][k].path_index++;
+    [df_pathmatrix3[i][j][k].df_path_index] = choice;  // this choice
+  df_pathmatrix3[i][j][k].df_path_index++;
 }
 /// helper function for the diff alignment algorithm copy the newly found
 /// optimal path to an index in the tensor for more detailed algorith
@@ -1913,16 +1913,16 @@ void update_path3(diff_T *dp, diffcomparisonpath3_T ***df_pathmatrix3,
 /// @param choice
 void update_path2(diff_T *dp, diffcomparisonpath2_T **df_pathmatrix2,
                   int score, int i, int j, int _i, int _j,
-                  enum path2_choice choice)
+                  enum df_path2_choice choice)
 {
   df_pathmatrix2[i][j].df_lev_score = score;
-  for (int k = 0; k <= df_pathmatrix2[_i][_j].path_index; k++) {
+  for (int k = 0; k <= df_pathmatrix2[_i][_j].df_path_index; k++) {
     df_pathmatrix2[i][j].df_path2[k]=
       df_pathmatrix2[_i][_j].df_path2[k]; }
-  df_pathmatrix2[i][j].path_index = df_pathmatrix2[_i][_j].path_index;
+  df_pathmatrix2[i][j].df_path_index = df_pathmatrix2[_i][_j].df_path_index;
   df_pathmatrix2[i][j].df_path2
-    [df_pathmatrix2[i][j].path_index] = choice;  // this choice
-  df_pathmatrix2[i][j].path_index++;
+    [df_pathmatrix2[i][j].df_path_index] = choice;  // this choice
+  df_pathmatrix2[i][j].df_path_index++;
 }
 /// helper function for the calculation of the levenshtein distance
 ///
@@ -1989,11 +1989,11 @@ void initialize_compareline3(diff_T *dp, int thisb, int thisp,
                              int otherb1, int otherb2)
 {
   dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp
-                         ].compare[otherb1]=-1;
+                         ].df_compare[otherb1]=-1;
   dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp
-                         ].compare[otherb2]=-1;
-  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp].newline = false;
-  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp].filler = 0;
+                         ].df_compare[otherb2]=-1;
+  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp].df_newline = false;
+  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp].df_filler = 0;
 }
 /// Helper function for the diff alignment algorithm.
 /// "dp->df_comparisonlines" represents a 2d array. indexed as
@@ -2009,10 +2009,10 @@ void initialize_compareline3(diff_T *dp, int thisb, int thisp,
 void initialize_compareline2(diff_T *dp, int thisb, int thisp, int otherb)
 {
   dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp
-                         ].compare[otherb] = -1;
+                         ].df_compare[otherb] = -1;
   dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp
-                         ].newline = false;
-  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp].filler = 0;
+                         ].df_newline = false;
+  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp].df_filler = 0;
 }
 /// the 2d (for two buffers) implementation of the linematch diff
 /// algorithm for aligning the most similar lines when constructing diff
@@ -2033,7 +2033,7 @@ void linematch_2buffers(diff_T *dp)
     for (int j = 0; j < (dp->df_count[b1]+1); j++) {
       df_pathmatrix2[i][j].df_path2=
         xmalloc((dp->df_count[b0]+dp->df_count[b1]) *
-                sizeof(enum path2_choice));
+                sizeof(enum df_path2_choice));
     }
   }
   bool icur = 1;
@@ -2043,7 +2043,7 @@ void linematch_2buffers(diff_T *dp)
     for (int j = 0; j <= dp->df_count[b1]; j++) {
       if (i == 0 && j == 0) {
         df_pathmatrix2[0][0].df_lev_score = 0;
-        df_pathmatrix2[0][0].path_index = 0;
+        df_pathmatrix2[0][0].df_path_index = 0;
       } else if (i == 0) {
         score = df_pathmatrix2[0][j-1].df_lev_score;
         update_path2(dp, df_pathmatrix2, score, 0, j,  // to
@@ -2091,22 +2091,22 @@ void linematch_2buffers(diff_T *dp)
   initialize_compareline2(dp, b0, p0, b1);
   initialize_compareline2(dp, b1, p1, b0);
   for (int i = 0; i < df_pathmatrix2
-       [icur][dp->df_count[b1]].path_index; i++) {
+       [icur][dp->df_count[b1]].df_path_index; i++) {
     int p = df_pathmatrix2[icur][dp->df_count[b1]].df_path2[i];
     if (p == DFPATH2_SKIP0) {
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].filler++;
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].newline = true;
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_filler++;
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_newline = true;
       p0++;
       initialize_compareline2(dp, b0, p0, b1);
     } else if (p == DFPATH2_COMPARE01) {
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].compare[b1]=p1;
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].compare[b0]=p0;
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_compare[b1]=p1;
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_compare[b0]=p0;
       p1++, p0++;
       initialize_compareline2(dp, b0, p0, b1);
       initialize_compareline2(dp, b1, p1, b0);
     } else if (p == DFPATH2_SKIP1) {
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].filler++;
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].newline = true;
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_filler++;
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_newline = true;
       p1++;
       initialize_compareline2(dp, b1, p1, b0);
     }
@@ -2127,7 +2127,7 @@ void linematch_2buffers(diff_T *dp)
 /// moving from one edge of the cube/3d tensor to the opposite edge.
 /// Motions from one cell of the cube to the next represent decisions. In
 /// a 3d cube, there are a total of 7 decisions that can be made,
-/// represented by the enum path3_choice which is defined in
+/// represented by the enum df_path3_choice which is defined in
 /// buffer_defs.h a comparison of buffer 0 and 1 represents a motion
 /// toward the opposite edge of the cube with components along the 0 and
 /// 1 axes.  a comparison of buffer 0, 1, and 2 represents a motion
@@ -2168,7 +2168,7 @@ void linematch_3buffers(diff_T * dp)
         df_pathmatrix3[i][j][k].df_path3 =
             xmalloc(
                 (dp->df_count[b0]+dp->df_count[b1]+dp->df_count[b2]) *
-                sizeof(enum path3_choice));
+                sizeof(enum df_path3_choice));
       }
     }
   }
@@ -2187,7 +2187,7 @@ void linematch_3buffers(diff_T * dp)
       for (int k = 0; k<= dp->df_count[b2]; k++) {
         if (i == 0 && j == 0 && k == 0) {
           df_pathmatrix3[0][0][0].df_lev_score = 0;
-          df_pathmatrix3[0][0][0].path_index = 0;
+          df_pathmatrix3[0][0][0].df_path_index = 0;
         } else if (j == 0 && k == 0) {
          score = df_pathmatrix3[!icur][0][0].df_lev_score;
          update_path3(
@@ -2361,57 +2361,57 @@ void linematch_3buffers(diff_T * dp)
   initialize_compareline3(dp, b1, p1, b0, b2);
   initialize_compareline3(dp, b2, p2, b0, b1);
   for (int i = 0; i < df_pathmatrix3
-       [icur][dp->df_count[b1]][dp->df_count[b2]].path_index; i++) {
+       [icur][dp->df_count[b1]][dp->df_count[b2]].df_path_index; i++) {
     int p = df_pathmatrix3
       [icur][dp->df_count[b1]][dp->df_count[b2]].df_path3[i];
     if (p == DFPATH3_COMPARE01) {
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].compare[b1] = p1;
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].compare[b0] = p0;
-      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].filler++;
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_compare[b1] = p1;
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_compare[b0] = p0;
+      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_filler++;
       p0++, p1++;
       initialize_compareline3(dp, b0, p0, b1, b2);
       initialize_compareline3(dp, b1, p1, b0, b2);
     } else if (p == DFPATH3_COMPARE02) {
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].compare[b2] = p2;
-      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].compare[b0] = p0;
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].filler++;
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_compare[b2] = p2;
+      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_compare[b0] = p0;
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_filler++;
       p0++, p2++;
       initialize_compareline3(dp, b0, p0, b1, b2);
       initialize_compareline3(dp, b2, p2, b0, b1);
     } else if (p == DFPATH3_COMPARE12) {
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].compare[b2] = p2;
-      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].compare[b1] = p1;
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].filler++;
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_compare[b2] = p2;
+      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_compare[b1] = p1;
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_filler++;
       p1++, p2++;
       initialize_compareline3(dp, b1, p1, b0, b2);
       initialize_compareline3(dp, b2, p2, b0, b1);
     } else if (p == DFPATH3_COMPARE012) {
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].compare[b1] = p1;
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].compare[b2] = p2;
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].compare[b0] = p0;
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].compare[b2] = p2;
-      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].compare[b0] = p0;
-      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].compare[b1] = p1;
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_compare[b1] = p1;
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_compare[b2] = p2;
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_compare[b0] = p0;
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_compare[b2] = p2;
+      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_compare[b0] = p0;
+      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_compare[b1] = p1;
       p0++, p1++, p2++;
       initialize_compareline3(dp, b0, p0, b1, b2);
       initialize_compareline3(dp, b1, p1, b0, b2);
       initialize_compareline3(dp, b2, p2, b0, b1);
     } else if  (p == DFPATH3_SKIP0) {
-      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].filler++;
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].filler++;
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].newline = true;
+      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_filler++;
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_filler++;
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_newline = true;
       p0++;
       initialize_compareline3(dp, b0, p0, b1, b2);
     } else if (p == DFPATH3_SKIP1) {
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].filler++;
-      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].filler++;
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].newline = true;
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_filler++;
+      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_filler++;
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_newline = true;
       p1++;
       initialize_compareline3(dp, b1, p1, b0, b2);
     } else if (p == DFPATH3_SKIP2) {
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].filler++;
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].filler++;
-      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].newline = true;
+      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_filler++;
+      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_filler++;
+      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_newline = true;
       p2++;
       initialize_compareline3(dp, b2, p2, b0, b1);
     }
@@ -2515,18 +2515,18 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
     long off = lnum - dp->df_lnum[idx];
     if (off < dp->df_count[idx]) {
       if (linestatus != NULL&&dp->df_comparisonlines[
-          dp->df_arr_col_size * idx + lnum-dp->df_lnum[idx]].newline) {
+          dp->df_arr_col_size * idx + lnum-dp->df_lnum[idx]].df_newline) {
         *linestatus=-2;   // line was added
       } else if (linestatus != NULL) { *linestatus=-1; }  // line was changed
       return (
           diff_flags&DIFF_FILLER?
           dp->df_comparisonlines[
-              dp->df_arr_col_size * idx + lnum-dp->df_lnum[idx]].filler:0);
+              dp->df_arr_col_size * idx + lnum-dp->df_lnum[idx]].df_filler:0);
     } else {
       return (
           diff_flags&DIFF_FILLER?
           dp->df_comparisonlines[
-              dp->df_arr_col_size * idx + lnum-dp->df_lnum[idx]].filler:0);
+              dp->df_arr_col_size * idx + lnum-dp->df_lnum[idx]].df_filler:0);
     }
   }
   if (lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
@@ -3057,7 +3057,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       long comparl;
       if (diff_linematch(dp)) {
         comparl = dp->df_comparisonlines[
-            dp->df_arr_col_size * idx +  lnum - dp->df_lnum[idx]  ].compare[i];
+            dp->df_arr_col_size * idx +  lnum - dp->df_lnum[idx]  ].df_compare[i];
         if (comparl != -1) { comparl+=dp->df_lnum[i]; }
         if (comparl == -1) { continue; }
       } else {

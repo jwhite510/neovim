@@ -60,7 +60,7 @@ between 3 buffers. The dimmensions of the tensor are the length of the diff in
 each buffer plus 1 A path is constructed by moving from one edge of the cube/3d
 tensor to the opposite edge.  Motions from one cell of the cube to the next
 represent decisions. In a 3d cube, there are a total of 7 decisions that can be
-made, represented by the enum path3_choice which is defined in buffer_defs.h a
+made, represented by the enum df_path3_choice which is defined in buffer_defs.h a
 comparison of buffer 0 and 1 represents a motion toward the opposite edge of the
 cube with components along the 0 and 1 axes.  a comparison of buffer 0, 1, and 2
 represents a motion toward the opposite edge of the cube with components along
