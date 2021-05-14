@@ -2425,12 +2425,13 @@ void linematch_3buffers(diff_T * dp)
 
 /// Check diff status for line "lnum" in buffer "buf":
 ///
-/// Returns 0 for nothing special Returns -1 for a line that should be
-/// highlighted as changed.  Returns -2 for a line that should be
-/// highlighted as added/deleted.  Returns > 0 for inserting that many
-/// filler lines above it (never happens when 'diffopt' doesn't contain
-///     "filler").  This should only be used for windows where 'diff' is
-/// set.  When diffopt contains linematch, a changed/added/deleted line
+/// Returns 0 for nothing special
+/// Returns -1 for a line that should be highlighted as changed.
+/// Returns -2 for a line that should be highlighted as added/deleted.
+/// Returns > 0 for inserting that many filler lines above it (never happens
+/// when 'diffopt' doesn't contain "filler").
+/// This should only be used for windows where 'diff' is set.
+/// When diffopt contains linematch, a changed/added/deleted line
 /// may also have filler lines above it. In such a case, the possibilities
 /// are no longer mutually exclusive. The number of filler lines is
 /// returned from diff_check, and the integer 'linestatus' passed by
