@@ -2145,6 +2145,18 @@ void linematch_2buffers(diff_T *dp)
 /// before first populating the edges and the surfaces of the cube.
 /// Therefore, there are several sets of if / else statements inside the
 /// main loops which determine which case to evaluate.
+///
+/// Optimizations
+/// As the function to calculate the cell of a tensor at point i,j,k is a
+/// function of the cells at i-1, j-1, k-1, the whole tensor doesn't need
+/// to be stored in memory at once. In the case of the 3d cube, only two
+/// slices (along k and j axis) are stored in memory. For the 2d matrix
+/// (for 2 files), only two rows are stored at a time. The next/previous
+/// slice (or row) is always calculated from the other, and they alternate
+/// at each iteration.
+/// In the 3d case, 3 arrays are populated to memorize the score (matched
+/// characters) of the 3 buffers, so a redundant calculation of the
+/// scores does not occur
 /// @param dp
 void linematch_3buffers(diff_T * dp)
 {
