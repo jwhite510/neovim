@@ -517,7 +517,7 @@ static diff_T* diff_alloc_new(tabpage_T *tp, diff_T *dprev, diff_T *dp)
   diff_T *dnew = xmalloc(sizeof(*dnew));
   dnew->df_redraw = 1;
   dnew->df_next = dp;
-  dnew->df_comparisonlines=NULL;
+  dnew->df_comparisonlines = NULL;
   if (dprev == NULL) {
     tp->tp_first_diff = dnew;
   } else {
@@ -1816,7 +1816,7 @@ int count_virtual_to_real(win_T *win, const linenr_T lnum,
     real_offset++;
   }
   if ( line_new_virtualp != NULL ) {
-    (*line_new_virtualp)=virtual_offset;
+    (*line_new_virtualp) = virtual_offset;
   }
   return real_offset;
 }
@@ -1827,10 +1827,10 @@ int count_virtual_to_real(win_T *win, const linenr_T lnum,
 /// @param s2
 long count_matched_chars(const char_u *s1, const char_u *s2)
 {
-  long l1=(long)STRLEN(s1), l2=(long)STRLEN(s2);
+  long l1 = (long)STRLEN(s1), l2 = (long)STRLEN(s2);
   if ( diff_flags & DIFF_IWHITE || diff_flags & DIFF_IWHITEALL
       || diff_flags & DIFF_ICASE ) {
-    bool iwhite=(diff_flags & DIFF_IWHITEALL || diff_flags & DIFF_IWHITE);
+    bool iwhite = (diff_flags & DIFF_IWHITEALL || diff_flags & DIFF_IWHITE);
     // the newly processed strings that will be compared
     char_u *s1_proc = xmalloc(STRLEN(s1) * sizeof(char_u));
     char_u *s2_proc = xmalloc(STRLEN(s2) * sizeof(char_u));
@@ -1848,14 +1848,14 @@ long count_matched_chars(const char_u *s1, const char_u *s2)
           i++;
         } else { d++; }
       }
-      strsproc[k][i]='\0';
+      strsproc[k][i] = '\0';
     }
-    long l1_nowhite=(long)STRLEN(s1_proc);
-    long l2_nowhite=(long)STRLEN(s2_proc);
-    long maxlength = l1_nowhite > l2_nowhite?l1_nowhite:l2_nowhite;
+    long l1_proc = (long)STRLEN(s1_proc);
+    long l2_proc = (long)STRLEN(s2_proc);
+    long maxlength = l1_proc > l2_proc?l1_proc:l2_proc;
     long lev = levenshtein(s1_proc, s2_proc);
     xfree(s1_proc), xfree(s2_proc);
-    return maxlength-lev;
+    return maxlength - lev;
   }
   // compare strings without considering the white space
   long maxlength = l1 > l2?l1:l2;
@@ -1885,7 +1885,8 @@ void update_path3(diff_T *dp, diffcomparisonpath3_T ***df_pathmatrix3,
   for (int __k = 0; __k <= df_pathmatrix3[_i][_j][_k].df_path_index; __k++) {
     df_pathmatrix3[i][j][k].df_path3[__k]=
       df_pathmatrix3[_i][_j][_k].df_path3[__k]; }
-  df_pathmatrix3[i][j][k].df_path_index = df_pathmatrix3[_i][_j][_k].df_path_index;
+  df_pathmatrix3[i][j][k].df_path_index =
+    df_pathmatrix3[_i][_j][_k].df_path_index;
   df_pathmatrix3[i][j][k].df_path3
     [df_pathmatrix3[i][j][k].df_path_index] = choice;  // this choice
   df_pathmatrix3[i][j][k].df_path_index++;
@@ -1940,10 +1941,10 @@ long levmin(long a, long b, long c)
 long levenshtein(const char_u *s1, const char_u *s2)
 {
     long x, y;
-    long s1len=(long)STRLEN(s1), s2len=(long)STRLEN(s2);
+    long s1len = (long)STRLEN(s1), s2len = (long)STRLEN(s2);
     unsigned long **matrix = xmalloc(sizeof( long * ) * (s2len+1));
     for (long i = 0; i < (s2len+1); i++) {
-        matrix[i]=xmalloc(sizeof(long) * (s1len+1));
+        matrix[i] = xmalloc(sizeof(long) * (s1len+1));
     }
 
     matrix[0][0] = 0;
@@ -1953,10 +1954,10 @@ long levenshtein(const char_u *s1, const char_u *s2)
         matrix[0][y] = matrix[0][y-1] + 1; }
     for (x = 1; x <= s2len; x++) {
         for (y = 1; y <= s1len; y++) {
-            matrix[x][y] = levmin(matrix[x-1][y] + 1,
-                                  matrix[x][y-1] + 1,
-                                  matrix[x-1][y-1] + (s1[y-1] ==
-                                                      s2[x-1] ? 0 : 1));
+            matrix[x][y] = levmin(
+                matrix[x-1][y] + 1,
+                matrix[x][y-1] + 1,
+                matrix[x-1][y-1] + (s1[y-1] == s2[x-1] ? 0 : 1));
         }
     }
     long rvalue = matrix[s2len][s1len];
@@ -1985,7 +1986,8 @@ void initialize_compareline3(diff_T *dp, int thisb, int thisp,
                          ].df_compare[otherb1]=-1;
   dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp
                          ].df_compare[otherb2]=-1;
-  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp].df_newline = false;
+  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp
+                         ].df_newline = false;
   dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp].df_filler = 0;
 }
 /// Helper function for the diff alignment algorithm.
@@ -2494,7 +2496,7 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
     dp->df_valid_buffers_max = 0;
     for (i = 0; i < DB_COUNT; i++) {
       if (curtab->tp_diffbuf[i] != NULL) {
-        dp->df_valid_buffers[dp->df_valid_buffers_max]=i;
+        dp->df_valid_buffers[dp->df_valid_buffers_max] = i;
         dp->df_valid_buffers_max++;
       }
     }
@@ -3051,7 +3053,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       long comparl;
       if (diff_linematch(dp)) {
         comparl = dp->df_comparisonlines[
-            dp->df_arr_col_size * idx +  lnum - dp->df_lnum[idx]  ].df_compare[i];
+            dp->df_arr_col_size * idx +  lnum - dp->df_lnum[idx]].df_compare[i];
         if (comparl != -1) { comparl+=dp->df_lnum[i]; }
         if (comparl == -1) { continue; }
       } else {
@@ -3062,7 +3064,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       added = false;
       line_new = ml_get_buf(curtab->tp_diffbuf[i],
                             (diff_linematch(dp))?
-                            comparl:dp->df_lnum[i]+off, false);
+                            comparl:dp->df_lnum[i] + off, false);
 
       // Search for start of difference
       si_org = si_new = 0;
