@@ -3345,9 +3345,9 @@ void ex_diffgetput(exarg_T *eap)
         && (diff_check(curwin, eap->line1, NULL) == 0)
         && ((eap->line1 == 1)
             || (diff_check(curwin, eap->line1 - 1, NULL) == 0))) {
-      ++eap->line2;
+      eap->line2++;
     } else if (eap->line1 > 0) {
-      --eap->line1;
+      eap->line1--;
     }
   }
 
