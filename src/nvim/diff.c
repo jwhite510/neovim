@@ -452,9 +452,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
         }
       }
       dprev->df_next = dp->df_next;
-      if (!dp->df_redraw) {
-        xfree(dp->df_comparisonlines);
-      }
+      xfree(dp->df_comparisonlines);
       xfree(dp);
       dp = dprev->df_next;
     } else {
@@ -478,9 +476,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
 
     if (i == DB_COUNT) {
       diff_T *dnext = dp->df_next;
-      if (!dp->df_redraw) {
-        xfree(dp->df_comparisonlines);
-      }
+      xfree(dp->df_comparisonlines);
       xfree(dp);
       dp = dnext;
 
@@ -519,6 +515,7 @@ static diff_T *diff_alloc_new(tabpage_T *tp, diff_T *dprev, diff_T *dp)
   diff_T *dnew = xmalloc(sizeof(*dnew));
   dnew->df_redraw = 1;
   dnew->df_next = dp;
+  dnew->df_comparisonlines=NULL;
   if (dprev == NULL) {
     tp->tp_first_diff = dnew;
   } else {
@@ -1691,9 +1688,7 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
 
       while (dn != dp->df_next) {
         dpl = dn->df_next;
-        if (!dn->df_redraw) {
-          xfree(dn->df_comparisonlines);
-        }
+        xfree(dn->df_comparisonlines);
         xfree(dn);
         dn = dpl;
       }
@@ -1763,9 +1758,7 @@ void diff_clear(tabpage_T *tp)
   diff_T *next_p;
   for (p = tp->tp_first_diff; p != NULL; p = next_p) {
     next_p = p->df_next;
-    if (!p->df_redraw) {
-      xfree(p->df_comparisonlines);
-    }
+    xfree(p->df_comparisonlines);
     xfree(p);
   }
   tp->tp_first_diff = NULL;
@@ -3539,9 +3532,7 @@ void ex_diffgetput(exarg_T *eap)
       if (dfree != NULL) {
         // Diff is deleted, update folds in other windows.
         diff_fold_update(dfree, idx_to);
-        if (!dfree->df_redraw) {
-          xfree(dfree->df_comparisonlines);
-        }
+        xfree(dfree->df_comparisonlines);
         xfree(dfree);
       } else {
         // mark_adjust() may have changed the count in a wrong way
