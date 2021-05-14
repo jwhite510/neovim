@@ -893,13 +893,13 @@ struct file_buffer {
 
 
 // choices for comparison with linematch_2buffers
-enum path2_choice{
+enum df_path2_choice{
   DFPATH2_COMPARE01,
   DFPATH2_SKIP0,
   DFPATH2_SKIP1,
 };
 // choices for comparison with linematch_3buffers
-enum path3_choice{
+enum df_path3_choice{
   DFPATH3_COMPARE01,
   DFPATH3_COMPARE02,
   DFPATH3_COMPARE12,
@@ -912,27 +912,27 @@ enum path3_choice{
 // linematch_2buffers
 typedef struct diffcomparisonpath2_S diffcomparisonpath2_T;
 struct diffcomparisonpath2_S{
-  enum path2_choice *df_path2; // to keep track of this path traveled
+  enum df_path2_choice *df_path2; // to keep track of this path traveled
   int df_lev_score; // to keep track of the total score of this path
-  int path_index; // current index of this path
+  int df_path_index; // current index of this path
 };
 
 // contains array of choices chosen while comparing 3 files with
 // linematch_3buffers
 typedef struct diffcomparisonpath3_S diffcomparisonpath3_T;
 struct diffcomparisonpath3_S{
-  enum path3_choice *df_path3; // to keep track of this path traveled
+  enum df_path3_choice *df_path3; // to keep track of this path traveled
   int df_lev_score; // to keep track of the total score of this path
-  int path_index; // current index of this path
+  int df_path_index; // current index of this path
 };
 // contains the information for how to construct diff views when linematch
 // diffopt is enabled, it is populated after running linematch_3buffers or
 // linematch_2buffers.
 typedef struct df_linecompare_S df_linecompare_T;
 struct df_linecompare_S{
-  bool newline; // is this line skipped in other buffers?
-  int filler; // how many filler lines above this?
-  int compare[DB_COUNT]; // which line to compare to in other buffer
+  bool df_newline; // is this line skipped in other buffers?
+  int df_filler; // how many filler lines above this?
+  int df_compare[DB_COUNT]; // which line to compare to in other buffer
 };
 /*
  * Each diffblock defines where a block of lines starts in each of the buffers
