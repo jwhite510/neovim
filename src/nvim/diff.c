@@ -3062,7 +3062,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
   for (i = 0; i < DB_COUNT; ++i) {
     if ((curtab->tp_diffbuf[i] != NULL) && (i != idx)) {
       // Skip lines that are not in the other change (filler lines).
-      long comparl;
+      linenr_T comparl;
       if (diff_linematch(dp)) {
         comparl = dp->df_comparisonlines[
             dp->df_arr_col_size * idx +  lnum - dp->df_lnum[idx]].df_compare[i];
