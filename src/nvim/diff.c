@@ -1850,16 +1850,12 @@ long count_matched_chars(const char_u *s1, const char_u *s2)
       }
       strsproc[k][i] = '\0';
     }
-    long l1_proc = (long)STRLEN(s1_proc);
-    long l2_proc = (long)STRLEN(s2_proc);
-    long maxlength = l1_proc > l2_proc?l1_proc:l2_proc;
-    long lev = levenshtein(s1_proc, s2_proc);
+    long matching = matching_characters(s1_proc, s2_proc);
     xfree(s1_proc), xfree(s2_proc);
-    return maxlength - lev;
+    return matching;
   }
-  // compare strings without considering the white space
-  long maxlength = l1 > l2?l1:l2;
-  return maxlength - levenshtein(s1, s2);
+  // compare strings without changing the white space / case
+  return matching_characters(s1, s2);
 }
 /// helper function for the diff alignment algorithm copy the newly found
 /// optimal path to an index in the tensor for more detailed algorith
@@ -1918,54 +1914,46 @@ void update_path2(diff_T *dp, diffcomparisonpath2_T **df_pathmatrix2,
     [df_pathmatrix2[i][j].df_path_index] = choice;  // this choice
   df_pathmatrix2[i][j].df_path_index++;
 }
-/// helper function for the calculation of the levenshtein distance
-///
-/// @param s1
-/// @param s2
-long levmin(long a, long b, long c)
-{
-        if (a <= b && a <= c) {
-                return a;
-        } else if (b <= a && b <= c) {
-                return b;
-        } else if (c <= a && c <= b) {
-                return c;
-        }
-        return 0;
-}
-/// levenshtein distance calculation. Return the calculated levenshtein distance
+/// return matching characters between "s1" and "s2"
 /// between string "s1" and "s2".
 ///
 /// @param s1
 /// @param s2
-long levenshtein(const char_u *s1, const char_u *s2)
+long matching_characters(const char_u *s1, const char_u *s2)
 {
-    long x, y;
     long s1len = (long)STRLEN(s1), s2len = (long)STRLEN(s2);
-    unsigned long **matrix = xmalloc(sizeof( long * ) * (s2len+1));
-    for (long i = 0; i < (s2len+1); i++) {
-        matrix[i] = xmalloc(sizeof(long) * (s1len+1));
+    unsigned long **matrix = xmalloc(sizeof( long * ) * (s1len+1));
+    for (long i = 0; i < (s1len+1); i++) {
+        matrix[i] = xmalloc(sizeof(long) * (s2len+1));
     }
-
     matrix[0][0] = 0;
-    for (x = 1; x <= s2len; x++) {
-        matrix[x][0] = matrix[x-1][0] + 1; }
-    for (y = 1; y <= s1len; y++) {
-        matrix[0][y] = matrix[0][y-1] + 1; }
-    for (x = 1; x <= s2len; x++) {
-        for (y = 1; y <= s1len; y++) {
-            matrix[x][y] = levmin(
-                matrix[x-1][y] + 1,
-                matrix[x][y-1] + 1,
-                matrix[x-1][y-1] + (s1[y-1] == s2[x-1] ? 0 : 1));
+    for (int i = 1; i <= s1len; i++) {
+        matrix[i][0] = 0; }
+    for (int j = 1; j <= s2len; j++) {
+        matrix[0][j] = 0; }
+    for (long i = 1; i <= s1len; i++) {
+      for (long j = 1; j <= s2len; j++) {
+        matrix[i][j]=0;
+        // skip char in s1
+        if (matrix[i-1][j] > matrix[i][j]) {
+          matrix[i][j] = matrix[i-1][j];
         }
+        // skip char in s2
+        if (matrix[i][j-1] > matrix[i][j]) {
+          matrix[i][j] = matrix[i][j-1];
+        }
+        // compare char in s1 and s2
+        if ( (s1[i-1] == s2[j-1]) && (matrix[i-1][j-1] + 1) > matrix[i][j] ) {
+          matrix[i][j] = matrix[i-1][j-1] + 1;
+        }
+      }
     }
-    long rvalue = matrix[s2len][s1len];
-    for (long i = 0; i < (s2len+1); i++) {
-        xfree(matrix[i]);
+    long rvalue = matrix[s1len][s2len];
+    for (long i = 0; i < (s1len+1); i++) {
+      xfree(matrix[i]);
     }
     xfree(matrix);
-    return(rvalue);
+    return rvalue;
 }
 /// Helper function for the diff alignment algorithm.
 /// "dp->df_comparisonlines" represents a 2d array. indexed as
