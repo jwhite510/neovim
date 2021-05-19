@@ -1878,7 +1878,7 @@ void update_path3(diff_T *dp, diffcomparisonpath3_T ***df_pathmatrix3,
                   enum df_path3_choice choice)
 {
   df_pathmatrix3[i][j][k].df_lev_score = score;
-  for (int __k = 0; __k <= df_pathmatrix3[_i][_j][_k].df_path_index; __k++) {
+  for (int __k = 0; __k < df_pathmatrix3[_i][_j][_k].df_path_index; __k++) {
     df_pathmatrix3[i][j][k].df_path3[__k]=
       df_pathmatrix3[_i][_j][_k].df_path3[__k]; }
   df_pathmatrix3[i][j][k].df_path_index =
@@ -1906,7 +1906,7 @@ void update_path2(diff_T *dp, diffcomparisonpath2_T **df_pathmatrix2,
                   enum df_path2_choice choice)
 {
   df_pathmatrix2[i][j].df_lev_score = score;
-  for (int k = 0; k <= df_pathmatrix2[_i][_j].df_path_index; k++) {
+  for (int k = 0; k < df_pathmatrix2[_i][_j].df_path_index; k++) {
     df_pathmatrix2[i][j].df_path2[k]=
       df_pathmatrix2[_i][_j].df_path2[k]; }
   df_pathmatrix2[i][j].df_path_index = df_pathmatrix2[_i][_j].df_path_index;
