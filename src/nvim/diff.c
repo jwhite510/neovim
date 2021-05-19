@@ -1922,34 +1922,38 @@ void update_path2(diff_T *dp, diffcomparisonpath2_T **df_pathmatrix2,
 long matching_characters(const char_u *s1, const char_u *s2)
 {
     long s1len = (long)STRLEN(s1), s2len = (long)STRLEN(s2);
-    unsigned long **matrix = xmalloc(sizeof( long * ) * (s1len+1));
-    for (long i = 0; i < (s1len+1); i++) {
+    unsigned long **matrix = xmalloc(sizeof( long * ) * (2));
+    for (long i = 0; i < (2); i++) {
         matrix[i] = xmalloc(sizeof(long) * (s2len+1));
     }
-    matrix[0][0] = 0;
-    for (int i = 1; i <= s1len; i++) {
-        matrix[i][0] = 0; }
-    for (int j = 1; j <= s2len; j++) {
-        matrix[0][j] = 0; }
-    for (long i = 1; i <= s1len; i++) {
-      for (long j = 1; j <= s2len; j++) {
-        matrix[i][j]=0;
-        // skip char in s1
-        if (matrix[i-1][j] > matrix[i][j]) {
-          matrix[i][j] = matrix[i-1][j];
-        }
-        // skip char in s2
-        if (matrix[i][j-1] > matrix[i][j]) {
-          matrix[i][j] = matrix[i][j-1];
-        }
-        // compare char in s1 and s2
-        if ( (s1[i-1] == s2[j-1]) && (matrix[i-1][j-1] + 1) > matrix[i][j] ) {
-          matrix[i][j] = matrix[i-1][j-1] + 1;
+    bool icur = 1;  // save space by storing only two rows for i axis
+    for (long i = 0; i <= s1len; i++) {
+      icur = !icur;
+      for (long j = 0; j <= s2len; j++) {
+        if (i == 0) {
+          matrix[icur][j] = 0;
+        } else if (j == 0) {
+          matrix[icur][j] = 0;
+        } else {
+          matrix[icur][j] = 0;
+          // skip char in s1
+          if (matrix[!icur][j] > matrix[icur][j]) {
+            matrix[icur][j] = matrix[!icur][j];
+          }
+          // skip char in s2
+          if (matrix[icur][j-1] > matrix[icur][j]) {
+            matrix[icur][j] = matrix[icur][j-1];
+          }
+          // compare char in s1 and s2
+          if ( (s1[i-1] == s2[j-1])
+              && (matrix[!icur][j-1] + 1) > matrix[icur][j] ) {
+            matrix[icur][j] = matrix[!icur][j-1] + 1;
+          }
         }
       }
     }
-    long rvalue = matrix[s1len][s2len];
-    for (long i = 0; i < (s1len+1); i++) {
+    long rvalue = matrix[icur][s2len];
+    for (long i = 0; i < (2); i++) {
       xfree(matrix[i]);
     }
     xfree(matrix);
