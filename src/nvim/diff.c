@@ -1922,7 +1922,7 @@ void update_path2(diff_T *dp, diffcomparisonpath2_T **df_pathmatrix2,
 long matching_characters(const char_u *s1, const char_u *s2)
 {
     long s1len = (long)STRLEN(s1), s2len = (long)STRLEN(s2);
-    unsigned long *matrix[2];
+    long *matrix[2];
     matrix[0] = xmalloc(sizeof(long) * (s2len+1));
     matrix[1] = xmalloc(sizeof(long) * (s2len+1));
     bool icur = 1;  // save space by storing only two rows for i axis
