@@ -1675,6 +1675,12 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
       dp->df_lnum[idx_new] = lnum_new;
       dp->df_count[idx_new] = count_new;
 
+      FILE*fp=fopen("debug.txt","a");
+      fprintf(fp,"allocating new diff block\n");
+      fprintf(fp,"lnum_orig: %li, count_orig: %li \n", lnum_orig,count_orig);
+      fprintf(fp,"lnum_new: %li, count_new: %li \n", lnum_new,count_new);
+      fclose(fp);
+
       // Set values for other buffers, these must be equal to the
       // original buffer, otherwise there would have been a change
       // already.
