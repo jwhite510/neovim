@@ -1854,6 +1854,12 @@ long count_matched_chars(const char_u *s1, const char_u *s2)
     xfree(s1_proc), xfree(s2_proc);
     return matching;
   }
+  FILE*fp = fopen("debug.txt","a");
+  fprintf(fp,"compare: %s, %s\n", s1, s2);
+  // fprintf(fp,"score: %li\n",maxlength - levenshtein(s1, s2));
+  fprintf(fp,"(match)score: %li\n",matching_characters(s1,s2));
+  fprintf(fp,"-----------------------\n");
+  fclose(fp);
   // compare strings without changing the white space / case
   return matching_characters(s1, s2);
 }
