@@ -15,6 +15,10 @@
 #include "nvim/lua/xdiff.h"
 #include "nvim/vim.h"
 #include "xdiff/xdiff.h"
+#include "nvim/linematch.h"
+
+#define COMPARED_BUFFER0 (1 << 0)
+#define COMPARED_BUFFER1 (1 << 1)
 
 typedef enum {
   kNluaXdiffModeUnified = 0,
@@ -30,6 +34,81 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/xdiff.c.generated.h"
 #endif
+
+static bool linematch;
+
+static void get_linematch_results(lua_State *lstate, long start_a, long count_a,
+    long start_b, long count_b) {
+
+  const char *diff_begin[2];
+  int diff_length[2];
+  size_t sz;
+  // get the pointer to char of the start of the diff to pass it to linematch algorithm
+  diff_begin[0] = lua_tolstring(lstate, 1, &sz);
+  diff_length[0] = (int)count_a;
+  diff_begin[1] = lua_tolstring(lstate, 2, &sz);
+  diff_length[1] = (int)count_b;
+  for (int i = 0; i < 2; i++) {
+    for (int j = 0; j < (i ? start_b : start_a) - 1; j++) {
+      while (*diff_begin[i] != '\n') {
+        diff_begin[i]++;
+      }
+      diff_begin[i]++;
+    }
+  }
+  int decisions_length = 0;
+  int *decisions = NULL;
+  linematch_nbuffers(diff_begin, diff_length, 2,
+      &decisions_length, &decisions);
+
+  long lnuma = start_a, lnumb = start_b;
+
+  long hunkstarta = lnuma;
+  long hunkstartb = lnumb;
+  long hunkcounta = 0;
+  long hunkcountb = 0;
+  for (int i = 0; i < decisions_length; i++) {
+    if (i && (decisions[i - 1] != decisions[i])) {
+      // push the hunk to lua state
+      lua_createtable(lstate, 0, 0);
+      lua_pushinteger(lstate, hunkstarta);
+      lua_rawseti(lstate, -2, 1);
+      lua_pushinteger(lstate, hunkcounta);
+      lua_rawseti(lstate, -2, 2);
+      lua_pushinteger(lstate, hunkstartb);
+      lua_rawseti(lstate, -2, 3);
+      lua_pushinteger(lstate, hunkcountb);
+      lua_rawseti(lstate, -2, 4);
+      lua_rawseti(lstate, -2, (signed)lua_objlen(lstate, -2) + 1);
+
+      hunkstarta = lnuma;
+      hunkstartb = lnumb;
+      hunkcounta = 0;
+      hunkcountb = 0;
+      // create a new hunk
+    }
+    if (decisions[i] & COMPARED_BUFFER0) {
+      lnuma++;
+      hunkcounta++;
+    }
+    if (decisions[i] & COMPARED_BUFFER1) {
+      lnumb++;
+      hunkcountb++;
+    }
+  }
+  // push hunk to lua state
+  lua_createtable(lstate, 0, 0);
+  lua_pushinteger(lstate, hunkstarta);
+  lua_rawseti(lstate, -2, 1);
+  lua_pushinteger(lstate, hunkcounta);
+  lua_rawseti(lstate, -2, 2);
+  lua_pushinteger(lstate, hunkstartb);
+  lua_rawseti(lstate, -2, 3);
+  lua_pushinteger(lstate, hunkcountb);
+  lua_rawseti(lstate, -2, 4);
+  lua_rawseti(lstate, -2, (signed)lua_objlen(lstate, -2) + 1);
+  xfree(decisions); 
+}
 
 static int write_string(void *priv, mmbuffer_t *mb, int nbuf)
 {
@@ -61,20 +140,24 @@ static int hunk_locations_cb(long start_a, long count_a, long start_b, long coun
   if (count_b > 0) {
     start_b += 1;
   }
-
   lua_State *lstate = (lua_State *)cb_data;
-  lua_createtable(lstate, 0, 0);
+  if (linematch) {
+    get_linematch_results(lstate, start_a, count_a, start_b, count_b);
+  } else {
+    lua_createtable(lstate, 0, 0);
 
-  lua_pushinteger(lstate, start_a);
-  lua_rawseti(lstate, -2, 1);
-  lua_pushinteger(lstate, count_a);
-  lua_rawseti(lstate, -2, 2);
-  lua_pushinteger(lstate, start_b);
-  lua_rawseti(lstate, -2, 3);
-  lua_pushinteger(lstate, count_b);
-  lua_rawseti(lstate, -2, 4);
+    lua_pushinteger(lstate, start_a);
+    lua_rawseti(lstate, -2, 1);
+    lua_pushinteger(lstate, count_a);
+    lua_rawseti(lstate, -2, 2);
+    lua_pushinteger(lstate, start_b);
+    lua_rawseti(lstate, -2, 3);
+    lua_pushinteger(lstate, count_b);
+    lua_rawseti(lstate, -2, 4);
 
-  lua_rawseti(lstate, -2, (signed)lua_objlen(lstate, -2) + 1);
+    lua_rawseti(lstate, -2, (signed)lua_objlen(lstate, -2) + 1);
+  }
+
 
   return 0;
 }
@@ -205,6 +288,13 @@ static NluaXdiffMode process_xdl_diff_opts(lua_State *lstate, xdemitconf_t *cfg,
         goto exit_1;
       }
       cfg->interhunkctxlen = v->data.integer;
+    } else if (strequal("linematch", k.data)) {
+      if (v->data.boolean) {
+        linematch = true;
+      } else {
+        linematch = false;
+      }
+      // v->data
     } else {
       struct {
         const char *name;
@@ -280,7 +370,7 @@ int nlua_xdl_diff(lua_State *lstate)
       return luaL_argerror(lstate, 3, "expected table");
     }
 
-    mode = process_xdl_diff_opts(lstate, &cfg, &params, &err);
+    mode = process_xdl_diff_opts(lstate, &cfg, &params,  &err);
 
     if (ERROR_SET(&err)) {
       goto exit_0;

@@ -18,6 +18,7 @@
 #include "nvim/decoration_provider.h"
 #include "nvim/diff.h"
 #include "nvim/drawscreen.h"
+#include "nvim/diff_defs.h"
 #include "nvim/eval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_cmds2.h"
