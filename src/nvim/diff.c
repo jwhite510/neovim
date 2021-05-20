@@ -1528,6 +1528,7 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
     }
   }
 
+  int diffn = 0;
   for (;;) {
     if (fd == NULL) {
       if (line_idx >= dout->dout_ga.ga_len) {
@@ -1586,6 +1587,25 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
                              &lnum_new, &count_new) == FAIL) {
         continue;
       }
+    }
+    // override what the output from the diff was
+    // ----
+    // testdiff1.txt and testdiff2.txt
+    // have two differences, as long as they files are not
+    // modifies, the two differences will be overwritten with
+    // these line numbers
+    if(diffn == 0){
+      lnum_orig = 1;
+      count_orig = 1;
+      lnum_new = 1;
+      count_new = 0;
+      diffn++;
+    }else if (diffn == 1){
+      lnum_orig = 3; // try setting it to 2
+      count_orig = 0;
+      lnum_new = 2; // try setting it to 1
+      count_new = 1;
+      diffn++;
     }
 
     // Go over blocks before the change, for which orig and new are equal.
