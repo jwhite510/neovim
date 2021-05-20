@@ -913,6 +913,7 @@ struct file_buffer {
  */
 #define DB_COUNT 8     // up to four buffers can be diff'ed
 
+
 /*
  * Each diffblock defines where a block of lines starts in each of the buffers
  * and how many lines it occupies in that buffer.  When the lines are missing
@@ -932,6 +933,8 @@ struct diffblock_S {
   diff_T *df_next;
   linenr_T df_lnum[DB_COUNT];           // line number in buffer
   linenr_T df_count[DB_COUNT];          // nr of inserted/changed lines
+  bool df_redraw;
+  bool is_linematched;
 };
 
 #define SNAP_HELP_IDX   0
