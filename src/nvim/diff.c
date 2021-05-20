@@ -1601,9 +1601,9 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
       count_new = 0;
       diffn++;
     }else if (diffn == 1){
-      lnum_orig = 3; // try setting it to 2
+      lnum_orig = 2; // try setting it to 2
       count_orig = 0;
-      lnum_new = 2; // try setting it to 1
+      lnum_new = 1; // try setting it to 1
       count_new = 1;
       diffn++;
     }
@@ -1620,7 +1620,8 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
       notset = true;
     }
 
-    if ((dp != NULL)
+    // this will merge the two blocks together
+    if ((dp != NULL) && 0 // override this behaviour by adding 0
         && (lnum_orig <= dp->df_lnum[idx_orig] + dp->df_count[idx_orig])
         && (lnum_orig + count_orig >= dp->df_lnum[idx_orig])) {
       // New block overlaps with existing block(s).
@@ -1715,9 +1716,9 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
 
   // for remaining diff blocks orig and new are equal
   while (dp != NULL) {
-    if (notset) {
-      diff_copy_entry(dprev, dp, idx_orig, idx_new);
-    }
+    // if (notset) {
+    //   diff_copy_entry(dprev, dp, idx_orig, idx_new);
+    // }
     dprev = dp;
     dp = dp->df_next;
     notset = true;
