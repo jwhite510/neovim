@@ -1611,7 +1611,7 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
     // Go over blocks before the change, for which orig and new are equal.
     // Copy blocks from orig to new.
     while (dp != NULL
-           && lnum_orig > dp->df_lnum[idx_orig] + dp->df_count[idx_orig]) {
+           && lnum_orig >= dp->df_lnum[idx_orig] + dp->df_count[idx_orig]) {
       if (notset) {
         diff_copy_entry(dprev, dp, idx_orig, idx_new);
       }
@@ -1716,9 +1716,9 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
 
   // for remaining diff blocks orig and new are equal
   while (dp != NULL) {
-    // if (notset) {
-    //   diff_copy_entry(dprev, dp, idx_orig, idx_new);
-    // }
+    if (notset) {
+      diff_copy_entry(dprev, dp, idx_orig, idx_new);
+    }
     dprev = dp;
     dp = dp->df_next;
     notset = true;
@@ -1820,6 +1820,14 @@ int diff_check(win_T *wp, linenr_T lnum)
       break;
     }
   }
+
+  // idk ?? cant do this, because both diffs are on the same line number
+  // if(dp != NULL && dp->df_count[idx] == 0
+  //    && dp->df_next != NULL
+  //    && dp->df_next->df_lnum[idx] == dp->df_lnum[idx]
+  //    ){
+  //   dp = dp->df_next; 
+  // }
 
   if ((dp == NULL) || (lnum < dp->df_lnum[idx])) {
     return 0;
