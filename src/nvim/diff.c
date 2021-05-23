@@ -1916,6 +1916,9 @@ void update_path2(diff_T *dp, diffcomparisonpath2_T **df_pathmatrix2,
 }
 /// return matching characters between "s1" and "s2"
 /// between string "s1" and "s2".
+/// Consider the case of two strings 'AAACCC' and 'CCCAAA', the
+/// return value from this function will be 3, either to match
+/// the 3 C's, or the 3 A's.
 ///
 /// @param s1
 /// @param s2
