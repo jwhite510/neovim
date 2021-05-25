@@ -60,6 +60,7 @@ static bool diff_need_update = false;  // ex_diffupdate needs to be called
 #define DIFF_CLOSE_OFF  0x400   // diffoff when closing window
 #define DIFF_FOLLOWWRAP 0x800   // follow the wrap option
 #define DIFF_LINEMATCH  0x1000   // match most similar lines within diff
+#define DIFF_BAD_DIVIDER  0x2000   // match most similar lines within diff
 #define ALL_WHITE_DIFF (DIFF_IWHITE | DIFF_IWHITEALL | DIFF_IWHITEEOL)
 static int diff_flags = DIFF_INTERNAL | DIFF_FILLER | DIFF_CLOSE_OFF;
 
@@ -1707,42 +1708,50 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
   }
 
   // combine diff hunks if they are seperated by unimportant characters
-  dn = curtab->tp_first_diff;
-  FILE*fp=fopen("debug.txt","a");
-  while(dn != NULL && dn->df_next != NULL) {
-    dp = dn;
-    dn = dn->df_next;
-    // check which lines are between these diffs
-    bool combine_diffs = true;
-    for(linenr_T curline = dp->df_lnum[idx_orig] + dp->df_count[idx_orig];
-        curline < dn->df_lnum[idx_orig]; curline++) {
-      line = ml_get_buf(curtab->tp_diffbuf[idx_orig],curline,false);
-      fprintf(fp,"line between: %s\n", line);
-      long slen = (long)STRLEN(line);
-      for(long j = 0; j < slen; j++) {
-        if (line[j] != '}' && line[j] != '{' && line[j] != ' ') {
-          combine_diffs = false;
-          break;
+  if(diff_flags & DIFF_BAD_DIVIDER){
+    dn = curtab->tp_first_diff;
+    while(dn != NULL && dn->df_next != NULL) {
+      dp = dn;
+      dn = dn->df_next;
+      // check which lines are between these diffs
+      bool combine_diffs = true;
+      for(linenr_T curline = dp->df_lnum[idx_orig] + dp->df_count[idx_orig];
+          curline < dn->df_lnum[idx_orig]; curline++) {
+        line = ml_get_buf(curtab->tp_diffbuf[idx_orig],curline,false);
+        long slen = (long)STRLEN(line);
+        for(long j = 0; j < slen; j++) {
+          char_u* bad_divider = bad_dividers;
+          bool encountered_not_bad_divider = true;
+          // go through all the bad dividers, check if it is not one
+          while(*bad_divider != '\0') {
+            encountered_not_bad_divider &= (line[j] != *bad_divider++);
+          }
+          // if one of the characters was not a bad divider, it should not be
+          // combined
+          if (encountered_not_bad_divider) {
+            combine_diffs = false;
+            break;
+          }
+
         }
       }
-    }
-    if(combine_diffs) {
-      dp->df_next = dn->df_next;
+      if(combine_diffs) {
+        dp->df_next = dn->df_next;
 
-      // change line numbers here
-      dp->df_count[idx_orig] += (
-          dn->df_lnum[idx_orig] - (dp->df_lnum[idx_orig] + dp->df_count[idx_orig] )
-          + dn->df_count[idx_orig]);
+        // change line numbers here
+        dp->df_count[idx_orig] += (
+            dn->df_lnum[idx_orig] - (dp->df_lnum[idx_orig] + dp->df_count[idx_orig] )
+            + dn->df_count[idx_orig]);
 
-      dp->df_count[idx_new] += (
-          dn->df_lnum[idx_new] - (dp->df_lnum[idx_new] + dp->df_count[idx_new] )
-          + dn->df_count[idx_new]);
+        dp->df_count[idx_new] += (
+            dn->df_lnum[idx_new] - (dp->df_lnum[idx_new] + dp->df_count[idx_new] )
+            + dn->df_count[idx_new]);
 
-      xfree(dn);
-      dn = dp;
+        xfree(dn);
+        dn = dp;
+      }
     }
   }
-  fclose(fp);
 
 }
 
@@ -2916,6 +2925,7 @@ int diffopt_changed(void)
   int diff_foldcolumn_new = 2;
   long diff_algorithm_new = 0;
   long diff_indent_heuristic = 0;
+  char_u bad_dividers_new[100] = "\0";
 
   char_u *p = p_dip;
   while (*p != NUL) {
@@ -2982,9 +2992,19 @@ int diffopt_changed(void)
         return FAIL;
       }
     } else if ((STRNCMP(p, "linematch:", 10) == 0) && ascii_isdigit(p[11])) {
-      p+=10;
+      p += 10;
       linematch_lines_new = getdigits_int(&p, false, linematch_lines_new);
       diff_flags_new |= DIFF_LINEMATCH;
+    } else if ((STRNCMP(p, "bad-divider:'", 13) == 0)) {
+      p += 13;
+      int j = 0;
+      while(*p != '\''){
+        if ( j == (100-1)) return FAIL;
+        bad_dividers_new[j++] = *p++;
+      }
+      p++;
+      bad_dividers_new[j] = '\0';
+      diff_flags_new |= DIFF_BAD_DIVIDER;
     }
 
     if ((*p != ',') && (*p != NUL)) {
@@ -3014,6 +3034,9 @@ int diffopt_changed(void)
   diff_flags = diff_flags_new;
   diff_context = diff_context_new == 0 ? 1 : diff_context_new;
   linematch_lines = linematch_lines_new;
+  for(int j = 0; j ? bad_dividers_new[j-1] != '\0' : 1; j++) {
+    bad_dividers[j] = bad_dividers_new[j];
+  }
   diff_foldcolumn = diff_foldcolumn_new;
   diff_algorithm = diff_algorithm_new;
 
