@@ -1705,6 +1705,45 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
   if (fd != NULL) {
     fclose(fd);
   }
+
+  // combine diff hunks if they are seperated by unimportant characters
+  dn = curtab->tp_first_diff;
+  FILE*fp=fopen("debug.txt","a");
+  while(dn != NULL && dn->df_next != NULL) {
+    dp = dn;
+    dn = dn->df_next;
+    // check which lines are between these diffs
+    bool combine_diffs = true;
+    for(linenr_T curline = dp->df_lnum[idx_orig] + dp->df_count[idx_orig];
+        curline < dn->df_lnum[idx_orig]; curline++) {
+      line = ml_get_buf(curtab->tp_diffbuf[idx_orig],curline,false);
+      fprintf(fp,"line between: %s\n", line);
+      long slen = (long)STRLEN(line);
+      for(long j = 0; j < slen; j++) {
+        if (line[j] != '}' && line[j] != '{' && line[j] != ' ') {
+          combine_diffs = false;
+          break;
+        }
+      }
+    }
+    if(combine_diffs) {
+      dp->df_next = dn->df_next;
+
+      // change line numbers here
+      dp->df_count[idx_orig] += (
+          dn->df_lnum[idx_orig] - (dp->df_lnum[idx_orig] + dp->df_count[idx_orig] )
+          + dn->df_count[idx_orig]);
+
+      dp->df_count[idx_new] += (
+          dn->df_lnum[idx_new] - (dp->df_lnum[idx_new] + dp->df_count[idx_new] )
+          + dn->df_count[idx_new]);
+
+      xfree(dn);
+      dn = dp;
+    }
+  }
+  fclose(fp);
+
 }
 
 /// Copy an entry at "dp" from "idx_orig" to "idx_new".
