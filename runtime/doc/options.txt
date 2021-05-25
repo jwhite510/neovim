@@ -1995,6 +1995,20 @@ A jump table for the options with a short description can be found at |Q_op|.
 				hunk of 30 lines each, or a 3 buffer diff hunk
 				of 20 lines each.
 
+		bad-divider:'{characters}'
+				Prevent diff hunks from being divided by only
+				the characters provided in place of
+				{characters}. This is useful when a diff that
+				should be one hunk is divided into multiple
+				hunks, seperated by blank lines or bracktets.
+				To prevent diff hunks from being seperated by
+				blank lines or lines consisting of only white
+				spaces, use "bad-divider:'\ '", Where the
+				white space character is preceeded by a
+				backslash. To prevent diff hunks from being
+				seperated by blank lines and opening/closing
+				brackets, use "bad-divider:'{}\ '"
+
                 algorithm:{text} Use the specified diff algorithm with the
 				internal diff engine. Currently supported
 				algorithms are:
