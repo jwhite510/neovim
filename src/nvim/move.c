@@ -457,7 +457,7 @@ void set_topline(win_T *wp, linenr_T lnum)
   wp->w_botline += lnum - wp->w_topline;
   wp->w_topline = lnum;
   wp->w_topline_was_set = true;
-  wp->w_topfill = 0;
+  // wp->w_topfill = 0; // removing this fixes the misalignment while editing diffs
   wp->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_TOPLINE);
   // Don't set VALID_TOPLINE here, 'scrolloff' needs to be checked.
   redraw_later(wp, VALID);

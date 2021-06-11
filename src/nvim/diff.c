@@ -695,12 +695,6 @@ void diff_redraw(bool dofold)
         wp, dpfirst->df_lnum[chid],
         virtual_lines_above_from, &virtual_offset);
     wp->w_topfill = virtual_offset-virtual_lines_above_from-1;
-    FILE*fp=fopen("debug.txt","a");
-    fprintf(fp,"DiffUpdate called\n");
-    fprintf(fp,"fromidx: %i, chid: %i\n", fromidx, chid);
-    fprintf(fp,"virtual_offset: %i\n", virtual_offset);
-    fprintf(fp,"virtual_lines_above_from: %i\n", virtual_lines_above_from);
-    fclose(fp);
     // print
   }
 }
@@ -1886,11 +1880,11 @@ int count_virtual_lines(win_T *win, linenr_T start, linenr_T endline)
 int count_virtual_to_real(win_T *win, const linenr_T lnum,
                           const int virtual_lines, int *line_new_virtualp )
 {
-  FILE*fp=fopen("debug.txt","a");
-  fprintf(fp,"---------------------\n");
-  fprintf(fp,"count_virtual_to_real called\n");
-  fprintf(fp,"lnum: %li \n",lnum);
-  fprintf(fp,"virtual_lines: %i \n",virtual_lines);
+  // FILE*fp=fopen("debug.txt","a");
+  // fprintf(fp,"---------------------\n");
+  // fprintf(fp,"count_virtual_to_real called\n");
+  // fprintf(fp,"lnum: %li \n",lnum);
+  // fprintf(fp,"virtual_lines: %i \n",virtual_lines);
   int real_offset = 0;
   int virtual_offset = 0;
   while (1) {
@@ -1907,8 +1901,8 @@ int count_virtual_to_real(win_T *win, const linenr_T lnum,
   if ( line_new_virtualp != NULL ) {
     (*line_new_virtualp) = virtual_offset;
   }
-  fprintf(fp,"virtual_offset: %i \n",virtual_offset);
-  fclose(fp);
+  // fprintf(fp,"virtual_offset: %i \n",virtual_offset);
+  // fclose(fp);
   return real_offset;
 }
 
@@ -2877,7 +2871,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
       // count same amount of virtual lines from top of this window
       int virtual_offset;
       int offset = count_virtual_to_real(
-          curwin, dp->df_lnum[toidx],
+          towin, dp->df_lnum[toidx],
           virtual_lines_above_from, &virtual_offset);
 
       if (fromwin->w_topline >= dp->df_lnum[fromidx]) {
@@ -2886,12 +2880,6 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
       } else {
         towin->w_topline = lnum + (dp->df_lnum[toidx] - dp->df_lnum[fromidx]);
       }
-      FILE*fp=fopen("debug.txt","a");
-      fprintf(fp,"diff_set_topline called\n");
-      fprintf(fp,"fromidx: %i, toidx: %i\n", fromidx, toidx);
-      fprintf(fp,"virtual_offset: %i\n", virtual_offset);
-      fprintf(fp,"virtual_lines_above_from: %i\n", virtual_lines_above_from);
-      fclose(fp);
       return;
     }
     if (lnum >= dp->df_lnum[fromidx]) {
