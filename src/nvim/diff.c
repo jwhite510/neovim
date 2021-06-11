@@ -648,7 +648,7 @@ void diff_redraw(bool dofold)
   // find the window in the diff buffers that has the lowest relative line number
 
   // find the first diff -- might only need to do this in one window actually
-  diff_T *dpfirst;
+  diff_T *dpfirst = NULL;
   win_T* fromwin = NULL;
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (!wp->w_p_diff) {
