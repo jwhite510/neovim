@@ -645,6 +645,47 @@ static int diff_check_sanity(tabpage_T *tp, diff_T *dp)
 void diff_redraw(bool dofold)
 {
   need_diff_redraw = false;
+  // find the window in the diff buffers that has the lowest relative line number
+
+  // find the first diff -- might only need to do this in one window actually
+  diff_T *dpfirst;
+  int first_diffnr = INT_MAX;
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (!wp->w_p_diff) {
+      continue;
+    }
+    // get the id
+    buf_T *chbuf = wp->w_buffer;
+    int chid = diff_buf_idx(chbuf);
+    // search for a change that includes "wp->topline" in the list of diffblocks.
+    diff_T *dp = curtab->tp_first_diff;
+    for (int i = 0; dp != NULL; dp = dp->df_next, i++) {
+      if (wp->w_topline <= dp->df_lnum[chid] + dp->df_count[chid]) {
+        if ( i < first_diffnr ) {
+          first_diffnr = i;
+          dpfirst = dp;
+        }
+        break;
+      }
+    }
+  }
+  if (!dpfirst) { return; }
+  // fromwin is has the lowest linenumber with respect to the diff block
+  win_T* fromwin = NULL;
+  int lowest_line = INT_MAX;
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (!wp->w_p_diff) {
+      continue;
+    }
+    buf_T *chbuf = wp->w_buffer;
+    int chid = diff_buf_idx(chbuf);
+    if ( (wp->w_topline - dpfirst->df_lnum[chid]) < lowest_line ) {
+      lowest_line = wp->w_topline - dpfirst->df_lnum[chid];
+      fromwin = wp;
+    }
+  }
+  // set the top fill of the other lines using fromwin
+  int fromidx = diff_buf_idx(fromwin->w_buffer);
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (!wp->w_p_diff) {
       continue;
@@ -653,19 +694,23 @@ void diff_redraw(bool dofold)
     if (dofold && foldmethodIsDiff(wp)) {
       foldUpdateAll(wp);
     }
-
-    // A change may have made filler lines invalid, need to take care
-    // of that for other windows.
-    int n = diff_check(wp, wp->w_topline, NULL);
-
-    if (((wp != curwin) && (wp->w_topfill > 0)) || (n > 0)) {
-      if (wp->w_topfill > n) {
-        wp->w_topfill = (n < 0 ? 0 : n);
-      } else if ((n > 0) && (n > wp->w_topfill)) {
-        wp->w_topfill = n;
-      }
-      check_topfill(wp, false);
+    if (wp == fromwin) {
+      continue;
     }
+    // set fromwin -> chid
+    buf_T *chbuf = wp->w_buffer;
+    int chid = diff_buf_idx(chbuf);
+    int virtual_lines_above_from =
+      count_virtual_lines(fromwin,
+                          dpfirst->df_lnum[fromidx],
+                          fromwin->w_topline);
+    if (virtual_lines_above_from) { virtual_lines_above_from--; }
+    // count same amount of virtual lines from top of this window
+    int virtual_offset;
+    int offset = count_virtual_to_real(
+        curwin, dpfirst->df_lnum[chid],
+        virtual_lines_above_from, &virtual_offset);
+    wp->w_topfill = virtual_offset-virtual_lines_above_from-1;
   }
 }
 
