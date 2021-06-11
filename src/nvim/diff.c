@@ -691,11 +691,10 @@ void diff_redraw(bool dofold)
     if (virtual_lines_above_from) { virtual_lines_above_from--; }
     // count same amount of virtual lines from top of this window
     int virtual_offset;
-    int offset = count_virtual_to_real(
+    count_virtual_to_real(
         wp, dpfirst->df_lnum[chid],
         virtual_lines_above_from, &virtual_offset);
     wp->w_topfill = virtual_offset-virtual_lines_above_from-1;
-    // print
   }
 }
 
