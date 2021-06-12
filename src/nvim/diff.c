@@ -694,7 +694,10 @@ void diff_redraw(bool dofold)
     count_virtual_to_real(
         wp, dpfirst->df_lnum[chid],
         virtual_lines_above_from, &virtual_offset);
-    wp->w_topfill = virtual_offset-virtual_lines_above_from-1;
+    if (fromwin->w_topline >= dpfirst->df_lnum[fromidx]) {
+      wp->w_topfill = virtual_offset-virtual_lines_above_from-1;
+    }
+    check_topfill(wp, false);
   }
 }
 
