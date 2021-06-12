@@ -649,7 +649,7 @@ void diff_redraw(bool dofold)
 
   // find the first diff -- might only need to do this in one window actually
   diff_T *dpfirst = NULL;
-  win_T* fromwin = NULL;
+  win_T* fromwin = curwin;
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (!wp->w_p_diff) {
       continue;
@@ -662,7 +662,7 @@ void diff_redraw(bool dofold)
     for (; dp != NULL; dp = dp->df_next) {
       if (wp->w_topline <= dp->df_lnum[chid] + dp->df_count[chid]) {
         dpfirst = dp;
-        fromwin = wp;
+        // fromwin = wp;
         break;
       }
     }
