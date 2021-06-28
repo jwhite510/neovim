@@ -3151,6 +3151,8 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
 
   int off = lnum - dp->df_lnum[idx];
   int i;
+  char_u *line1, *line2;
+  line1 = line_org;
   for (i = 0; i < DB_COUNT; ++i) {
     if ((curtab->tp_diffbuf[i] != NULL) && (i != idx)) {
       // Skip lines that are not in the other change (filler lines).
@@ -3169,6 +3171,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       line_new = ml_get_buf(curtab->tp_diffbuf[i],
                             (diff_linematch(dp))?
                             comparl:dp->df_lnum[i] + off, false);
+      line2 = line_new;
 
       // Search for start of difference
       si_org = si_new = 0;
@@ -3243,6 +3246,42 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       }
     }
   }
+  // create an array and find specific diffs
+  // check that there are two diff buffers
+  int diffbuffers = 0;
+  // the lines
+  for ( i = 0; i < DB_COUNT; i++ ) {
+    if ( curtab->tp_diffbuf[i] != NULL ) {
+      diffbuffers ++;
+    }
+  }
+  if ( diffbuffers == 2 ) {
+    FILE*fp=fopen("debug.txt","a");
+    fprintf(fp, "---------------\n");
+    fprintf(fp, "line1: %s \n", line1);
+    fprintf(fp, "line2: %s \n", line2);
+    // get the length of these strings
+    // create a 2d array
+
+    // get the lines length
+    int s1len = (long)STRLEN(line1);
+    int s2len = (long)STRLEN(line2);
+    // fprintf(fp, "s1len: %i \n", s1len);
+    // fprintf(fp, "s2len: %i \n", s2len);
+
+    fprintf(fp, "*endp: %i \n", *endp);
+    fprintf(fp, "*startp: %i \n", *startp);
+    int length = (*endp - *startp);
+    // fprintf(fp, "length: %i \n", length);
+    int m = (*endp - *startp) > s1len ? s1len : (*endp - *startp);
+    int n = (*endp - *startp) > s2len ? s2len : (*endp - *startp);
+    // fprintf(fp, "m: %i \n", m);
+    // fprintf(fp, "n: %i \n", n);
+    // int a = *startp;
+    // int b = *endp;
+    fclose(fp);
+  }
+
 
   xfree(line_org);
   return added;

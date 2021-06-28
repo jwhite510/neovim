@@ -3081,6 +3081,11 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
             && n_extra == 0) {
           diff_hlf = HLF_TXD;                   // changed text
         }
+	// get the exact changes
+	// id
+	// extraction from map?
+	// 2d array the size of change start - change end
+	// diff_hlf = find_specific_change(line)
         if (diff_hlf == HLF_TXD && ptr - line > change_end
             && n_extra == 0) {
           diff_hlf = HLF_CHD;                   // changed line
