@@ -3107,6 +3107,15 @@ bool diffopt_closeoff(void)
   return (diff_flags & DIFF_CLOSE_OFF) != 0;
 }
 
+void word_diff_path_update( worddiff_T** worddiff, enum worddiffpath2_choice choice, int i, int j, int _i, int _j ) {
+  // copy path _i, _j to i, j
+  for ( int k = 0; k < worddiff[_i][_j].wp_index; k++ ) {
+    worddiff[i][j].worddiffpath[k] = worddiff[_i][_j].worddiffpath[k];
+  }
+  worddiff[i][j].wp_index = worddiff[_i][_j].wp_index;
+  worddiff[i][j].worddiffpath[worddiff[i][j].wp_index++] = choice;
+}
+
 /// Find the difference within a changed line.
 ///
 /// @param  wp      window whose current buffer to check
@@ -3262,23 +3271,105 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
     fprintf(fp, "line2: %s \n", line2);
     // get the length of these strings
     // create a 2d array
-
     // get the lines length
     int s1len = (long)STRLEN(line1);
     int s2len = (long)STRLEN(line2);
-    // fprintf(fp, "s1len: %i \n", s1len);
-    // fprintf(fp, "s2len: %i \n", s2len);
+    // bool[s1len + 1][s2len + 1]
+    worddiff_T **grid = xmalloc((s1len + 1) * sizeof(worddiff_T* ));
+    for ( int j = 0; j < (s1len + 1); j++ ) {
+      grid[j] = xmalloc((s2len + 1) * sizeof(worddiff_T));
+      for ( int k = 0; k < (s2len +1); k++ ) {
+        grid[j][k].worddiffpath = xmalloc(
+            (s2len * s1len) * sizeof(enum worddiffpath2_choice)
+            );
+      }
+    }
+    // construct path
+    for ( int j = 0; j <= s1len; j++ ) {
+      for ( int k = 0; k <= s2len; k++ ) {
+        if ( j == 0 && k == 0 ) {
+          grid[j][k].wp_index = 0;
+          grid[j][k].wp_score = 0;
+        } else if ( j == 0 ) {
+          grid[j][k].wp_score = grid[j][k - 1].wp_score + 1;
+          word_diff_path_update(grid, WORDDIFF_PATH_SKIP0,
+              j, k, // to
+              j, k - 1); // from
+        } else if ( k == 0 ) {
+          grid[j][k].wp_score = grid[j - 1][k].wp_score + 1;
+          word_diff_path_update(grid, WORDDIFF_PATH_SKIP1,
+              j, k, // to
+              j - 1, k); // from
+        } else {
+          grid[j][k].wp_score = INT_MAX;
+          int score;
+          score = grid[j - 1][k].wp_score + 1;
+          if ( score < grid[j][k].wp_score  ) {
+            grid[j][k].wp_score = score;
+            word_diff_path_update(grid, WORDDIFF_PATH_SKIP1,
+                j, k, // to
+                j - 1, k); // from
+          }
+          score = grid[j][k - 1].wp_score + 1;
+          if ( score < grid[j][k].wp_score  ) {
+            grid[j][k].wp_score = score;
+            word_diff_path_update(grid, WORDDIFF_PATH_SKIP0,
+                j, k, // to
+                j, k - 1); // from
+          }
+          score = grid[j - 1][k - 1].wp_score;
+          if ( score < grid[j][k].wp_score && line1[j] == line2[k]  ) {
+            grid[j][k].wp_score = score;
+            word_diff_path_update(grid, WORDDIFF_PATH_COMPARE01,
+                j, k, // to
+                j - 1, k - 1); // from
+          }
+          // three choices
+        }
+      }
+    }
+    // construct boolean values 0 -> unchanged 1 -> changed
+    bool *s1changed = xmalloc(s1len * sizeof(bool));
+    bool *s2changed = xmalloc(s2len * sizeof(bool));
+    int s1p = 0, s2p = 0;
+    fprintf(fp, "path:\n");
+    for ( int p = 0; p < grid[s1len][s2len].wp_index; p++ ) {
+      if ( grid[s1len][s2len].worddiffpath[p] == WORDDIFF_PATH_SKIP1 ) {
+        fprintf(fp, "WORDDIFF_PATH_SKIP1 \n");
+        s1changed[ s1p++ ] = 1;
+      } else if ( grid[s1len][s2len].worddiffpath[p] == WORDDIFF_PATH_SKIP0 ) {
+        fprintf(fp, "WORDDIFF_PATH_SKIP0 \n");
+        s2changed[ s2p++ ] = 1;
+      } else if ( grid[s1len][s2len].worddiffpath[p] == WORDDIFF_PATH_COMPARE01 ) {
+        fprintf(fp, "WORDDIFF_PATH_COMPARE01 \n");
+        s1changed[ s1p++ ] = 0;
+        s2changed[ s2p++ ] = 0;
+      }
+    }
 
-    fprintf(fp, "*endp: %i \n", *endp);
-    fprintf(fp, "*startp: %i \n", *startp);
-    int length = (*endp - *startp);
-    // fprintf(fp, "length: %i \n", length);
-    int m = (*endp - *startp) > s1len ? s1len : (*endp - *startp);
-    int n = (*endp - *startp) > s2len ? s2len : (*endp - *startp);
-    // fprintf(fp, "m: %i \n", m);
-    // fprintf(fp, "n: %i \n", n);
-    // int a = *startp;
-    // int b = *endp;
+    fprintf(fp, "---------------------------\n");
+    fprintf(fp, "s1changed:\n");
+    fprintf(fp, "s1len: %i \n", s1len);
+    for ( int p = 0; p < s1len; p++ ) {
+      fprintf(fp, "%i", s1changed[p]);
+    }
+    fprintf(fp, "\n");
+
+    fprintf(fp, "s2changed:\n");
+    fprintf(fp, "s2len: %i \n", s2len);
+    for ( int p = 0; p < s2len; p++ ) {
+      fprintf(fp, "%i", s2changed[p]);
+    }
+    fprintf(fp, "\n");
+
+    xfree(s1changed), xfree(s2changed);
+    // free the memory
+    for ( int j = 0; j < (s1len + 1); j++ ) {
+      for ( int k = 0; k < (s2len + 1); k++ ) {
+        xfree(grid[j][k].worddiffpath);
+      }
+      xfree(grid[j]);
+    }
     fclose(fp);
   }
 

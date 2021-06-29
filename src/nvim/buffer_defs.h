@@ -972,6 +972,18 @@ struct diffblock_S {
   int df_arr_col_size;  // used for referencing 2d array
 };
 
+enum worddiffpath2_choice {
+  WORDDIFF_PATH_COMPARE01,
+  WORDDIFF_PATH_SKIP0,
+  WORDDIFF_PATH_SKIP1,
+};
+typedef struct worddiff_S worddiff_T;
+struct worddiff_S {
+  enum worddiffpath2_choice *worddiffpath;
+  int wp_index;
+  int wp_score;
+};
+
 #define SNAP_HELP_IDX   0
 # define SNAP_AUCMD_IDX 1
 # define SNAP_COUNT     2
