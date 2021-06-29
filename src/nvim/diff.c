@@ -3318,7 +3318,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
                 j, k - 1); // from
           }
           score = grid[j - 1][k - 1].wp_score;
-          if ( score < grid[j][k].wp_score && line1[j] == line2[k]  ) {
+          if ( score < grid[j][k].wp_score && line1[j - 1] == line2[k - 1]  ) {
             grid[j][k].wp_score = score;
             word_diff_path_update(grid, WORDDIFF_PATH_COMPARE01,
                 j, k, // to
