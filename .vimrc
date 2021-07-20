@@ -1359,6 +1359,9 @@ vnoremap <leader>gr y:call MyGrepSilent('-rI', "<C-R>"")<cr>
 vnoremap <leader>qq :cgetbuffer<CR> :call ProcessQF()<CR>
 " get the stack trace, only filter QuickFixBufferListedOnly
 vnoremap <leader>qv :cgetbuffer<CR> :call QuickFixBufferListedOnly()<CR>
+" remove whitespace in visual selection
+vnoremap <leader>wr :s/\s\+$//e<CR>
+" '<,'>s/\s\+$//e
 
 " # # # # # # # # # # # # # # # # # # # # # # # #
 " #   I N S E R T  M O D E  M A P P I N G S     #
