@@ -76,6 +76,7 @@ set rtp+=~/.fzf
 Plug 'junegunn/fzf.vim'
 " change name so ag.vim doesnt overwrite this command
 :command -bang -nargs=* Agf call fzf#vim#ag(<q-args>, <bang>0)
+let g:fzf_layout = { 'down': '~25%' }
 
 " Plug 'neoclide/coc.nvim'
 
@@ -1384,7 +1385,8 @@ inoremap <c-k> <c-c>
 inoremap <A-f> <Right>
 inoremap <A-b> <Left>
 
-inoremap <c-x><c-m> <plug>(fzf-complete-line)
+imap <c-x><c-m> <plug>(fzf-complete-line)
+
 inoremap <c-f> <Right>
 inoremap <c-b> <Left>
 
