@@ -119,6 +119,137 @@ fun! CheckEnableSemanticHighLight()
 
 
 endfun
+fun! ShrinkFoldTop(direction)
+	try
+		normal! zo
+	catch
+	endtry
+	try
+		normal! [z
+	catch
+	endtry
+	try
+		normal! mt
+	catch
+	endtry
+	try
+		normal! ]z
+	catch
+	endtry
+	try
+		normal! ms
+	catch
+	endtry
+
+	try
+		normal! `t
+	catch
+	endtry
+
+
+	try
+		normal! zd
+	catch
+	endtry
+
+	"
+	" delete the fold
+	if a:direction == 'top'
+		try
+			normal! j
+		catch
+		endtry
+	else
+		try
+			normal! k
+		catch
+		endtry
+
+	endif
+
+
+	try
+		normal! V`s
+	catch
+	endtry
+
+	try
+		normal! zf
+	catch
+	endtry
+
+	" try
+	" 	normal! `tV`s
+	" catch
+	" endtry
+
+endfun
+fun! ShrinkFoldBottom(direction)
+	try
+		normal! zo
+	catch
+	endtry
+	try
+		normal! [z
+	catch
+	endtry
+	try
+		normal! mt
+	catch
+	endtry
+	try
+		normal! ]z
+	catch
+	endtry
+	try
+		normal! ms
+	catch
+	endtry
+
+	try
+		normal! `t
+	catch
+	endtry
+
+
+	try
+		normal! zd
+	catch
+	endtry
+
+	try
+		normal! V`s
+	catch
+	endtry
+
+
+	"
+	" delete the fold
+	if a:direction == 'top'
+		try
+			normal! j
+		catch
+		endtry
+	else
+		try
+			normal! k
+		catch
+		endtry
+
+	endif
+
+
+	try
+		normal! zf
+	catch
+	endtry
+
+	" try
+	" 	normal! `tV`s
+	" catch
+	" endtry
+
+endfun
 fun! UpByIndent()
 
 	" mark the current position
@@ -1319,6 +1450,11 @@ nnoremap <leader>ye yg_
 nnoremap <silent> zJ :call NextClosedFold('j')<cr>
 nnoremap <silent> zK :call NextClosedFold('k')<cr>
 
+" resize a fold
+nnoremap <leader>zk :call ShrinkFoldTop('top')<cr>
+nnoremap <leader>zj :call ShrinkFoldTop('bottom')<cr>
+nnoremap <leader>z, :call ShrinkFoldBottom('top')<cr>
+nnoremap <leader>zm :call ShrinkFoldBottom('bottom')<cr>
 " easymotion
 " <Leader>q{char} to move to {char}
 " map  <Leader>ef <Plug>(easymotion-bd-f)
