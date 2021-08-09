@@ -3160,7 +3160,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
 
   int off = lnum - dp->df_lnum[idx];
   int i;
-  char_u *line1, *line2;
+  char_u *line1 = NULL, *line2 = NULL;
   line1 = line_org;
   for (i = 0; i < DB_COUNT; ++i) {
     if ((curtab->tp_diffbuf[i] != NULL) && (i != idx)) {
@@ -3264,11 +3264,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       diffbuffers ++;
     }
   }
-  if ( diffbuffers == 2 ) {
-    FILE*fp=fopen("debug.txt","a");
-    fprintf(fp, "---------------\n");
-    fprintf(fp, "line1: %s \n", line1);
-    fprintf(fp, "line2: %s \n", line2);
+  if ( diffbuffers == 2 && line1 && line2 && STRLEN(line1) > 0 && STRLEN(line2) > 0 ) {
     // get the length of these strings
     // create a 2d array
     // get the lines length
@@ -3337,35 +3333,16 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
     s1changed = xmalloc(s1len * sizeof(bool));
     s2changed = xmalloc(s2len * sizeof(bool));
     int s1p = 0, s2p = 0;
-    fprintf(fp, "path:\n");
     for ( int p = 0; p < grid[s1len][s2len].wp_index; p++ ) {
       if ( grid[s1len][s2len].worddiffpath[p] == WORDDIFF_PATH_SKIP1 ) {
-        fprintf(fp, "WORDDIFF_PATH_SKIP1 \n");
         s1changed[ s1p++ ] = 1;
       } else if ( grid[s1len][s2len].worddiffpath[p] == WORDDIFF_PATH_SKIP0 ) {
-        fprintf(fp, "WORDDIFF_PATH_SKIP0 \n");
         s2changed[ s2p++ ] = 1;
       } else if ( grid[s1len][s2len].worddiffpath[p] == WORDDIFF_PATH_COMPARE01 ) {
-        fprintf(fp, "WORDDIFF_PATH_COMPARE01 \n");
         s1changed[ s1p++ ] = 0;
         s2changed[ s2p++ ] = 0;
       }
     }
-
-    fprintf(fp, "---------------------------\n");
-    fprintf(fp, "s1changed:\n");
-    fprintf(fp, "s1len: %i \n", s1len);
-    for ( int p = 0; p < s1len; p++ ) {
-      fprintf(fp, "%i", s1changed[p]);
-    }
-    fprintf(fp, "\n");
-
-    fprintf(fp, "s2changed:\n");
-    fprintf(fp, "s2len: %i \n", s2len);
-    for ( int p = 0; p < s2len; p++ ) {
-      fprintf(fp, "%i", s2changed[p]);
-    }
-    fprintf(fp, "\n");
 
     // free the memory
     for ( int j = 0; j < (s1len + 1); j++ ) {
@@ -3374,7 +3351,6 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       }
       xfree(grid[j]);
     }
-    fclose(fp);
   }
 
 
