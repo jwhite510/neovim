@@ -983,6 +983,8 @@ struct worddiff_S {
   int wp_index;
   int wp_score;
 };
+EXTERN bool *s1changed;
+EXTERN bool *s2changed;
 
 #define SNAP_HELP_IDX   0
 # define SNAP_AUCMD_IDX 1

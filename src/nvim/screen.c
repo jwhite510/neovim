@@ -3077,10 +3077,12 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow,
       }
 
       if (diff_hlf != (hlf_T)0) {
+        if ( diff_hlf == HLF_TXD ) { diff_hlf = HLF_CHD; }
         if (diff_hlf == HLF_CHD && ptr - line >= change_start
             && n_extra == 0) {
-          diff_hlf = HLF_TXD;                   // changed text
+          if ( s1changed[ptr - line] ) { diff_hlf = HLF_TXD; }
         }
+	// set the changes here
 	// get the exact changes
 	// id
 	// extraction from map?

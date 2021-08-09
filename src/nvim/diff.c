@@ -3329,8 +3329,13 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       }
     }
     // construct boolean values 0 -> unchanged 1 -> changed
-    bool *s1changed = xmalloc(s1len * sizeof(bool));
-    bool *s2changed = xmalloc(s2len * sizeof(bool));
+    // static bool *s1changed;
+    // static bool *s2changed;
+    if ( s1changed != NULL ) {
+      xfree(s1changed), xfree(s2changed);
+    }
+    s1changed = xmalloc(s1len * sizeof(bool));
+    s2changed = xmalloc(s2len * sizeof(bool));
     int s1p = 0, s2p = 0;
     fprintf(fp, "path:\n");
     for ( int p = 0; p < grid[s1len][s2len].wp_index; p++ ) {
@@ -3362,7 +3367,6 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
     }
     fprintf(fp, "\n");
 
-    xfree(s1changed), xfree(s2changed);
     // free the memory
     for ( int j = 0; j < (s1len + 1); j++ ) {
       for ( int k = 0; k < (s2len + 1); k++ ) {
