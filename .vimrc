@@ -171,6 +171,14 @@ nmap <silent> gr <Plug>(coc-references)
 " Use K to show documentation in preview window.
 nnoremap <silent> K :call <SID>show_documentation()<CR>
 
+function! CocToggle()
+	if g:coc_enabled
+		CocDisable
+	else
+		CocEnable
+	endif
+endfunction
+
 function! s:show_documentation()
   if (index(['vim','help'], &filetype) >= 0)
     execute 'h '.expand('<cword>')
@@ -1512,6 +1520,8 @@ nnoremap <A-C-u> :call UpdateBracketUpPreview()<cr>
 " checktime shortcut
 nnoremap <leader>ch :checktime<CR>
 nnoremap <leader>cl :cclo<CR>
+" toggle coc
+nnoremap <leader>co :call CocToggle()<CR>
 " open a terminal
 nnoremap <leader>te :call OpenTerm()<CR>
 nnoremap <leader>tr :call OpenTermRight()<CR>
