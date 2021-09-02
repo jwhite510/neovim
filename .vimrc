@@ -1500,6 +1500,8 @@ nnoremap <leader>fp msHmt/<C-p><C-p><CR>`tzt`s
 " search add another word to search pattern
 nnoremap <leader>fs /<C-p>\\|
 nnoremap <leader>fl :call SearchWordsOnLine()<cr>
+nnoremap <leader>fi :set foldmethod=indent<cr>
+nnoremap <leader>fm :set foldmethod=manual<cr>
 " grep
 nnoremap <leader>gg yiw:call MyGrep('-rIi', "<C-R>"")<cr>
 " grep
