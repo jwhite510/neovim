@@ -95,6 +95,8 @@ Plug 'easymotion/vim-easymotion'
 Plug 'neoclide/coc.nvim', { 'branch':'release' }
 
 
+Plug 'kshenoy/vim-signature'
+
 call plug#end()
 
 set laststatus=2
@@ -1178,6 +1180,10 @@ endfunction
 au TabLeave * call HideBracketUpPreviewSigns()
 au TabEnter * call ShowBracketUpPreviewSigns()
 
+function! SelectLastModifiedTextRegion()
+	normal! `[V`]
+endfun
+
 
 
 command! -bar DuplicateTabpane
@@ -1638,6 +1644,7 @@ nnoremap <leader>zm :call ShrinkFoldBottom('bottom')<cr>
 " <Leader>q{char} to move to {char}
 " map  <Leader>ef <Plug>(easymotion-bd-f)
 " nmap <Leader>ef <Plug>(easymotion-overwin-f)
+nnoremap <leader>ls :call SelectLastModifiedTextRegion()<cr>
 
 " s{char}{char} to move to {char}{char}
 " nmap s <Plug>(easymotion-overwin-f2)
