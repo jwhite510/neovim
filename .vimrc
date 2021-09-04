@@ -97,6 +97,8 @@ Plug 'neoclide/coc.nvim', { 'branch':'release' }
 
 Plug 'kshenoy/vim-signature'
 
+Plug 'sk1418/QFGrep'
+
 call plug#end()
 
 set laststatus=2
@@ -1647,6 +1649,10 @@ nnoremap <leader>zm :call ShrinkFoldBottom('bottom')<cr>
 " map  <Leader>ef <Plug>(easymotion-bd-f)
 " nmap <Leader>ef <Plug>(easymotion-overwin-f)
 nnoremap <leader>ls :call SelectLastModifiedTextRegion()<cr>
+" add to location list
+nnoremap <leader>la :laddexpr expand("%").":".getpos('.')[1].":".(len(getline("."))?getline("."):"---")<cr>
+" clear location list
+nnoremap <leader>lc :call setloclist(0,[])<cr>
 
 " s{char}{char} to move to {char}{char}
 " nmap s <Plug>(easymotion-overwin-f2)
