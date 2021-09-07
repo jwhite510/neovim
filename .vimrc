@@ -672,6 +672,22 @@ fun! QFSigns()
 	" call setqflist(qfitems, 'r')
 
 endfun
+fun! LLSigns()
+	" clear all qf signs
+	call sign_unplace('llsign_group')
+	let llitems = getloclist(0)
+
+	let index = 0
+	for i in llitems
+		if i['valid'] == 1
+			call sign_place(index, 'llsign_group', 'llsign', bufname(i['bufnr']), {'lnum':i['lnum'], 'priority':12})
+			let index = index + 1
+		endif
+	endfor
+
+	" call setqflist(qfitems, 'r')
+
+endfun
 fun! ProcessQF()
 	" add quickfix signs
 	call QuickFixBufferListedOnly()
@@ -1186,6 +1202,25 @@ function! SelectLastModifiedTextRegion()
 	normal! `[V`]
 endfun
 
+function! RemoveFromLocationList()
+	let curllist = getloclist(0)
+	let curbufnr = bufnr()
+	let newllist = []
+	" echo curbufnr
+	let lnum = getpos('.')[1]
+	" echo lnum
+	" get the buffer number and lnum
+	" echo " curbufnr:".curbufnr." lnum:".lnum
+	for thing in curllist
+		if !and(thing['lnum'] == lnum, thing['bufnr'] == curbufnr)
+			let newllist += [thing]
+		endif
+		" echo thing
+	endfor
+	:call setloclist(0,newllist)
+	" echo newllist
+	" echo curllist
+endfun
 
 
 command! -bar DuplicateTabpane
@@ -1294,6 +1329,8 @@ set diffopt+=bad-divider:'{}\ '
 
 " define quickfix signs
 call sign_define('qfsign', {"text" : "q>",})
+" location list sign
+call sign_define('llsign', {"text" : "l>",})
 
 " let g:colors_name = "monokai"
 "colors:
@@ -1650,9 +1687,13 @@ nnoremap <leader>zm :call ShrinkFoldBottom('bottom')<cr>
 " nmap <Leader>ef <Plug>(easymotion-overwin-f)
 nnoremap <leader>ls :call SelectLastModifiedTextRegion()<cr>
 " add to location list
-nnoremap <leader>la :laddexpr expand("%").":".getpos('.')[1].":".(len(getline("."))?getline("."):"---")<cr>
+nnoremap <leader>la :laddexpr expand("%").":".getpos('.')[1].":".(len(getline("."))?getline("."):"---")<cr>:call LLSigns()<cr>
 " clear location list
-nnoremap <leader>lc :call setloclist(0,[])<cr>
+nnoremap <leader>lc :call setloclist(0,[])<cr>:call LLSigns()<cr>
+nnoremap <leader>lr :call RemoveFromLocationList()<cr>:call LLSigns()<cr>
+nnoremap ]w :lnext <CR>zv
+nnoremap [w :lprevious <CR>zv
+nnoremap <leader>ww :ll <CR>zv
 
 " s{char}{char} to move to {char}{char}
 " nmap s <Plug>(easymotion-overwin-f2)
