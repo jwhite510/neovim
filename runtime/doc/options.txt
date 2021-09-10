@@ -2005,6 +2005,31 @@ A jump table for the options with a short description can be found at |Q_op|.
 				Use the indent heuristic for the internal
 				diff library.
 
+		linematch:{n}   Align and mark changes between the most
+				similar lines between the buffers. Works for 2
+				or 3 buffer diffs. When the total number of
+				lines in the diff hunk exceeds {n}, the lines
+				will not be aligned because for very large
+				diff hunks there will be a noticeable lag.
+				A reasonable setting is "linematch:60", as
+				this will enable alignment for a 2 buffer diff
+				hunk of 30 lines each, or a 3 buffer diff hunk
+				of 20 lines each.
+
+		bad-divider:'{characters}'
+				Prevent diff hunks from being divided by only
+				the characters provided in place of
+				{characters}. This is useful when a diff that
+				should be one hunk is divided into multiple
+				hunks, seperated by blank lines or bracktets.
+				To prevent diff hunks from being seperated by
+				blank lines or lines consisting of only white
+				spaces, use "bad-divider:'\ '", Where the
+				white space character is preceeded by a
+				backslash. To prevent diff hunks from being
+				seperated by blank lines and opening/closing
+				brackets, use "bad-divider:'{}\ '"
+
                 algorithm:{text} Use the specified diff algorithm with the
 				internal diff engine. Currently supported
 				algorithms are:

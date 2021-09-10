@@ -459,7 +459,7 @@ void set_topline(win_T *wp, linenr_T lnum)
   wp->w_botline += lnum - wp->w_topline;
   wp->w_topline = lnum;
   wp->w_topline_was_set = true;
-  wp->w_topfill = 0;
+  // wp->w_topfill = 0; // removing this fixes the misalignment while editing diffs
   wp->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_TOPLINE);
   // Don't set VALID_TOPLINE here, 'scrolloff' needs to be checked.
   redraw_later(wp, VALID);
@@ -1039,7 +1039,7 @@ bool scrolldown(long line_count, int byfold)
   (void)hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
   validate_cursor();            /* w_wrow needs to be valid */
   while (line_count-- > 0) {
-    if (curwin->w_topfill < diff_check(curwin, curwin->w_topline)
+    if (curwin->w_topfill < diff_check(curwin, curwin->w_topline, NULL)
         && curwin->w_topfill < curwin->w_height_inner - 1) {
       curwin->w_topfill++;
       done++;
@@ -2243,7 +2243,7 @@ void do_check_cursorbind(void)
     if (curwin != old_curwin && curwin->w_p_crb) {
       if (curwin->w_p_diff) {
         curwin->w_cursor.lnum =
-          diff_get_corresponding_line(old_curbuf, line);
+          diff_get_corresponding_line(old_curbuf, old_curwin, line);
       } else {
         curwin->w_cursor.lnum = line;
       }
