@@ -125,6 +125,7 @@ set updatetime=300
 
 " Don't pass messages to |ins-completion-menu|.
 set shortmess+=c
+set expandtab
 
 " Always show the signcolumn, otherwise it would shift the text each time
 " diagnostics appear/become resolved.
@@ -674,7 +675,7 @@ fun! QFSigns()
 endfun
 fun! LLSigns()
 	" clear all qf signs
-	call sign_unplace('llsign_group')
+	call sign_unplace('llsign_group', {'buffer':bufnr()})
 	let llitems = getloclist(0)
 
 	let index = 0
@@ -1551,7 +1552,7 @@ nnoremap <leader>fm :set foldmethod=manual<cr>
 nnoremap <leader>gg yiw:call MyGrep('-rIi', "<C-R>"")<cr>
 " grep
 nnoremap <leader>gr yiw:call MyGrepSilent('-rIw', "<C-R>"")<cr>
-nnoremap <leader>gs :tabe<CR>:Gstatus<CR>
+nnoremap <leader>gs :tabe<CR>:Git<CR>
 " open file browser at folder of current file
 nnoremap <leader>cp :call OpenFileBrowser()<CR>
 " open method in single line split
@@ -1641,6 +1642,8 @@ nnoremap <leader>it :diffthis<CR>
 " change to directory of currently open file
 nnoremap <leader>cd :cd %:p:h<CR>
 nnoremap <leader>cu :call ToggleCursorLine()<CR>
+nnoremap <leader>mv :mkview<cr>
+nnoremap <leader>lv :loadview<cr>
 
 nnoremap <leader>pw :pwd<CR>
 
@@ -1773,6 +1776,7 @@ cmap <A-w> \<
 cmap <A-e> \>
 " greedy regex nearest match
 cmap <C-s> .\{-}
+cmap <A-C-n> ^.\+\(^.*notmatching.*$\)\@<!$
 
 
 
