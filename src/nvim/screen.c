@@ -4637,6 +4637,12 @@ static int grid_char_needs_redraw(ScreenGrid *grid, int off_from, int off_to, in
 static void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol, int clear_width,
                              int rlflag, win_T *wp, int bg_attr, bool wrap)
 {
+  // FILE*fp=fopen("debug.txt","a");
+  // fprintf(fp, "grid_put_linebuf called\n");
+  // fprintf(fp, "grid->Rows: %i", grid->Rows);
+  // fprintf(fp, "grid->Columns: %i", grid->Columns);
+  // fprintf(fp,"chars:%s \n", grid->chars[0]);
+  // fclose(fp);
   unsigned off_from;
   unsigned off_to;
   unsigned max_off_from;
@@ -6317,6 +6323,10 @@ void win_grid_alloc(win_T *wp)
   ScreenGrid *grid = &wp->w_grid;
   ScreenGrid *grid_allocated = &wp->w_grid_alloc;
 
+  FILE*fp=fopen("debug.txt","a");
+  fprintf(fp, "win_grid_alloc called\n");
+  fprintf(fp,"(pointer)grid: %p  \n",(void*)grid);
+  fclose(fp);
   int rows = wp->w_height_inner;
   int cols = wp->w_width_inner;
   int total_rows = wp->w_height_outer;
@@ -6490,6 +6500,11 @@ void grid_alloc(ScreenGrid *grid, int rows, int columns, bool copy, bool valid)
 {
   int new_row;
   ScreenGrid new = *grid;
+  FILE*fp=fopen("debug.txt","a");
+  fprintf(fp, "grid_alloc called\n");
+  // fprintf(fp, "rows:%i\n", rows);
+  // fprintf(fp, "columns:%i\n", columns);
+  fclose(fp);
   assert(rows >= 0 && columns >= 0);
   size_t ncells = (size_t)rows * columns;
   new.chars = xmalloc(ncells * sizeof(schar_T));
@@ -7162,8 +7177,8 @@ void draw_tabline(void)
       if (tp->tp_topframe == topframe) {
         attr = win_hl_attr(cwp, HLF_TPS);
       }
-      if (use_sep_chars && col > 0) {
-        grid_putchar(&default_grid, '|', 0, col++, attr);
+      if (true) {
+        grid_putchar(&default_grid, '?', 0, col++, attr);
       }
 
       if (tp->tp_topframe != topframe) {
