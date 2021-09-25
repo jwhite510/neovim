@@ -744,7 +744,7 @@ void sign_mark_adjust(
     if (sign->se_lnum >= line1 && sign->se_lnum <= line2) {
       if (amount != MAXLNUM) {
         new_lnum += amount;
-      } else if (!is_fixed || signcol >= 2) {
+      } else if ( 0 ) {
         *lastp = next;
         if (next) {
           next->se_prev = last;
