@@ -1561,9 +1561,14 @@ nnoremap <leader>mo :call SplitViewMethodOpen()<cr>
 nnoremap <leader>mc :call SplitViewMethodClose()<cr>
 
 nnoremap <A-C-p> :call BracketUpPreview('up')<cr>
-nnoremap <A-C-k> :ContextToggleWindow<CR>
+" nnoremap <A-C-k> :ContextToggleWindow<CR>
 nnoremap <A-C-n> :call BracketUpPreview('down')<cr>
 nnoremap <A-C-u> :call UpdateBracketUpPreview()<cr>
+
+nnoremap <A-C-k> :NvimTabsTabup<cr>
+nnoremap <A-C-j> :NvimTabsTabdown<cr>
+nnoremap <A-C-q> :NvimTabsClosetab<cr>
+nnoremap <A-C-t> :NvimTabsNewtab<cr>
 
 " checktime shortcut
 nnoremap <leader>ch :checktime<CR>
