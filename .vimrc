@@ -46,6 +46,8 @@ Plug 'tpope/vim-dispatch'
 "
 Plug 'preservim/nerdtree'
 
+Plug 'jwhite510/nvim_win_tabs'
+
 
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
