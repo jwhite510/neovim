@@ -48,7 +48,7 @@ Plug 'preservim/nerdtree'
 
 Plug 'jwhite510/nvim_win_tabs'
 
-
+Plug 'tpope/vim-sleuth'
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
 " let g:ycm_key_list_select_completion=[]

@@ -152,17 +152,17 @@ nnoremap <buffer> <leader>ph :call SwitchHeader()<CR>
 set formatoptions-=cro
 
 
-augroup my_cpp
-   au!
-   au BufWinEnter <buffer> setlocal foldmethod=indent
-   au BufWinEnter <buffer> setlocal shiftwidth=2
-   au BufWinEnter <buffer> setlocal softtabstop=2
-   " au BufWinEnter <buffer> let foldlevelstart=1
-   au BufWinEnter <buffer> setlocal expandtab
-augroup END
-
-let b:undo_ftplugin = get(b:, 'undo_ftplugin', 'exe')
-    \ . "
-    \ | setlocal foldmethod<
-    \ | exe 'au! my_cpp * <buffer>'
-    \ "
+" augroup my_cpp
+"    au!
+"    au BufWinEnter <buffer> setlocal foldmethod=indent
+"    au BufWinEnter <buffer> setlocal shiftwidth=2
+"    au BufWinEnter <buffer> setlocal softtabstop=2
+"    " au BufWinEnter <buffer> let foldlevelstart=1
+"    au BufWinEnter <buffer> setlocal expandtab
+" augroup END
+" 
+" let b:undo_ftplugin = get(b:, 'undo_ftplugin', 'exe')
+"     \ . "
+"     \ | setlocal foldmethod<
+"     \ | exe 'au! my_cpp * <buffer>'
+"     \ "

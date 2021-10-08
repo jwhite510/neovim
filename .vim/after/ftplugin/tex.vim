@@ -34,16 +34,16 @@ compiler tex
 hi clear texItalStyle
 hi clear texItalBoldStyle
 
-augroup my_tex
-    au!
-    au BufWinEnter <buffer> setlocal foldmethod=indent
-    au BufWinEnter <buffer> setlocal shiftwidth=2
-    au BufWinEnter <buffer> setlocal softtabstop=2
-    au BufWinEnter <buffer> let foldlevelstart=1
-augroup END
-
-let b:undo_ftplugin = get(b:, 'undo_ftplugin', 'exe')
-    \ . "
-    \ | setlocal foldmethod<
-    \ | exe 'au! my_tex * <buffer>'
-    \ "
+" augroup my_tex
+"     au!
+"     au BufWinEnter <buffer> setlocal foldmethod=indent
+"     au BufWinEnter <buffer> setlocal shiftwidth=2
+"     au BufWinEnter <buffer> setlocal softtabstop=2
+"     au BufWinEnter <buffer> let foldlevelstart=1
+" augroup END
+" 
+" let b:undo_ftplugin = get(b:, 'undo_ftplugin', 'exe')
+"     \ . "
+"     \ | setlocal foldmethod<
+"     \ | exe 'au! my_tex * <buffer>'
+"     \ "

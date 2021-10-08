@@ -30,16 +30,16 @@ inoremap <buffer> ;; <Esc>A;<Esc>
 nmap <buffer> <c-p> [{
 set formatoptions-=cro
 
-augroup my_cs
-   au!
-   au BufWinEnter <buffer> setlocal foldmethod=indent
-   au BufWinEnter <buffer> setlocal shiftwidth=2
-   au BufWinEnter <buffer> setlocal softtabstop=2
-   au BufWinEnter <buffer> setlocal expandtab
-augroup END
-
-let b:undo_ftplugin = get(b:, 'undo_ftplugin', 'exe')
-    \ . "
-    \ | setlocal foldmethod<
-    \ | exe 'au! my_cs * <buffer>'
-    \ "
+" augroup my_cs
+"    au!
+"    au BufWinEnter <buffer> setlocal foldmethod=indent
+"    au BufWinEnter <buffer> setlocal shiftwidth=2
+"    au BufWinEnter <buffer> setlocal softtabstop=2
+"    au BufWinEnter <buffer> setlocal expandtab
+" augroup END
+" 
+" let b:undo_ftplugin = get(b:, 'undo_ftplugin', 'exe')
+"     \ . "
+"     \ | setlocal foldmethod<
+"     \ | exe 'au! my_cs * <buffer>'
+"     \ "

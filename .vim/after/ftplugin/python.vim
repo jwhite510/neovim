@@ -69,17 +69,17 @@ let $PYTHONUNBUFFERED=1
 " set compiler
 autocmd BufEnter *.py :compiler python
 
-augroup my_python
-    au!
-    au BufWinEnter <buffer> setlocal foldmethod=indent
-    au BufWinEnter <buffer> setlocal shiftwidth=4
-    au BufWinEnter <buffer> setlocal softtabstop=4
-    au BufWinEnter <buffer> setlocal expandtab
-    au BufWinEnter <buffer> setlocal foldignore=
-augroup END
-
-let b:undo_ftplugin = get(b:, 'undo_ftplugin', 'exe')
-    \ . "
-    \ | setlocal foldmethod<
-    \ | exe 'au! my_python * <buffer>'
-    \ "
+" augroup my_python
+"     au!
+"     au BufWinEnter <buffer> setlocal foldmethod=indent
+"     au BufWinEnter <buffer> setlocal shiftwidth=4
+"     au BufWinEnter <buffer> setlocal softtabstop=4
+"     au BufWinEnter <buffer> setlocal expandtab
+"     au BufWinEnter <buffer> setlocal foldignore=
+" augroup END
+" 
+" let b:undo_ftplugin = get(b:, 'undo_ftplugin', 'exe')
+"     \ . "
+"     \ | setlocal foldmethod<
+"     \ | exe 'au! my_python * <buffer>'
+"     \ "

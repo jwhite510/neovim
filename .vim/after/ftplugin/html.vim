@@ -83,17 +83,17 @@ nnoremap <buffer> <leader>html :-1read ~/.vim/snippet/start.html<CR>4jf>a
 nnoremap <buffer> <leader>com :g/^\s*$/d<CR>:%le<CR>:noh<CR>
 
 
-augroup my_html
-    au!
-    au BufWinEnter <buffer> setlocal foldmethod=indent
-    au BufWinEnter <buffer> setlocal shiftwidth=2
-    au BufWinEnter <buffer> setlocal softtabstop=2
-    au BufWinEnter <buffer> setlocal expandtab
-    au BufWinEnter <buffer> setlocal iskeyword+=-
-augroup END
-
-let b:undo_ftplugin = get(b:, 'undo_ftplugin', 'exe')
-    \ . "
-    \ | setlocal foldmethod<
-    \ | execute 'au! my_html * <buffer>'
-    \ "
+" augroup my_html
+"     au!
+"     au BufWinEnter <buffer> setlocal foldmethod=indent
+"     au BufWinEnter <buffer> setlocal shiftwidth=2
+"     au BufWinEnter <buffer> setlocal softtabstop=2
+"     au BufWinEnter <buffer> setlocal expandtab
+"     au BufWinEnter <buffer> setlocal iskeyword+=-
+" augroup END
+" 
+" let b:undo_ftplugin = get(b:, 'undo_ftplugin', 'exe')
+"     \ . "
+"     \ | setlocal foldmethod<
+"     \ | execute 'au! my_html * <buffer>'
+"     \ "
