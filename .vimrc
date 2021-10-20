@@ -50,6 +50,7 @@ Plug 'jwhite510/nvim_win_tabs'
 
 Plug 'tpope/vim-eunuch'
 Plug 'tpope/vim-sleuth'
+Plug 'rickhowe/spotdiff.vim'
 
 
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
@@ -1645,6 +1646,7 @@ nnoremap <C-Space> :pc<CR>
 " open in vscode
 nnoremap <leader>vs :w<CR>:call OpenVSCode()<CR><CR>
 nnoremap <leader>vl ^vg_
+nnoremap <leader>vo :VDiffoff!<CR>
 nnoremap <leader>ic :set ic! ic?<CR>
 nnoremap <leader>io :diffoff<CR>
 nnoremap <leader>iO :diffoff!<CR>
@@ -1725,6 +1727,7 @@ nmap s <Plug>(easymotion-overwin-f2)
 " # # # # # # # # # # # # # # # # # # # # # # # #
 
 " space key does nothing
+vnoremap <leader>vd :VDiffthis<CR>
 vnoremap <SPACE> <Nop>
 " moving indentation easier
 vnoremap < <gv
