@@ -48,7 +48,10 @@ Plug 'preservim/nerdtree'
 
 Plug 'jwhite510/nvim_win_tabs'
 
+Plug 'tpope/vim-eunuch'
 Plug 'tpope/vim-sleuth'
+
+
 " Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
 " let g:ycm_key_list_select_completion=[]
@@ -1744,6 +1747,7 @@ vnoremap <leader>qv :cgetbuffer<CR> :call QuickFixBufferListedOnly()<CR>
 " remove whitespace in visual selection
 vnoremap <leader>wr :s/\s\+$//e<CR>
 " '<,'>s/\s\+$//e
+vnoremap <leader>/ /\%V
 
 " # # # # # # # # # # # # # # # # # # # # # # # #
 " #   I N S E R T  M O D E  M A P P I N G S     #
