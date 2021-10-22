@@ -159,9 +159,14 @@ export PATH=$PATH":/opt/Qt/Tools/QtCreator/bin"
 # alias vim=nvim
 # alias clear='' i learned my lesson
 
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[1;36m'
+NC='\033[0m' # No Color
+
 alias gitl="git log --oneline --graph --all --date-order"
 alias myglog="git log --date-order --author jonathon --graph --all"
-alias gitdc="echo ----------diff----------:;git diff --stat;echo -------diff staged-----:;git diff --cached --stat"
+alias gitdc="echo -e \"${BLUE}-------diff staged------:${NC}\";git diff --cached --stat;echo -e \"${RED}----------diff----------:${NC}\";git diff --stat;"
 alias delta="delta --navigate"
 
 export RANGER_LOAD_DEFAULT_RC=false
