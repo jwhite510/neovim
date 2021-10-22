@@ -1647,6 +1647,7 @@ nnoremap <C-Space> :pc<CR>
 nnoremap <leader>vs :w<CR>:call OpenVSCode()<CR><CR>
 nnoremap <leader>vl ^vg_
 nnoremap <leader>vo :VDiffoff!<CR>
+nnoremap <leader>vu :VDiffupdate<CR>
 nnoremap <leader>ic :set ic! ic?<CR>
 nnoremap <leader>io :diffoff<CR>
 nnoremap <leader>iO :diffoff!<CR>
