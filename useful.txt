@@ -10,3 +10,23 @@ grep -r --include "*.txt" "pattern" .
 
 # git clone a repo with limited depth
 git clone -b branchname --depth 1 repourl .
+
+# windows things:
+find services running on port:
+netstat -ano | findstr :8080
+taskkill /PID 14272
+
+# SVN commands:
+# revert all the changes
+svn revert --depth=infinity .
+
+# revert to specific revision
+svn up -rxxxxxx
+
+# get newest version from repository
+
+# vim seach
+
+
+push remotes from one git branch to another remote
+git push usb "refs/remotes/src/*:refs/heads/*"
