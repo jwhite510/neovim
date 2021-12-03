@@ -175,10 +175,10 @@ nmap <silent> [g <Plug>(coc-diagnostic-prev)
 nmap <silent> ]g <Plug>(coc-diagnostic-next)
 
 " GoTo code navigation.
-nmap <silent> gd <Plug>(coc-definition)
-nmap <silent> gy <Plug>(coc-type-definition)
-nmap <silent> gi <Plug>(coc-implementation)
-nmap <silent> gr <Plug>(coc-references)
+nmap <silent> <leader>gd <Plug>(coc-definition)
+nmap <silent> <leader>gy <Plug>(coc-type-definition)
+nmap <silent> <leader>gi <Plug>(coc-implementation)
+nmap <silent> <leader>gr <Plug>(coc-references)
 
 " Use K to show documentation in preview window.
 nnoremap <silent> K :call <SID>show_documentation()<CR>
@@ -884,7 +884,7 @@ endfunction
 
 function! DiffFileWhereThisLineWasLastEdited()
 	" with fugitive
-	:execute ":Gblame"
+	:execute ":Git blame"
 	:execute "normal! ye"
 	:execute ":q"
 	call feedkeys(":Ghdiffsplit! \<C-r>\"~1")
@@ -1558,7 +1558,7 @@ nnoremap <leader>fm :set foldmethod=manual<cr>
 " grep
 nnoremap <leader>gg yiw:call MyGrep('-rIi', "<C-R>"")<cr>
 " grep
-nnoremap <leader>gr yiw:call MyGrepSilent('-rIw', "<C-R>"")<cr>
+" nnoremap <leader>gr yiw:call MyGrepSilent('-rIw', "<C-R>"")<cr>
 nnoremap <leader>gs :tabe<CR>:Git<CR>
 " open file browser at folder of current file
 nnoremap <leader>cp :call OpenFileBrowser()<CR>
