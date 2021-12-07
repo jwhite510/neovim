@@ -897,6 +897,18 @@ struct file_buffer {
  */
 #define DB_COUNT 8     // up to four buffers can be diff'ed
 
+typedef struct df_iterators_S df_iterators_T;
+struct df_iterators_S {
+  int* iterators;  // current index of this path
+  int* buffers;  // mapping to dp buffer
+  int n;
+};
+
+typedef struct paths_S paths_T;
+struct paths_S {
+  int* index;  // current index of this path
+  int n;
+};
 
 // choices for comparison with linematch_2buffers
 enum df_path2_choice{

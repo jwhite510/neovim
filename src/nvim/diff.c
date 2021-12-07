@@ -2126,6 +2126,47 @@ void linematch_2buffers(diff_T *dp)
   xfree(df_pathmatrix2);
 }
 
+void populate_tensor(df_iterators_T df_iterators, int ch_dim, diff_T* dp) {
+  if (ch_dim == df_iterators.n) {
+    // do things here with indexes
+    //
+    //
+    paths_T paths;
+    paths.n = 0;
+    paths.index = xmalloc(sizeof(int) * df_iterators.n);
+
+    for (int j = 0; j < df_iterators.n; j++) {
+      if (df_iterators.iterators[j] > 0) {
+        paths.index[paths.n] = j;
+        paths.n++;
+      }
+    }
+    // places that it can come from:
+    // places that it can go to: indexes greater than 1
+    // make all the permutations of these indexes
+
+    FILE*fp=fopen("debug.txt","a");
+    fprintf(fp, "paths:\n");
+    for (int p = 0; p < paths.n; p++) {
+      fprintf(fp, " %i ", paths.index[p]);
+    }
+    fprintf(fp, "\n");
+    fclose(fp);
+
+    int choice = 0;
+    // TODO
+    // do some bit shifting for all the permutations for the paths
+
+    // get all of the non zero indexes
+    // find score with each permutation
+    return;
+  }
+  for(int i = 0; i < dp->df_count[df_iterators.buffers[ch_dim]]; i++ ) {
+    df_iterators.iterators[ch_dim] = i;
+    populate_tensor(df_iterators, ch_dim + 1, dp);
+  }
+}
+
 /// The 3d case (for 3 buffers) of the algorithm implemented when diffopt
 /// 'linematch' is enabled. The algorithm constructs a 3d tensor to
 /// compare a diff between 3 buffers. The dimmensions of the tensor are
@@ -2199,6 +2240,21 @@ void linematch_3buffers(diff_T * dp)
       ((dp->df_count[b0]+1) * (dp->df_count[b2]+1)) * sizeof(int));
   bool icur = 1;
   int score;
+
+  df_iterators_T df_iterators;
+  df_iterators.n = 3; // currently there are 3 files to iterate over
+  df_iterators.iterators = xmalloc(sizeof(int) * 3);
+  df_iterators.buffers = xmalloc(sizeof(int) * 3);
+  df_iterators.buffers[0] = b0;
+  df_iterators.buffers[1] = b1;
+  df_iterators.buffers[2] = b2;
+  FILE*fp=fopen("debug.txt","a");
+  fprintf(fp, "---populate_tensor called---\n");
+  fclose(fp);
+  populate_tensor(df_iterators, 0, dp);
+  xfree(df_iterators.iterators);
+  xfree(df_iterators.buffers);
+
   for (int i = 0; i <= dp->df_count[b0]; i++) {
     icur=!icur;
     for (int j = 0; j <= dp->df_count[b1]; j++) {
@@ -2307,6 +2363,9 @@ void linematch_3buffers(diff_T * dp)
                 DFPATH3_SKIP2);  // choice
           }
         } else {
+          //
+          //  collect all the indexes that are greater than 1
+          //
           df_pathmatrix3[icur][j][k].df_lev_score = -1;
           long matched_01 = mem01[i * (dp->df_count[b1]+1) + j];
           score = df_pathmatrix3[!icur][j-1][k].df_lev_score+matched_01;
@@ -2375,6 +2434,9 @@ void linematch_3buffers(diff_T * dp)
   dp->df_arr_col_size = maxlines+1;
   dp->df_comparisonlines =
     xmalloc(DB_COUNT *(dp->df_arr_col_size) * sizeof(df_linecompare_T));
+
+  // initialize lines
+
   initialize_compareline3(dp, b0, p0, b1, b2);
   initialize_compareline3(dp, b1, p1, b0, b2);
   initialize_compareline3(dp, b2, p2, b0, b1);
@@ -2397,6 +2459,9 @@ void linematch_3buffers(diff_T * dp)
       initialize_compareline3(dp, b0, p0, b1, b2);
       initialize_compareline3(dp, b2, p2, b0, b1);
     } else if (p == DFPATH3_COMPARE12) {
+      // add filler to the one that was not compared
+      // use a 010 111 100 integers to determine which is compared instead of enum
+      //
       dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_compare[b2] = p2;
       dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_compare[b1] = p1;
       dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_filler++;
