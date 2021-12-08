@@ -943,6 +943,14 @@ struct diffcomparisonpath3_S{
   int df_lev_score;  // to keep track of the total score of this path
   int df_path_index;  // current index of this path
 };
+
+typedef struct diffcomparisonpath_flat_S diffcomparisonpath_flat_T;
+struct diffcomparisonpath_flat_S{
+  int *decision;  // to keep track of this path traveled
+  int df_lev_score;  // to keep track of the total score of this path
+  int df_path_index;  // current index of this path
+};
+
 // contains the information for how to construct diff views when linematch
 // diffopt is enabled, it is populated after running linematch_3buffers or
 // linematch_2buffers.

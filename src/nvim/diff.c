@@ -2126,15 +2126,28 @@ void linematch_2buffers(diff_T *dp)
   xfree(df_pathmatrix2);
 }
 
-void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, int* choice, diff_T* dp) {
+int unwrap_indexes(int* values, df_iterators_T df_iterators, diff_T* dp) {
+  int num_unwrap_scalar = 1;
+  int path_index = 0;
+  for (int k = 0; k < df_iterators.n; k++) {
+    num_unwrap_scalar *= ( dp->df_count[df_iterators.buffers[k]] + 1 );
+  }
+  for (int k = 0; k < df_iterators.n; k++) {
+    num_unwrap_scalar = num_unwrap_scalar / (dp->df_count[df_iterators.buffers[k]] + 1);
+    path_index += num_unwrap_scalar * values[k];
+  }
+  return path_index;
+}
+
+void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, int* choice, diff_T* dp, diffcomparisonpath_flat_T* diffcomparisonpath_flat) {
   if (index == paths.n) {
     if ((*choice) > 0) {
       FILE*fp=fopen("debug.txt","a");
-      fprintf(fp, "choice: %i \n", (*choice));
+      // fprintf(fp, "choice: %i \n", (*choice));
       // read the number
       // calculate score here
 
-      fprintf(fp, "indexes:\n");
+      // fprintf(fp, "indexes:\n");
 
       // from values
       int* fromValues = xmalloc(sizeof(int) * df_iterators.n);
@@ -2144,7 +2157,7 @@ void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, i
       // to values
       for ( int k = 0; k < df_iterators.n; k++ ) {
         // access to the index
-        fprintf(fp, " k %i = %i", k, df_iterators.iterators[k]);
+        // fprintf(fp, " k %i = %i", k, df_iterators.iterators[k]);
         fromValues[k] = df_iterators.iterators[k];
         toValues[k] = df_iterators.iterators[k];
         // get the index at all of the places
@@ -2152,43 +2165,86 @@ void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, i
           fromValues[k]--;
           stringps[k] = ml_get_buf(
               curtab->tp_diffbuf[df_iterators.buffers[k]],
-              dp->df_lnum[df_iterators.buffers[k]],
+              dp->df_lnum[df_iterators.buffers[k]] + df_iterators.iterators[k] - 1,
               false
               );
           // pull the line at this index
           //
-          fprintf(fp, " get line: %i ", k);
+          // fprintf(fp, " get line: %i ", k);
         } else {
           stringps[k] = NULL;
         }
-        fprintf(fp, "\n");
+        // fprintf(fp, "\n");
       }
-
       // read the values here
+
+      // print the choice
+      fprintf(fp, "*choice: %i \n", (*choice));
+      // print the iterator values
+      fprintf(fp, "df_iterators: ");
+      for(int k = 0; k < df_iterators.n; k++) {
+        fprintf(fp, "k%i=%i ", k, df_iterators.iterators[k]);
+      }
+      fprintf(fp, "\n");
+      // print the strings
+      fprintf(fp, "stringps: \n");
+      for(int k = 0; k < df_iterators.n; k++) {
+        fprintf(fp, "k%i: %s \n", k, stringps[k]);
+      }
+      fprintf(fp, "\n");
+      fprintf(fp, "fromValues: \n");
+      for(int k = 0; k < df_iterators.n; k++) {
+        fprintf(fp, "k%i=%i ", k, fromValues[k]);
+      }
+      fprintf(fp, "\n");
+      fprintf(fp, "toValues: \n");
+      for(int k = 0; k < df_iterators.n; k++) {
+        fprintf(fp, "k%i=%i ", k, toValues[k]);
+      }
+      fprintf(fp, "\n");
+
+      int unwrapped_index_from = unwrap_indexes(fromValues, df_iterators, dp);
+      int unwrapped_index_to = unwrap_indexes(toValues, df_iterators, dp);
+
+      // use these indexes in diffcomparisonpath_flat
+      //
+      // TODO initialize the 0, 0, 0 case to a value of 0 first
+
+      // length of each iterator
+      // unravel these indexes
+
       // fromValues;
       // toValues;
-      fprintf(fp, "\n");
-      fprintf(fp, "indexes that are greater than 0:\n");
+      // fprintf(fp, "\n");
+      // fprintf(fp, "indexes that are greater than 0:\n");
       // calculate score
       // int score = pathmatrix[i][j][k]
       // for each index that is greater than 0
+
+
       xfree(fromValues);
       xfree(toValues);
+      xfree(stringps);
       fclose(fp);
       // for every one count matched characters
       // get the i value for each index
+
+    } else {
+      // initialize the 0, 0, 0 ... choice
+      diffcomparisonpath_flat->df_lev_score = 0;
+      diffcomparisonpath_flat->df_path_index = 0;
 
     }
     return;
   }
   int bit_place = paths.index[index];
   *(choice) |= (1 << bit_place); // set it to 1
-  try_possible_paths(df_iterators, paths, index + 1, choice, dp);
+  try_possible_paths(df_iterators, paths, index + 1, choice, dp, diffcomparisonpath_flat);
   *(choice) &= ~(1 << bit_place); // set it to 0
-  try_possible_paths(df_iterators, paths, index + 1, choice, dp);
+  try_possible_paths(df_iterators, paths, index + 1, choice, dp, diffcomparisonpath_flat);
 }
 
-void populate_tensor(df_iterators_T df_iterators, int ch_dim, diff_T* dp) {
+void populate_tensor(df_iterators_T df_iterators, int ch_dim, diff_T* dp, diffcomparisonpath_flat_T* diffcomparisonpath_flat) {
   if (ch_dim == df_iterators.n) {
     // do things here with indexes
     //
@@ -2208,15 +2264,15 @@ void populate_tensor(df_iterators_T df_iterators, int ch_dim, diff_T* dp) {
     // make all the permutations of these indexes
 
     FILE*fp=fopen("debug.txt","a");
-    fprintf(fp, "paths:\n");
-    for (int p = 0; p < paths.n; p++) {
-      fprintf(fp, " %i ", paths.index[p]);
-    }
-    fprintf(fp, "\n");
+    // fprintf(fp, "paths:\n");
+    // for (int p = 0; p < paths.n; p++) {
+    //   fprintf(fp, " %i ", paths.index[p]);
+    // }
+    // fprintf(fp, "\n");
     int choice = 0;
-    fprintf(fp, "try_possible_paths:\n");
+    fprintf(fp, "TRY_POSSIBLE_PATHS:\n");
     fclose(fp);
-    try_possible_paths(df_iterators, paths, 0, &choice, dp);
+    try_possible_paths(df_iterators, paths, 0, &choice, dp, diffcomparisonpath_flat);
 
     // 0 1 ->
     // 010 DFPATH3_SKIP1
@@ -2249,9 +2305,9 @@ void populate_tensor(df_iterators_T df_iterators, int ch_dim, diff_T* dp) {
     // find score with each permutation
     return;
   }
-  for(int i = 0; i < dp->df_count[df_iterators.buffers[ch_dim]]; i++ ) {
+  for(int i = 0; i <= dp->df_count[df_iterators.buffers[ch_dim]]; i++ ) {
     df_iterators.iterators[ch_dim] = i;
-    populate_tensor(df_iterators, ch_dim + 1, dp);
+    populate_tensor(df_iterators, ch_dim + 1, dp, diffcomparisonpath_flat);
   }
 }
 
@@ -2319,6 +2375,11 @@ void linematch_3buffers(diff_T * dp)
       }
     }
   }
+
+  // create the flattened path matrix
+  diffcomparisonpath_flat_T* diffcomparisonpath_flat = xmalloc(sizeof(diffcomparisonpath_flat_T) *
+      (dp->df_count[b1] + 1) * (dp->df_count[b1] + 1) * (dp->df_count[b2] + 1));
+
   // memory for avoiding repetitive calculations of score
   int *mem12 = xmalloc(
       ((dp->df_count[b1]+1) * (dp->df_count[b2]+1)) * sizeof(int));
@@ -2339,7 +2400,7 @@ void linematch_3buffers(diff_T * dp)
   FILE*fp=fopen("debug.txt","a");
   fprintf(fp, "---populate_tensor called---\n");
   fclose(fp);
-  populate_tensor(df_iterators, 0, dp);
+  populate_tensor(df_iterators, 0, dp, diffcomparisonpath_flat);
   xfree(df_iterators.iterators);
   xfree(df_iterators.buffers);
 
