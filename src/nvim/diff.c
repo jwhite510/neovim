@@ -2736,8 +2736,6 @@ void linematch_3buffers(diff_T * dp)
   values_final[2] = dp->df_count[b2];
   int u = unwrap_indexes(values_final, df_iterators, dp);
   xfree(values_final);
-  xfree(df_iterators.iterators);
-  xfree(df_iterators.buffers);
   int df_path_index2 = diffcomparisonpath_flat[u].df_path_index;
   int df_lev_score2 = diffcomparisonpath_flat[u].df_lev_score;
   int* decision2 = diffcomparisonpath_flat[u].decision; // [i]
@@ -2777,6 +2775,8 @@ void linematch_3buffers(diff_T * dp)
     }
   }
   xfree(comparison_mem);
+  xfree(df_iterators.iterators);
+  xfree(df_iterators.buffers);
 
   for (int i = 0; i < (
         ( 2 ) *
