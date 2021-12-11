@@ -1843,31 +1843,7 @@ int count_virtual_to_real(win_T *win, const linenr_T lnum,
 
 long count_matched_chars_f(char_u** stringps, int* fromValues, int n, int*** comparison_mem) {
 
-  int true_ans = 0;
-  int _n = 0;
-  char_u** stringsinarow = xmalloc(sizeof(char_u*) * n);
-  for (int i = 0; i < n; i++) {
-    if (stringps[i] != NULL) {
-      stringsinarow[_n++] = stringps[i];
-    }
-  }
-  if ( _n == 2) {
-    true_ans = count_matched_chars(stringsinarow[0], stringsinarow[1]);
-  } else if ( _n == 3) {
-    long matched01 = count_matched_chars(stringsinarow[0], stringsinarow[1]);
-    long matched02 = count_matched_chars(stringsinarow[0], stringsinarow[2]);
-    long matched12 = count_matched_chars(stringsinarow[1], stringsinarow[2]);
-    long matched012 = matched01 + matched02 + matched12;
-    matched012 *= 2, matched012 /= 3;
-    true_ans = matched012;
-  }
-  xfree(stringsinarow);
-
-
-  int matched_chars = 0;
-  int pointerindex = 0;
-  int matched = 0;
-  // TODO test the bounds to make sure nothing is accessed out of bounds
+  int matched_chars = 0, pointerindex = 0, matched = 0;
   for (int i = 0; i < n; i++) {
     for (int j = i + 1; j < n; j++) {
       if ( stringps[i] != NULL && stringps[j] != NULL ) {
@@ -1888,15 +1864,7 @@ long count_matched_chars_f(char_u** stringps, int* fromValues, int n, int*** com
     matched_chars *= 2, matched_chars /= 3;
   }
 
-
-  if (true) {
-    // FILE*fp1=fopen("debug.txt","a");
-    // fprintf(fp1, "true_ans: %i, matched_chars: %i\n", true_ans, matched_chars);
-    // fclose(fp1);
-    int testv = 1;
-  } 
   return matched_chars;
-  // return 0;
 }
 
 /// return the number of matching characters between two strings
@@ -1937,11 +1905,6 @@ long count_matched_chars(const char_u *s1, const char_u *s2)
 }
 
 void update_path_flat(diffcomparisonpath_flat_T* diffcomparisonpath_flat, int score, int to, int from, const int choice) {
-
-  // FILE*fp1=fopen("debug.txt","a");
-  // fprintf(fp1, "to: %i \n", to);
-  // fclose(fp1);
-
   for (int k = 0; k < diffcomparisonpath_flat[from].df_path_index; k++) {
     diffcomparisonpath_flat[to].decision[k] = diffcomparisonpath_flat[from].decision[k];
   }
@@ -2222,22 +2185,10 @@ int unwrap_indexes(int* values, df_iterators_T df_iterators, diff_T* dp) {
 void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, int* choice, diff_T* dp, diffcomparisonpath_flat_T* diffcomparisonpath_flat, int*** comparison_mem) {
   if (index == paths.n) {
     if ((*choice) > 0) {
-      // FILE*fp=fopen("debug.txt","a");
-      // fprintf(fp, "choice: %i \n", (*choice));
-      // read the number
-      // calculate score here
-
-      // fprintf(fp, "indexes:\n");
-
-      // from values
       int* fromValues = xmalloc(sizeof(int) * df_iterators.n);
       int* toValues = xmalloc(sizeof(int) * df_iterators.n);
       char_u** stringps = xmalloc(sizeof(char_u*) * df_iterators.n);
-
-      // to values
       for ( int k = 0; k < df_iterators.n; k++ ) {
-        // access to the index
-        // fprintf(fp, " k %i = %i", k, df_iterators.iterators[k]);
         fromValues[k] = df_iterators.iterators[k];
         toValues[k] = df_iterators.iterators[k];
         // get the index at all of the places
@@ -2248,55 +2199,17 @@ void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, i
               dp->df_lnum[df_iterators.buffers[k]] + df_iterators.iterators[k] - 1,
               false
               );
-          // pull the line at this index
-          //
-          // fprintf(fp, " get line: %i ", k);
         } else {
           stringps[k] = NULL;
         }
-        // fprintf(fp, "\n");
       }
-      // read the values here
-
-      // print the choice
-      // fprintf(fp, "====================\n");
-      // fprintf(fp, "*choice: %i \n", (*choice));
-      // // print the iterator values
-      // fprintf(fp, "df_iterators: ");
-      // for(int k = 0; k < df_iterators.n; k++) {
-      //   fprintf(fp, "k%i=%i ", k, df_iterators.iterators[k]);
-      // }
-      // fprintf(fp, "\n");
-      // // print the strings
-      // fprintf(fp, "stringps: \n");
-      // for(int k = 0; k < df_iterators.n; k++) {
-      //   fprintf(fp, "k%i: %s \n", k, stringps[k]);
-      // }
-      // fprintf(fp, "\n");
-      // fprintf(fp, "fromValues: \n");
-      // for(int k = 0; k < df_iterators.n; k++) {
-      //   fprintf(fp, "k%i=%i ", k, fromValues[k]);
-      // }
-      // fprintf(fp, "\n");
-      // fprintf(fp, "toValues: \n");
-      // for(int k = 0; k < df_iterators.n; k++) {
-      //   fprintf(fp, "k%i=%i ", k, toValues[k]);
-      // }
-      // fprintf(fp, "\n");
-
       int unwrapped_index_from = unwrap_indexes(fromValues, df_iterators, dp);
       int unwrapped_index_to = unwrap_indexes(toValues, df_iterators, dp);
-      // calculate score
-      // initialize the score
       long matched_chars = count_matched_chars_f(
           stringps, fromValues, df_iterators.n, comparison_mem
           );
       int score = diffcomparisonpath_flat[unwrapped_index_from].df_lev_score + matched_chars;
-      // fprintf(fp, "score: %i\n", score);
-      // fprintf(fp, "matched_chars: %i\n", matched_chars);
       if (score > diffcomparisonpath_flat[unwrapped_index_to].df_lev_score) {
-        // fprintf(fp, "UPDATING SCORE\n");
-        // TODO implement this function
         update_path_flat(
             diffcomparisonpath_flat,
             score,
@@ -2306,34 +2219,14 @@ void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, i
             );
       }
 
-      // use these indexes in diffcomparisonpath_flat
-      //
-      // TODO initialize the 0, 0, 0 case to a value of 0 first
-
-      // length of each iterator
-      // unravel these indexes
-
-      // fromValues;
-      // toValues;
-      // fprintf(fp, "\n");
-      // fprintf(fp, "indexes that are greater than 0:\n");
-      // calculate score
-      // int score = pathmatrix[i][j][k]
-      // for each index that is greater than 0
-
-
       xfree(fromValues);
       xfree(toValues);
       xfree(stringps);
-      // fclose(fp);
-      // for every one count matched characters
-      // get the i value for each index
 
     } else {
       // initialize the 0, 0, 0 ... choice
       diffcomparisonpath_flat[0].df_lev_score = 0;
       diffcomparisonpath_flat[0].df_path_index = 0;
-
     }
     return;
   }
@@ -2346,9 +2239,6 @@ void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, i
 
 void populate_tensor(df_iterators_T df_iterators, int ch_dim, diff_T* dp, diffcomparisonpath_flat_T* diffcomparisonpath_flat, int*** comparison_mem) {
   if (ch_dim == df_iterators.n) {
-    // do things here with indexes
-    //
-    //
     paths_T paths;
     paths.n = 0;
     paths.index = xmalloc(sizeof(int) * df_iterators.n);
@@ -2359,52 +2249,12 @@ void populate_tensor(df_iterators_T df_iterators, int ch_dim, diff_T* dp, diffco
         paths.n++;
       }
     }
-    // places that it can come from:
-    // places that it can go to: indexes greater than 1
-    // make all the permutations of these indexes
-
-    // FILE*fp=fopen("debug.txt","a");
-    // fprintf(fp, "paths:\n");
-    // for (int p = 0; p < paths.n; p++) {
-    //   fprintf(fp, " %i ", paths.index[p]);
-    // }
-    // fprintf(fp, "\n");
     int choice = 0;
-    // fprintf(fp, "TRY_POSSIBLE_PATHS:\n");
-    // fclose(fp);
     int unwrapper_index_to = unwrap_indexes(df_iterators.iterators, df_iterators, dp);
     diffcomparisonpath_flat[unwrapper_index_to].df_lev_score = -1;
     try_possible_paths(df_iterators, paths, 0, &choice, dp, diffcomparisonpath_flat, comparison_mem);
 
-    // 0 1 ->
-    // 010 DFPATH3_SKIP1
-    // 100 DFPATH3_SKIP0
-    // 110 DFPATH3_COMPARE01
-
-    // 0 2 ->
-    // 101 DFPATH3_COMPARE02
-    // 100 DFPATH3_SKIP0
-    // 001 DFPATH3_SKIP2
-
-    // 1 2 ->
-    // 011 DFPATH3_COMPARE12
-    // 010 DFPATH3_SKIP1
-    // 001 DFPATH3_SKIP2
-
-    // 0 1 2 ->
-    // 010 DFPATH3_SKIP1
-    // 100 DFPATH3_SKIP0
-    // 110 DFPATH3_COMPARE01
-    // 101 DFPATH3_COMPARE02
-    // 011 DFPATH3_COMPARE12
-    // 001 DFPATH3_SKIP2
-
     xfree(paths.index);
-    // TODO
-    // do some bit shifting for all the permutations for the paths
-
-    // get all of the non zero indexes
-    // find score with each permutation
     return;
   }
   for(int i = 0; i <= dp->df_count[df_iterators.buffers[ch_dim]]; i++ ) {
@@ -2512,7 +2362,6 @@ void linematch_3buffers(diff_T * dp)
   df_iterators.buffers[0] = b0;
   df_iterators.buffers[1] = b1;
   df_iterators.buffers[2] = b2;
-  // malloc for comparison memory
 
   int pointercount = 0;
   for (int i = 0; i < df_iterators.n; i++) {
@@ -2539,9 +2388,6 @@ void linematch_3buffers(diff_T * dp)
     }
   }
 
-  // FILE*fp=fopen("debug.txt","a");
-  // fprintf(fp, "---populate_tensor called---\n");
-  // fclose(fp);
   populate_tensor(df_iterators, 0, dp, diffcomparisonpath_flat, comparison_mem);
 
   for (int i = 0; i <= dp->df_count[b0]; i++) {
@@ -2652,9 +2498,6 @@ void linematch_3buffers(diff_T * dp)
                 DFPATH3_SKIP2);  // choice
           }
         } else {
-          //
-          //  collect all the indexes that are greater than 1
-          //
           df_pathmatrix3[icur][j][k].df_lev_score = -1;
           long matched_01 = mem01[i * (dp->df_count[b1]+1) + j];
           score = df_pathmatrix3[!icur][j-1][k].df_lev_score+matched_01;
@@ -2809,9 +2652,6 @@ void linematch_3buffers(diff_T * dp)
       initialize_compareline3(dp, b0, p0, b1, b2);
       initialize_compareline3(dp, b2, p2, b0, b1);
     } else if (p == DFPATH3_COMPARE12) {
-      // add filler to the one that was not compared
-      // use a 010 111 100 integers to determine which is compared instead of enum
-      //
       dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_compare[b2] = p2;
       dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_compare[b1] = p1;
       dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_filler++;
