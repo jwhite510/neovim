@@ -1873,11 +1873,22 @@ long count_matched_chars_f(char_u** stringps, int* fromValues, int n, int*** com
       if ( stringps[i] != NULL && stringps[j] != NULL ) {
         int i1 = fromValues[i]; // index of where to get the buffer
         int j1 = fromValues[j];
+
+        FILE*fp0=fopen("debug.txt","a");
+        fprintf(fp0,"pointerindex:%i\n", pointerindex);
+        fprintf(fp0,"i0: %i, i1: %i\n",
+            i1,
+            j1
+            );
+        fclose(fp0);
+
+
         if (comparison_mem[pointerindex][i1][j1] == -1) {
           comparison_mem[pointerindex][i1][j1] = count_matched_chars(
               stringps[i], stringps[j]
               );
         }
+
         matched ++;
         matched_chars += comparison_mem[pointerindex][i1][j1];
       }
@@ -2525,11 +2536,22 @@ void linematch_3buffers(diff_T * dp)
   for (int i = 0; i < df_iterators.n; i++) {
     for (int j = i + 1; j < df_iterators.n; j++) {
 
+      FILE*fp0=fopen("debug.txt","a");
+      fprintf(fp0,"cpointer:%i\n", cpointer);
+      fprintf(fp0,"s0: %i, s1: %i\n",
+          dp->df_count[df_iterators.buffers[i]],
+          dp->df_count[df_iterators.buffers[j]]
+          );
+      fclose(fp0);
+
       comparison_mem[cpointer] = xmalloc(sizeof(int*) *
           dp->df_count[df_iterators.buffers[i]]);
+
       for (int k = 0; k < dp->df_count[df_iterators.buffers[i]]; k++) {
+
         comparison_mem[cpointer][k] = xmalloc(sizeof(int) *
             dp->df_count[df_iterators.buffers[j]]);
+
         // initialize to -1
         for (int l = 0; l < dp->df_count[df_iterators.buffers[j]]; l++) {
           comparison_mem[cpointer][k][l] = -1;
