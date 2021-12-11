@@ -2600,8 +2600,63 @@ void linematch_3buffers(diff_T * dp)
   fprintf(fp1, "df_path_index 2 : %i \n", df_path_index2);
   fprintf(fp1, "df_lev_score 2 : %i \n", df_lev_score2);
   fprintf(fp1, "decision2:\n");
+
+  int* pointers = xmalloc(sizeof(int)*df_iterators.n);
+  for(int i = 0; i < df_iterators.n; i++) {
+    pointers[i] = 0;
+  }
+
+  // initialize compare lines
+  for (int bit_place = 0; bit_place < df_iterators.n; bit_place++) {
+    dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_newline = false;
+    dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_filler = 0;
+    for (int _bit_place = 0; _bit_place < df_iterators.n; _bit_place++) {
+      if (_bit_place != bit_place) {
+        dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_compare[ _bit_place ] = -1;
+      }
+    }
+  }
   for (int p = 0; p < df_path_index2; p++) {
     fprintf(fp1, " %i ", decision2[p]);
+    // perform the extraction
+
+    // for each thing that gets compared
+    for (int bit_place = 0; bit_place < df_iterators.n; bit_place++) {
+      if ( decision2[p] & (1 << bit_place) ) {
+
+        bool newline = true;
+        for (int _bit_place = 0; _bit_place < df_iterators.n; _bit_place++) {
+          if (_bit_place != bit_place) {
+            if ( decision2[p] & (1 << _bit_place) ) {
+              newline = false;
+              dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_compare[_bit_place] = pointers[_bit_place];
+            }
+          }
+        }
+        if ( newline ) {
+          dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_newline = true;
+        }
+
+      } else {
+        dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_filler++;
+      }
+    }
+    for (int bit_place = 0; bit_place < df_iterators.n; bit_place++) {
+      if (decision2[p] & (1 << bit_place)) {
+        pointers[bit_place]++;
+      }
+    }
+    for (int bit_place = 0; bit_place < df_iterators.n; bit_place++) {
+      if (decision2[p] & (1 << bit_place)) {
+        dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_newline = false;
+        dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_filler = 0;
+        for (int _bit_place = 0; _bit_place < df_iterators.n; _bit_place++) {
+          if (_bit_place != bit_place) {
+            dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_compare[ _bit_place ] = -1;
+          }
+        }
+      }
+    }
   }
   fprintf(fp1, "\n");
 
@@ -2617,6 +2672,7 @@ void linematch_3buffers(diff_T * dp)
       cpointer++;
     }
   }
+  xfree(pointers);
   xfree(comparison_mem);
   xfree(df_iterators.iterators);
   xfree(df_iterators.buffers);
