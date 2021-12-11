@@ -2311,22 +2311,6 @@ void linematch_3buffers(diff_T * dp)
   int b0 = dp->df_valid_buffers[0];
   int b1 = dp->df_valid_buffers[1];
   int b2 = dp->df_valid_buffers[2];
-  diffcomparisonpath3_T ***df_pathmatrix3=
-    xmalloc(sizeof(diffcomparisonpath3_T **) * (2));
-  for (int i = 0; i < (2); i++) {
-    df_pathmatrix3[i] =
-      xmalloc(sizeof(diffcomparisonpath3_T *) * (dp->df_count[b1]+1));
-    for (int j = 0; j < (dp->df_count[b1]+1); j++) {
-      df_pathmatrix3[i][j] =
-        xmalloc(sizeof(diffcomparisonpath3_T) * (dp->df_count[b2]+1));
-      for (int k = 0; k < (dp->df_count[b2]+1); k++) {
-        df_pathmatrix3[i][j][k].df_path3 =
-            xmalloc(
-                (dp->df_count[b0]+dp->df_count[b1]+dp->df_count[b2]) *
-                sizeof(enum df_path3_choice));
-      }
-    }
-  }
 
   // create the flattened path matrix
   diffcomparisonpath_flat_T* diffcomparisonpath_flat = xmalloc(sizeof(diffcomparisonpath_flat_T) *
@@ -2346,15 +2330,6 @@ void linematch_3buffers(diff_T * dp)
   }
 
   // memory for avoiding repetitive calculations of score
-  int *mem12 = xmalloc(
-      ((dp->df_count[b1]+1) * (dp->df_count[b2]+1)) * sizeof(int));
-  int *mem01 = xmalloc(
-      ((dp->df_count[b0]+1) * (dp->df_count[b1]+1)) * sizeof(int));
-  int *mem02 = xmalloc(
-      ((dp->df_count[b0]+1) * (dp->df_count[b2]+1)) * sizeof(int));
-  bool icur = 1;
-  int score;
-
   df_iterators_T df_iterators;
   df_iterators.n = 3; // currently there are 3 files to iterate over
   df_iterators.iterators = xmalloc(sizeof(int) * 3);
@@ -2390,175 +2365,6 @@ void linematch_3buffers(diff_T * dp)
 
   populate_tensor(df_iterators, 0, dp, diffcomparisonpath_flat, comparison_mem);
 
-  for (int i = 0; i <= dp->df_count[b0]; i++) {
-    icur=!icur;
-    for (int j = 0; j <= dp->df_count[b1]; j++) {
-      for (int k = 0; k<= dp->df_count[b2]; k++) {
-        if (i == 0 && j == 0 && k == 0) {
-          df_pathmatrix3[0][0][0].df_lev_score = 0;
-          df_pathmatrix3[0][0][0].df_path_index = 0;
-        } else if (j == 0 && k == 0) {
-         score = df_pathmatrix3[!icur][0][0].df_lev_score;
-         update_path3(
-             dp, df_pathmatrix3, score, icur, 0, 0,
-             !icur, 0, 0,
-             DFPATH3_SKIP0);
-        } else if (i == 0 && k == 0) {
-          score = df_pathmatrix3[0][j-1][0].df_lev_score;
-          update_path3(
-              dp, df_pathmatrix3, score, 0, j, 0,
-              0, j-1, 0,
-              DFPATH3_SKIP1);
-        } else if (i == 0 && j == 0) {
-          score = df_pathmatrix3[0][0][k-1].df_lev_score;
-          update_path3(
-              dp, df_pathmatrix3, score, 0, 0, k,
-              0, 0, k-1,
-              DFPATH3_SKIP2);
-        } else if (k == 0) {
-          df_pathmatrix3[icur][j][k].df_lev_score = -1;
-          long matched_chars = count_matched_chars(
-              ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
-              ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false));
-          mem01[i * (dp->df_count[b1]+1) + j] = matched_chars;
-          score = df_pathmatrix3[!icur][j-1][k].df_lev_score+matched_chars;
-          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
-            update_path3(
-                dp, df_pathmatrix3, score, icur, j, k,
-                !icur, j-1, k,  // from
-                DFPATH3_COMPARE01);  // choice
-          }
-          score = df_pathmatrix3[!icur][j][k].df_lev_score;
-          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
-            update_path3(
-                dp, df_pathmatrix3, score, icur, j, k,
-                !icur, j, k,  // from
-                DFPATH3_SKIP0);  // choice
-          }
-          score = df_pathmatrix3[icur][j-1][k].df_lev_score;
-          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
-            update_path3(
-                dp, df_pathmatrix3, score, icur, j, k,
-                icur, j-1, k,  // from
-                DFPATH3_SKIP1);  // choice
-          }
-        } else if (j == 0) {
-          df_pathmatrix3[icur][j][k].df_lev_score = -1;
-          long matched_chars = count_matched_chars(
-              ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
-              ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
-          mem02[i * (dp->df_count[b2]+1) + k] = matched_chars;
-          score = df_pathmatrix3[!icur][j][k-1].df_lev_score+matched_chars;
-          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
-            update_path3(
-                dp, df_pathmatrix3, score, icur, j, k,
-                !icur, j, k-1,  // from
-                DFPATH3_COMPARE02);  // choice
-          }
-          score = df_pathmatrix3[!icur][j][k].df_lev_score;
-          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
-            update_path3(
-                dp, df_pathmatrix3, score, icur, j, k,
-                !icur, j, k,  // from
-                DFPATH3_SKIP0);  // choice
-          }
-          score = df_pathmatrix3[icur][j][k-1].df_lev_score;
-          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
-            update_path3(
-                dp, df_pathmatrix3, score, icur, j, k,
-                icur, j, k-1,  // from
-                DFPATH3_SKIP2);  // choice
-          }
-        } else if ( i == 0 ) {
-          df_pathmatrix3[icur][j][k].df_lev_score = -1;
-          long matched_chars = count_matched_chars(
-              ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false),
-              ml_get_buf(curtab->tp_diffbuf[b2], dp->df_lnum[b2]+k-1, false));
-          // store in memory for later
-          mem12[j * (dp->df_count[b2]+1) + k] = matched_chars;
-          score = df_pathmatrix3[icur][j-1][k-1].df_lev_score + matched_chars;
-          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
-            update_path3(
-                dp, df_pathmatrix3, score, icur, j, k,
-                icur, j-1, k-1,  // from
-                DFPATH3_COMPARE12);  // choice
-          }
-          score = df_pathmatrix3[icur][j-1][k].df_lev_score;
-          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
-            update_path3(
-                dp, df_pathmatrix3, score, icur, j, k,
-                icur, j-1, k,  // from
-                DFPATH3_SKIP1);  // choice
-          }
-          score = df_pathmatrix3[icur][j][k-1].df_lev_score;
-          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
-            update_path3(
-                dp, df_pathmatrix3, score, icur, j, k,
-                icur, j, k-1,  // from
-                DFPATH3_SKIP2);  // choice
-          }
-        } else {
-          df_pathmatrix3[icur][j][k].df_lev_score = -1;
-          long matched_01 = mem01[i * (dp->df_count[b1]+1) + j];
-          score = df_pathmatrix3[!icur][j-1][k].df_lev_score+matched_01;
-          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
-            update_path3(
-                dp, df_pathmatrix3, score, icur, j, k,
-                !icur, j-1, k,  // from
-                DFPATH3_COMPARE01);  // choice
-          }
-          long matched_02 = mem02[i * (dp->df_count[b2]+1) + k];
-          score = df_pathmatrix3[!icur][j][k-1].df_lev_score+matched_02;
-          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
-            update_path3(
-                dp, df_pathmatrix3, score, icur, j, k,
-                !icur, j, k-1,  // from
-                DFPATH3_COMPARE02);  // choice
-          }
-          long matched_12 = mem12[j * (dp->df_count[b2]+1) + k];
-          score = df_pathmatrix3[icur][j-1][k-1].df_lev_score+matched_12;
-          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
-            update_path3(
-                dp, df_pathmatrix3, score, icur, j, k,
-                icur, j-1, k-1,  // from
-                DFPATH3_COMPARE12);  // choice
-          }
-          long matched_012 = matched_01+matched_02+matched_12;
-          // prioritize equally to a 2 line match
-          matched_012 *= 2, matched_012 /= 3;
-          score = df_pathmatrix3[!icur][j-1][k-1].df_lev_score+matched_012;
-          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
-            update_path3(
-                dp, df_pathmatrix3, score, icur, j, k,
-                !icur, j-1, k-1,  // from
-                DFPATH3_COMPARE012);  // choice
-          }
-          score = df_pathmatrix3[!icur][j][k].df_lev_score;
-          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
-            update_path3(
-                dp, df_pathmatrix3, score, icur, j, k,
-                !icur, j, k,  // from
-                DFPATH3_SKIP0);  // choice
-          }
-          score = df_pathmatrix3[icur][j-1][k].df_lev_score;
-          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
-            update_path3(
-                dp, df_pathmatrix3, score, icur, j, k,
-                icur, j-1, k,  // from
-                DFPATH3_SKIP1);  // choice
-          }
-          score = df_pathmatrix3[icur][j][k-1].df_lev_score;
-          if (score > df_pathmatrix3[icur][j][k].df_lev_score) {
-            update_path3(
-                dp, df_pathmatrix3, score, icur, j, k,
-                icur, j, k-1,  // from
-                DFPATH3_SKIP2);  // choice
-          }
-        }
-      }
-    }
-  }
-  int p0 = 0, p1 = 0, p2 = 0;  // i, j, k
   int maxlines = 0;
   if (dp->df_count[b0] > maxlines) { maxlines = dp->df_count[b0]; }
   if (dp->df_count[b1] > maxlines) { maxlines = dp->df_count[b1]; }
@@ -2568,11 +2374,6 @@ void linematch_3buffers(diff_T * dp)
     xmalloc(DB_COUNT *(dp->df_arr_col_size) * sizeof(df_linecompare_T));
 
   // initialize lines
-  int df_path_index1 = df_pathmatrix3[icur][dp->df_count[b1]][dp->df_count[b2]].df_path_index;
-  int df_lev_score1 = df_pathmatrix3[icur][dp->df_count[b1]][dp->df_count[b2]].df_lev_score;
-  enum df_path3_choice* df_path3_1 =  df_pathmatrix3[icur][dp->df_count[b1]][dp->df_count[b2]].df_path3; // [i]
-
-
   int* values_final = xmalloc(sizeof(int) * 3);
   values_final[0] = dp->df_count[b0];
   values_final[1] = dp->df_count[b1];
@@ -2583,23 +2384,6 @@ void linematch_3buffers(diff_T * dp)
   int df_lev_score2 = diffcomparisonpath_flat[u].df_lev_score;
   int* decision2 = diffcomparisonpath_flat[u].decision; // [i]
 
-  FILE*fp1=fopen("debug.txt","a");
-
-  fprintf(fp1, "dp->df_count[b0]: %i \n", dp->df_count[b0]);
-  fprintf(fp1, "dp->df_count[b1]: %i \n", dp->df_count[b1]);
-  fprintf(fp1, "dp->df_count[b2]: %i \n", dp->df_count[b2]);
-
-  fprintf(fp1, "df_path_index 1 : %i \n", df_path_index1);
-  fprintf(fp1, "df_lev_score 1 : %i \n", df_lev_score1);
-  fprintf(fp1, "df_path3_1:\n");
-  for (int p = 0; p < df_path_index1; p++) {
-    fprintf(fp1, " %i ", df_path3_1[p]);
-  }
-  fprintf(fp1, "\n");
-
-  fprintf(fp1, "df_path_index 2 : %i \n", df_path_index2);
-  fprintf(fp1, "df_lev_score 2 : %i \n", df_lev_score2);
-  fprintf(fp1, "decision2:\n");
 
   int* pointers = xmalloc(sizeof(int)*df_iterators.n);
   for(int i = 0; i < df_iterators.n; i++) {
@@ -2617,7 +2401,6 @@ void linematch_3buffers(diff_T * dp)
     }
   }
   for (int p = 0; p < df_path_index2; p++) {
-    fprintf(fp1, " %i ", decision2[p]);
     // perform the extraction
 
     // for each thing that gets compared
@@ -2658,9 +2441,7 @@ void linematch_3buffers(diff_T * dp)
       }
     }
   }
-  fprintf(fp1, "\n");
 
-  fclose(fp1);
   // free comparison memory
   cpointer = 0;
   for (int i = 0; i < df_iterators.n; i++) {
@@ -2685,77 +2466,6 @@ void linematch_3buffers(diff_T * dp)
     xfree(diffcomparisonpath_flat[i].decision);
   }
   xfree(diffcomparisonpath_flat);
-
-  initialize_compareline3(dp, b0, p0, b1, b2);
-  initialize_compareline3(dp, b1, p1, b0, b2);
-  initialize_compareline3(dp, b2, p2, b0, b1);
-  for (int i = 0; i < df_pathmatrix3
-       [icur][dp->df_count[b1]][dp->df_count[b2]].df_path_index; i++) {
-    int p = df_pathmatrix3
-      [icur][dp->df_count[b1]][dp->df_count[b2]].df_path3[i];
-    if (p == DFPATH3_COMPARE01) {
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_compare[b1] = p1;
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_compare[b0] = p0;
-      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_filler++;
-      p0++, p1++;
-      initialize_compareline3(dp, b0, p0, b1, b2);
-      initialize_compareline3(dp, b1, p1, b0, b2);
-    } else if (p == DFPATH3_COMPARE02) {
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_compare[b2] = p2;
-      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_compare[b0] = p0;
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_filler++;
-      p0++, p2++;
-      initialize_compareline3(dp, b0, p0, b1, b2);
-      initialize_compareline3(dp, b2, p2, b0, b1);
-    } else if (p == DFPATH3_COMPARE12) {
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_compare[b2] = p2;
-      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_compare[b1] = p1;
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_filler++;
-      p1++, p2++;
-      initialize_compareline3(dp, b1, p1, b0, b2);
-      initialize_compareline3(dp, b2, p2, b0, b1);
-    } else if (p == DFPATH3_COMPARE012) {
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_compare[b1] = p1;
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_compare[b2] = p2;
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_compare[b0] = p0;
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_compare[b2] = p2;
-      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_compare[b0] = p0;
-      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_compare[b1] = p1;
-      p0++, p1++, p2++;
-      initialize_compareline3(dp, b0, p0, b1, b2);
-      initialize_compareline3(dp, b1, p1, b0, b2);
-      initialize_compareline3(dp, b2, p2, b0, b1);
-    } else if  (p == DFPATH3_SKIP0) {
-      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_filler++;
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_filler++;
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_newline = true;
-      p0++;
-      initialize_compareline3(dp, b0, p0, b1, b2);
-    } else if (p == DFPATH3_SKIP1) {
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_filler++;
-      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_filler++;
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_newline = true;
-      p1++;
-      initialize_compareline3(dp, b1, p1, b0, b2);
-    } else if (p == DFPATH3_SKIP2) {
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_filler++;
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_filler++;
-      dp->df_comparisonlines[dp->df_arr_col_size * b2 + p2].df_newline = true;
-      p2++;
-      initialize_compareline3(dp, b2, p2, b0, b1);
-    }
-  }
-  for (int i = 0; i < (2); i++) {
-    for (int j = 0; j < (dp->df_count[b1]+1); j++) {
-      for (int k = 0; k < (dp->df_count[b2]+1); k++) {
-        xfree(df_pathmatrix3[i][j][k].df_path3);
-      }
-      xfree(df_pathmatrix3[i][j]);
-    }
-    xfree(df_pathmatrix3[i]);
-  }
-  xfree(df_pathmatrix3);
-  xfree(mem12), xfree(mem01), xfree(mem02);
 }
 
 
