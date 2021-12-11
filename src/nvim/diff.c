@@ -1861,6 +1861,7 @@ long count_matched_chars_f(char_u** stringps, int* fromValues, int n, int*** com
     matched012 *= 2, matched012 /= 3;
     true_ans = matched012;
   }
+  xfree(stringsinarow);
 
 
   int matched_chars = 0;
@@ -2398,7 +2399,7 @@ void populate_tensor(df_iterators_T df_iterators, int ch_dim, diff_T* dp, diffco
     // 011 DFPATH3_COMPARE12
     // 001 DFPATH3_SKIP2
 
-
+    xfree(paths.index);
     // TODO
     // do some bit shifting for all the permutations for the paths
 
@@ -2734,6 +2735,7 @@ void linematch_3buffers(diff_T * dp)
   values_final[1] = dp->df_count[b1];
   values_final[2] = dp->df_count[b2];
   int u = unwrap_indexes(values_final, df_iterators, dp);
+  xfree(values_final);
   xfree(df_iterators.iterators);
   xfree(df_iterators.buffers);
   int df_path_index2 = diffcomparisonpath_flat[u].df_path_index;
@@ -2763,6 +2765,27 @@ void linematch_3buffers(diff_T * dp)
   fprintf(fp1, "\n");
 
   fclose(fp1);
+  // free comparison memory
+  cpointer = 0;
+  for (int i = 0; i < df_iterators.n; i++) {
+    for (int j = i + 1; j < df_iterators.n; j++) {
+      for (int k = 0; k < dp->df_count[df_iterators.buffers[i]]; k++) {
+        xfree(comparison_mem[cpointer][k]);
+      }
+      xfree(comparison_mem[cpointer]);
+      cpointer++;
+    }
+  }
+  xfree(comparison_mem);
+
+  for (int i = 0; i < (
+        ( 2 ) *
+        // (dp->df_count[b0] + 1) *
+        (dp->df_count[b1] + 1) *
+        (dp->df_count[b2] + 1)); i++) {
+    xfree(diffcomparisonpath_flat[i].decision);
+  }
+  xfree(diffcomparisonpath_flat);
 
   initialize_compareline3(dp, b0, p0, b1, b2);
   initialize_compareline3(dp, b1, p1, b0, b2);
