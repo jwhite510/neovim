@@ -136,12 +136,13 @@ set expandtab
 
 " Always show the signcolumn, otherwise it would shift the text each time
 " diagnostics appear/become resolved.
-if has("nvim-0.5.0") || has("patch-8.1.1564")
-  " Recently vim can merge signcolumn and number column into one
-  set signcolumn=number
-else
-  set signcolumn=yes
-endif
+" if has("nvim-0.5.0") || has("patch-8.1.1564")
+"   " Recently vim can merge signcolumn and number column into one
+"   set signcolumn=number
+" else
+"   set signcolumn=yes
+" endif
+set signcolumn=auto
 
 " Use tab for trigger completion with characters ahead and navigate.
 " NOTE: Use command ':verbose imap <tab>' to make sure tab is not mapped by
@@ -1615,6 +1616,7 @@ nnoremap <leader>ll :echo "assign me"<CR>
 nnoremap <leader>le :call DiffFileWhereThisLineWasLastEdited()<CR>
 " command for toggleing line numbers
 nnoremap <leader>nu :set invnumber<CR>
+nnoremap <leader>nr :set relativenumber!<CR>
 " toggle line wrapping
 nnoremap <leader>W :set wrap! wrap?<CR>
 nnoremap <leader><c-w> :call WrapCmd()<CR>
