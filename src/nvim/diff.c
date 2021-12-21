@@ -2067,100 +2067,65 @@ void linematch_2buffers(diff_T *dp)
 {
   int b0 = dp->df_valid_buffers[0];
   int b1 = dp->df_valid_buffers[1];
-  diffcomparisonpath2_T **df_pathmatrix2 =
-    // for previous and next row
-    xmalloc( (2) * sizeof( diffcomparisonpath2_T * ));
-  for (int i = 0; i < (2); i++) {
-    df_pathmatrix2[i]=
-      xmalloc((dp->df_count[b1]+1) * sizeof(diffcomparisonpath2_T));
-    for (int j = 0; j < (dp->df_count[b1]+1); j++) {
-      df_pathmatrix2[i][j].df_path2=
-        xmalloc((dp->df_count[b0]+dp->df_count[b1]) *
-                sizeof(enum df_path2_choice));
-    }
+  //
+  // create the flattened path matrix
+  diffcomparisonpath_flat_T* diffcomparisonpath_flat = xmalloc(sizeof(diffcomparisonpath_flat_T) *
+      ( 2 ) *
+      // (dp->df_count[b0] + 1) *
+      (dp->df_count[b1] + 1));
+  // allocate memory here
+  for (int i = 0; i < (
+        ( 2 ) *
+        // (dp->df_count[b0] + 1) *
+        (dp->df_count[b1] + 1)); i++) {
+    diffcomparisonpath_flat[i].decision = xmalloc(
+        (dp->df_count[b0] + dp->df_count[b1]) *
+          sizeof(int));
   }
-  bool icur = 1;
-  int score;
-  for (int i = 0; i <= dp->df_count[b0]; i++) {
-    icur=!icur;
-    for (int j = 0; j <= dp->df_count[b1]; j++) {
-      if (i == 0 && j == 0) {
-        df_pathmatrix2[0][0].df_lev_score = 0;
-        df_pathmatrix2[0][0].df_path_index = 0;
-      } else if (i == 0) {
-        score = df_pathmatrix2[0][j-1].df_lev_score;
-        update_path2(dp, df_pathmatrix2, score, 0, j,  // to
-                     0, j-1,  // from
-                     DFPATH2_SKIP1);  // choice
-      } else if (j == 0) {
-        score = df_pathmatrix2[!icur][0].df_lev_score;
-        update_path2(dp, df_pathmatrix2, score, icur, 0,  // to
-                     !icur, 0,  // from
-                     DFPATH2_SKIP0);  // choice
-      } else {
-         df_pathmatrix2[icur][j].df_lev_score = -1;
-        score =
-          df_pathmatrix2[!icur][j-1].df_lev_score+
-          count_matched_chars(
-              ml_get_buf(curtab->tp_diffbuf[b0], dp->df_lnum[b0]+i-1, false),
-              ml_get_buf(curtab->tp_diffbuf[b1], dp->df_lnum[b1]+j-1, false));
-        if (score > df_pathmatrix2[icur][j].df_lev_score) {
-          update_path2(dp, df_pathmatrix2, score, icur, j,
-                       !icur, j-1,  // from
-                       DFPATH2_COMPARE01);  // choice
-        }
-        score = df_pathmatrix2[!icur][j].df_lev_score;
-        if (score > df_pathmatrix2[icur][j].df_lev_score) {
-          update_path2(dp, df_pathmatrix2, score, icur, j,
-                       !icur, j,  // from
-                       DFPATH2_SKIP0);  // choice
-        }
-        score = df_pathmatrix2[icur][j-1].df_lev_score;
-        if (score > df_pathmatrix2[icur][j].df_lev_score) {
-          update_path2(dp, df_pathmatrix2, score, icur, j,
-                       icur, j-1,  // from
-                       DFPATH2_SKIP1);  // choice
-        }
-      }
-    }
-  }
-  int p0 = 0, p1 = 0;  // i, j
+
+  // memory for avoiding repetitive calculations of score
+  df_iterators_T df_iterators;
+  df_iterators.n = 2; // currently there are 3 files to iterate over
+  df_iterators.iterators = xmalloc(sizeof(int) * 2);
+  df_iterators.buffers = xmalloc(sizeof(int) * 2);
+  df_iterators.buffers[0] = b0;
+  df_iterators.buffers[1] = b1;
+
+  int*** comparison_mem = allocate_comparison_mem(df_iterators, dp);
+
+  populate_tensor(df_iterators, 0, dp, diffcomparisonpath_flat, comparison_mem);
+
   int maxlines = 0;
   if (dp->df_count[b0] > maxlines) { maxlines = dp->df_count[b0]; }
   if (dp->df_count[b1] > maxlines) { maxlines = dp->df_count[b1]; }
   dp->df_arr_col_size = maxlines+1;
   dp->df_comparisonlines=
-  xmalloc(DB_COUNT * (dp->df_arr_col_size) * sizeof(df_linecompare_T));
-  initialize_compareline2(dp, b0, p0, b1);
-  initialize_compareline2(dp, b1, p1, b0);
-  for (int i = 0; i < df_pathmatrix2
-       [icur][dp->df_count[b1]].df_path_index; i++) {
-    int p = df_pathmatrix2[icur][dp->df_count[b1]].df_path2[i];
-    if (p == DFPATH2_SKIP0) {
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_filler++;
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_newline = true;
-      p0++;
-      initialize_compareline2(dp, b0, p0, b1);
-    } else if (p == DFPATH2_COMPARE01) {
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_compare[b1]=p1;
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_compare[b0]=p0;
-      p1++, p0++;
-      initialize_compareline2(dp, b0, p0, b1);
-      initialize_compareline2(dp, b1, p1, b0);
-    } else if (p == DFPATH2_SKIP1) {
-      dp->df_comparisonlines[dp->df_arr_col_size * b0 + p0].df_filler++;
-      dp->df_comparisonlines[dp->df_arr_col_size * b1 + p1].df_newline = true;
-      p1++;
-      initialize_compareline2(dp, b1, p1, b0);
-    }
+    xmalloc(DB_COUNT * (dp->df_arr_col_size) * sizeof(df_linecompare_T));
+
+  // initialize lines
+  int* values_final = xmalloc(sizeof(int) * 3);
+  values_final[0] = dp->df_count[b0];
+  values_final[1] = dp->df_count[b1];
+  int u = unwrap_indexes(values_final, df_iterators, dp);
+  xfree(values_final);
+  int df_path_index2 = diffcomparisonpath_flat[u].df_path_index;
+  int df_lev_score2 = diffcomparisonpath_flat[u].df_lev_score;
+  int* decision2 = diffcomparisonpath_flat[u].decision; // [i]
+
+
+  diff_allign_extraction(df_iterators, dp, df_path_index2, decision2);
+  free_comparison_mem(comparison_mem, df_iterators, dp);
+  xfree(df_iterators.iterators);
+  xfree(df_iterators.buffers);
+
+  for (int i = 0; i < (
+        ( 2 ) *
+        // (dp->df_count[b0] + 1) *
+        (dp->df_count[b1] + 1)); i++) {
+    xfree(diffcomparisonpath_flat[i].decision);
   }
-  for (int i = 0; i < 2; i++) {
-    for (int j = 0; j < (dp->df_count[b1]+1); j++) {
-      xfree(df_pathmatrix2[i][j].df_path2);
-    }
-    xfree(df_pathmatrix2[i]);
-  }
-  xfree(df_pathmatrix2);
+  xfree(diffcomparisonpath_flat);
+
 }
 
 int unwrap_indexes(int* values, df_iterators_T df_iterators, diff_T* dp) {
@@ -2235,6 +2200,109 @@ void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, i
   try_possible_paths(df_iterators, paths, index + 1, choice, dp, diffcomparisonpath_flat, comparison_mem);
   *(choice) &= ~(1 << bit_place); // set it to 0
   try_possible_paths(df_iterators, paths, index + 1, choice, dp, diffcomparisonpath_flat, comparison_mem);
+}
+
+int*** allocate_comparison_mem(df_iterators_T df_iterators, diff_T* dp) {
+  int pointercount = 0;
+  for (int i = 0; i < df_iterators.n; i++) {
+    for (int j = i + 1; j < df_iterators.n; j++) {
+      pointercount++;
+    }
+  }
+  int*** comparison_mem = xmalloc(sizeof(int**) * pointercount);
+  int cpointer = 0;
+  for (int i = 0; i < df_iterators.n; i++) {
+    for (int j = i + 1; j < df_iterators.n; j++) {
+
+      comparison_mem[cpointer] = xmalloc(sizeof(int*) *
+          dp->df_count[df_iterators.buffers[i]]);
+      for (int k = 0; k < dp->df_count[df_iterators.buffers[i]]; k++) {
+        comparison_mem[cpointer][k] = xmalloc(sizeof(int) *
+            dp->df_count[df_iterators.buffers[j]]);
+        // initialize to -1
+        for (int l = 0; l < dp->df_count[df_iterators.buffers[j]]; l++) {
+          comparison_mem[cpointer][k][l] = -1;
+        }
+      }
+      cpointer++;
+    }
+  }
+  return comparison_mem;
+}
+
+void diff_allign_extraction(df_iterators_T df_iterators, diff_T* dp, int df_path_index2, int* decision2) {
+  int* pointers = xmalloc(sizeof(int)*df_iterators.n);
+  for(int i = 0; i < df_iterators.n; i++) {
+    pointers[i] = 0;
+  }
+
+  // initialize compare lines
+  for (int bit_place = 0; bit_place < df_iterators.n; bit_place++) {
+    dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_newline = false;
+    dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_filler = 0;
+    for (int _bit_place = 0; _bit_place < df_iterators.n; _bit_place++) {
+      if (_bit_place != bit_place) {
+        dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_compare[ _bit_place ] = -1;
+      }
+    }
+  }
+  for (int p = 0; p < df_path_index2; p++) {
+    // perform the extraction
+
+    // for each thing that gets compared
+    for (int bit_place = 0; bit_place < df_iterators.n; bit_place++) {
+      if ( decision2[p] & (1 << bit_place) ) {
+
+        bool newline = true;
+        for (int _bit_place = 0; _bit_place < df_iterators.n; _bit_place++) {
+          if (_bit_place != bit_place) {
+            if ( decision2[p] & (1 << _bit_place) ) {
+              newline = false;
+              dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_compare[_bit_place] = pointers[_bit_place];
+            }
+          }
+        }
+        if ( newline ) {
+          dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_newline = true;
+        }
+
+      } else {
+        dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_filler++;
+      }
+    }
+    for (int bit_place = 0; bit_place < df_iterators.n; bit_place++) {
+      if (decision2[p] & (1 << bit_place)) {
+        pointers[bit_place]++;
+      }
+    }
+    for (int bit_place = 0; bit_place < df_iterators.n; bit_place++) {
+      if (decision2[p] & (1 << bit_place)) {
+        dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_newline = false;
+        dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_filler = 0;
+        for (int _bit_place = 0; _bit_place < df_iterators.n; _bit_place++) {
+          if (_bit_place != bit_place) {
+            dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_compare[ _bit_place ] = -1;
+          }
+        }
+      }
+    }
+  }
+  xfree(pointers);
+}
+
+void free_comparison_mem(int*** comparison_mem, df_iterators_T df_iterators, diff_T* dp) {
+  // free comparison memory
+  int cpointer = 0;
+  for (int i = 0; i < df_iterators.n; i++) {
+    for (int j = i + 1; j < df_iterators.n; j++) {
+      for (int k = 0; k < dp->df_count[df_iterators.buffers[i]]; k++) {
+        xfree(comparison_mem[cpointer][k]);
+      }
+      xfree(comparison_mem[cpointer]);
+      cpointer++;
+    }
+  }
+  xfree(comparison_mem);
 }
 
 void populate_tensor(df_iterators_T df_iterators, int ch_dim, diff_T* dp, diffcomparisonpath_flat_T* diffcomparisonpath_flat, int*** comparison_mem) {
@@ -2338,30 +2406,7 @@ void linematch_3buffers(diff_T * dp)
   df_iterators.buffers[1] = b1;
   df_iterators.buffers[2] = b2;
 
-  int pointercount = 0;
-  for (int i = 0; i < df_iterators.n; i++) {
-    for (int j = i + 1; j < df_iterators.n; j++) {
-      pointercount++;
-    }
-  }
-  int*** comparison_mem = xmalloc(sizeof(int**) * pointercount);
-  int cpointer = 0;
-  for (int i = 0; i < df_iterators.n; i++) {
-    for (int j = i + 1; j < df_iterators.n; j++) {
-
-      comparison_mem[cpointer] = xmalloc(sizeof(int*) *
-          dp->df_count[df_iterators.buffers[i]]);
-      for (int k = 0; k < dp->df_count[df_iterators.buffers[i]]; k++) {
-        comparison_mem[cpointer][k] = xmalloc(sizeof(int) *
-            dp->df_count[df_iterators.buffers[j]]);
-        // initialize to -1
-        for (int l = 0; l < dp->df_count[df_iterators.buffers[j]]; l++) {
-          comparison_mem[cpointer][k][l] = -1;
-        }
-      }
-      cpointer++;
-    }
-  }
+  int*** comparison_mem = allocate_comparison_mem(df_iterators, dp);
 
   populate_tensor(df_iterators, 0, dp, diffcomparisonpath_flat, comparison_mem);
 
@@ -2385,76 +2430,8 @@ void linematch_3buffers(diff_T * dp)
   int* decision2 = diffcomparisonpath_flat[u].decision; // [i]
 
 
-  int* pointers = xmalloc(sizeof(int)*df_iterators.n);
-  for(int i = 0; i < df_iterators.n; i++) {
-    pointers[i] = 0;
-  }
-
-  // initialize compare lines
-  for (int bit_place = 0; bit_place < df_iterators.n; bit_place++) {
-    dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_newline = false;
-    dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_filler = 0;
-    for (int _bit_place = 0; _bit_place < df_iterators.n; _bit_place++) {
-      if (_bit_place != bit_place) {
-        dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_compare[ _bit_place ] = -1;
-      }
-    }
-  }
-  for (int p = 0; p < df_path_index2; p++) {
-    // perform the extraction
-
-    // for each thing that gets compared
-    for (int bit_place = 0; bit_place < df_iterators.n; bit_place++) {
-      if ( decision2[p] & (1 << bit_place) ) {
-
-        bool newline = true;
-        for (int _bit_place = 0; _bit_place < df_iterators.n; _bit_place++) {
-          if (_bit_place != bit_place) {
-            if ( decision2[p] & (1 << _bit_place) ) {
-              newline = false;
-              dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_compare[_bit_place] = pointers[_bit_place];
-            }
-          }
-        }
-        if ( newline ) {
-          dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_newline = true;
-        }
-
-      } else {
-        dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_filler++;
-      }
-    }
-    for (int bit_place = 0; bit_place < df_iterators.n; bit_place++) {
-      if (decision2[p] & (1 << bit_place)) {
-        pointers[bit_place]++;
-      }
-    }
-    for (int bit_place = 0; bit_place < df_iterators.n; bit_place++) {
-      if (decision2[p] & (1 << bit_place)) {
-        dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_newline = false;
-        dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_filler = 0;
-        for (int _bit_place = 0; _bit_place < df_iterators.n; _bit_place++) {
-          if (_bit_place != bit_place) {
-            dp->df_comparisonlines[ dp->df_arr_col_size * bit_place + pointers[bit_place] ].df_compare[ _bit_place ] = -1;
-          }
-        }
-      }
-    }
-  }
-
-  // free comparison memory
-  cpointer = 0;
-  for (int i = 0; i < df_iterators.n; i++) {
-    for (int j = i + 1; j < df_iterators.n; j++) {
-      for (int k = 0; k < dp->df_count[df_iterators.buffers[i]]; k++) {
-        xfree(comparison_mem[cpointer][k]);
-      }
-      xfree(comparison_mem[cpointer]);
-      cpointer++;
-    }
-  }
-  xfree(pointers);
-  xfree(comparison_mem);
+  diff_allign_extraction(df_iterators, dp, df_path_index2, decision2);
+  free_comparison_mem(comparison_mem, df_iterators, dp);
   xfree(df_iterators.iterators);
   xfree(df_iterators.buffers);
 
