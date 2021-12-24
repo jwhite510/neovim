@@ -2190,8 +2190,14 @@ void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, i
 
     } else {
       // initialize the 0, 0, 0 ... choice
-      diffcomparisonpath_flat[0].df_lev_score = 0;
-      diffcomparisonpath_flat[0].df_path_index = 0;
+      int i = 0;
+      while (df_iterators.iterators[i] == 0 && i < df_iterators.n) {
+        i++;
+        if (i == df_iterators.n) {
+          diffcomparisonpath_flat[0].df_lev_score = 0;
+          diffcomparisonpath_flat[0].df_path_index = 0;
+        }
+      }
     }
     return;
   }
