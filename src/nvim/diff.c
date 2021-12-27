@@ -2382,9 +2382,9 @@ void populate_tensor(df_iterators_T df_iterators, int ch_dim, diff_T* dp, diffco
 /// @param dp
 void linematch_3buffers(diff_T * dp)
 {
-  int b0 = dp->df_valid_buffers[0];
-  int b1 = dp->df_valid_buffers[1];
-  int b2 = dp->df_valid_buffers[2];
+  // int b0 = dp->df_valid_buffers[0];
+  // int b1 = dp->df_valid_buffers[1];
+  // int b2 = dp->df_valid_buffers[2];
 
   int memsize = 1, i = 0, memsize_decisions = 0;
   while (i < dp->df_valid_buffers_max) {
@@ -2532,7 +2532,7 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
       }
     }
     if (dp->df_valid_buffers_max == 2) {
-      linematch_2buffers(dp);
+      linematch_3buffers(dp);
     } else if (dp->df_valid_buffers_max == 3) {
       linematch_3buffers(dp);
     }
