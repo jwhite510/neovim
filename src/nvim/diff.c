@@ -2433,10 +2433,10 @@ void linematch_3buffers(diff_T * dp)
     xmalloc(DB_COUNT *(dp->df_arr_col_size) * sizeof(df_linecompare_T));
 
   // initialize lines
-  int* values_final = xmalloc(sizeof(int) * 3);
-  values_final[0] = dp->df_count[b0];
-  values_final[1] = dp->df_count[b1];
-  values_final[2] = dp->df_count[b2];
+  int* values_final = xmalloc(sizeof(int) * df_iterators.n);
+  for (int i = 0; i < dp->df_valid_buffers_max; i++) {
+    values_final[i] = dp->df_count[dp->df_valid_buffers[i]];
+  }
   int u = unwrap_indexes(values_final, df_iterators, dp);
   xfree(values_final);
   int df_path_index2 = diffcomparisonpath_flat[u].df_path_index;
