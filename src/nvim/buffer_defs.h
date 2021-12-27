@@ -910,40 +910,6 @@ struct paths_S {
   int n;
 };
 
-// choices for comparison with linematch_2buffers
-enum df_path2_choice{
-  DFPATH2_COMPARE01,
-  DFPATH2_SKIP0,
-  DFPATH2_SKIP1,
-};
-// choices for comparison with linematch_3buffers
-enum df_path3_choice{
-  DFPATH3_COMPARE01,
-  DFPATH3_COMPARE02,
-  DFPATH3_COMPARE12,
-  DFPATH3_COMPARE012,
-  DFPATH3_SKIP0,
-  DFPATH3_SKIP1,
-  DFPATH3_SKIP2,
-};
-// contains array of choices chosen while comparing 2 files with
-// linematch_2buffers
-typedef struct diffcomparisonpath2_S diffcomparisonpath2_T;
-struct diffcomparisonpath2_S{
-  enum df_path2_choice *df_path2;  // to keep track of this path traveled
-  int df_lev_score;  // to keep track of the total score of this path
-  int df_path_index;  // current index of this path
-};
-
-// contains array of choices chosen while comparing 3 files with
-// linematch_3buffers
-typedef struct diffcomparisonpath3_S diffcomparisonpath3_T;
-struct diffcomparisonpath3_S{
-  enum df_path3_choice *df_path3;  // to keep track of this path traveled
-  int df_lev_score;  // to keep track of the total score of this path
-  int df_path_index;  // current index of this path
-};
-
 typedef struct diffcomparisonpath_flat_S diffcomparisonpath_flat_T;
 struct diffcomparisonpath_flat_S{
   int *decision;  // to keep track of this path traveled
