@@ -2450,10 +2450,7 @@ void linematch_3buffers(diff_T * dp)
   xfree(df_iterators.buffers);
 
   for (int i = 0; i < (
-        ( 2 ) *
-        // (dp->df_count[b0] + 1) *
-        (dp->df_count[b1] + 1) *
-        (dp->df_count[b2] + 1)); i++) {
+        memsize); i++) {
     xfree(diffcomparisonpath_flat[i].decision);
   }
   xfree(diffcomparisonpath_flat);
