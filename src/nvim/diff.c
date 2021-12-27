@@ -1914,63 +1914,6 @@ void update_path_flat(diffcomparisonpath_flat_T* diffcomparisonpath_flat, int sc
   diffcomparisonpath_flat[to].decision[diffcomparisonpath_flat[to].df_path_index] = choice;
   diffcomparisonpath_flat[to].df_path_index++;
 }
-/// helper function for the diff alignment algorithm copy the newly found
-/// optimal path to an index in the tensor for more detailed algorith
-/// description, see "linematch_3buffers" for the current diff hunk "dp",
-/// the "score" and path at index "i","j","k" is updated from the path
-/// from "_i","_j","_k" choice is represented by enum value "choice"
-///
-/// @param dp
-/// @param df_pathmatrix3
-/// @param score
-/// @param i
-/// @param j
-/// @param k
-/// @param _i
-/// @param _j
-/// @param _k
-/// @param choice
-void update_path3(diff_T *dp, diffcomparisonpath3_T ***df_pathmatrix3,
-                  int score, int i, int j, int k, int _i, int _j, int _k,
-                  enum df_path3_choice choice)
-{
-  df_pathmatrix3[i][j][k].df_lev_score = score;
-  for (int __k = 0; __k < df_pathmatrix3[_i][_j][_k].df_path_index; __k++) {
-    df_pathmatrix3[i][j][k].df_path3[__k]=
-      df_pathmatrix3[_i][_j][_k].df_path3[__k]; }
-  df_pathmatrix3[i][j][k].df_path_index =
-    df_pathmatrix3[_i][_j][_k].df_path_index;
-  df_pathmatrix3[i][j][k].df_path3
-    [df_pathmatrix3[i][j][k].df_path_index] = choice;  // this choice
-  df_pathmatrix3[i][j][k].df_path_index++;
-}
-/// helper function for the diff alignment algorithm copy the newly found
-/// optimal path to an index in the tensor for more detailed algorith
-/// description, see "linematch_2buffers" for the current diff hunk "dp",
-/// the "score" and path at index "i","j"is updated from the path from
-/// "_i","_j",choice is represented by enum value "choice"
-///
-/// @param dp
-/// @param df_pathmatrix2
-/// @param score
-/// @param i
-/// @param j
-/// @param _i
-/// @param _j
-/// @param choice
-void update_path2(diff_T *dp, diffcomparisonpath2_T **df_pathmatrix2,
-                  int score, int i, int j, int _i, int _j,
-                  enum df_path2_choice choice)
-{
-  df_pathmatrix2[i][j].df_lev_score = score;
-  for (int k = 0; k < df_pathmatrix2[_i][_j].df_path_index; k++) {
-    df_pathmatrix2[i][j].df_path2[k]=
-      df_pathmatrix2[_i][_j].df_path2[k]; }
-  df_pathmatrix2[i][j].df_path_index = df_pathmatrix2[_i][_j].df_path_index;
-  df_pathmatrix2[i][j].df_path2
-    [df_pathmatrix2[i][j].df_path_index] = choice;  // this choice
-  df_pathmatrix2[i][j].df_path_index++;
-}
 /// return matching characters between "s1" and "s2"
 /// between string "s1" and "s2".
 /// Consider the case of two strings 'AAACCC' and 'CCCAAA', the
@@ -2015,119 +1958,6 @@ long matching_characters(const char_u *s1, const char_u *s2)
     xfree(matrix[0]), xfree(matrix[1]);
     return rvalue;
 }
-/// Helper function for the diff alignment algorithm.
-/// "dp->df_comparisonlines" represents a 2d array. indexed as
-/// [buffer][line number] where the line number index represents the
-/// offset from the start of the diff block indicated by dp->lnum[id]. The
-/// comparison line in the other buffers is initialized to -1. It may
-/// remain as -1 if the line is not compared.
-///
-/// @param dp
-/// @param thisb
-/// @param thisp
-/// @param otherb1
-/// @param otherb2
-void initialize_compareline3(diff_T *dp, int thisb, int thisp,
-                             int otherb1, int otherb2)
-{
-  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp
-                         ].df_compare[otherb1]=-1;
-  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp
-                         ].df_compare[otherb2]=-1;
-  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp
-                         ].df_newline = false;
-  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp].df_filler = 0;
-}
-/// Helper function for the diff alignment algorithm.
-/// "dp->df_comparisonlines" represents a 2d array. indexed as
-/// [buffer][line number] where the line number index represents the
-/// offset from the start of the diff block indicated by dp->lnum[id]. The
-/// comparison line in the other buffers is initialized to -1. It may
-/// remain as -1 if the line is not compared.
-///
-/// @param dp
-/// @param thisb
-/// @param thisp
-/// @param otherb
-void initialize_compareline2(diff_T *dp, int thisb, int thisp, int otherb)
-{
-  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp
-                         ].df_compare[otherb] = -1;
-  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp
-                         ].df_newline = false;
-  dp->df_comparisonlines[dp->df_arr_col_size * thisb + thisp].df_filler = 0;
-}
-/// the 2d (for two buffers) implementation of the linematch diff
-/// algorithm for aligning the most similar lines when constructing diff
-/// views. For a general description of the algorithm, see
-/// linematch_3buffers
-///
-/// @param dp
-void linematch_2buffers(diff_T *dp)
-{
-  int b0 = dp->df_valid_buffers[0];
-  int b1 = dp->df_valid_buffers[1];
-  //
-  // create the flattened path matrix
-  diffcomparisonpath_flat_T* diffcomparisonpath_flat = xmalloc(sizeof(diffcomparisonpath_flat_T) *
-      ( 2 ) *
-      // (dp->df_count[b0] + 1) *
-      (dp->df_count[b1] + 1));
-  // allocate memory here
-  for (int i = 0; i < (
-        ( 2 ) *
-        // (dp->df_count[b0] + 1) *
-        (dp->df_count[b1] + 1)); i++) {
-    diffcomparisonpath_flat[i].decision = xmalloc(
-        (dp->df_count[b0] + dp->df_count[b1]) *
-          sizeof(int));
-  }
-
-  // memory for avoiding repetitive calculations of score
-  df_iterators_T df_iterators;
-  df_iterators.n = 2; // currently there are 3 files to iterate over
-  df_iterators.iterators = xmalloc(sizeof(int) * 2);
-  df_iterators.buffers = xmalloc(sizeof(int) * 2);
-  df_iterators.buffers[0] = b0;
-  df_iterators.buffers[1] = b1;
-
-  int*** comparison_mem = allocate_comparison_mem(df_iterators, dp);
-
-  populate_tensor(df_iterators, 0, dp, diffcomparisonpath_flat, comparison_mem);
-
-  int maxlines = 0;
-  if (dp->df_count[b0] > maxlines) { maxlines = dp->df_count[b0]; }
-  if (dp->df_count[b1] > maxlines) { maxlines = dp->df_count[b1]; }
-  dp->df_arr_col_size = maxlines+1;
-  dp->df_comparisonlines=
-    xmalloc(DB_COUNT * (dp->df_arr_col_size) * sizeof(df_linecompare_T));
-
-  // initialize lines
-  int* values_final = xmalloc(sizeof(int) * 3);
-  values_final[0] = dp->df_count[b0];
-  values_final[1] = dp->df_count[b1];
-  int u = unwrap_indexes(values_final, df_iterators, dp);
-  xfree(values_final);
-  int df_path_index2 = diffcomparisonpath_flat[u].df_path_index;
-  int df_lev_score2 = diffcomparisonpath_flat[u].df_lev_score;
-  int* decision2 = diffcomparisonpath_flat[u].decision; // [i]
-
-
-  diff_allign_extraction(df_iterators, dp, df_path_index2, decision2);
-  free_comparison_mem(comparison_mem, df_iterators, dp);
-  xfree(df_iterators.iterators);
-  xfree(df_iterators.buffers);
-
-  for (int i = 0; i < (
-        ( 2 ) *
-        // (dp->df_count[b0] + 1) *
-        (dp->df_count[b1] + 1)); i++) {
-    xfree(diffcomparisonpath_flat[i].decision);
-  }
-  xfree(diffcomparisonpath_flat);
-
-}
-
 int unwrap_indexes(int* values, df_iterators_T df_iterators, diff_T* dp) {
   int num_unwrap_scalar = 1;
   int path_index = 0;
@@ -2380,7 +2210,7 @@ void populate_tensor(df_iterators_T df_iterators, int ch_dim, diff_T* dp, diffco
 /// characters) of the 3 buffers, so a redundant calculation of the
 /// scores does not occur
 /// @param dp
-void linematch_3buffers(diff_T * dp)
+void linematch_nbuffers(diff_T * dp)
 {
   // int b0 = dp->df_valid_buffers[0];
   // int b1 = dp->df_valid_buffers[1];
@@ -2532,9 +2362,9 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
       }
     }
     if (dp->df_valid_buffers_max == 2) {
-      linematch_3buffers(dp);
+      linematch_nbuffers(dp);
     } else if (dp->df_valid_buffers_max == 3) {
-      linematch_3buffers(dp);
+      linematch_nbuffers(dp);
     }
     dp->df_redraw = false;
   }
