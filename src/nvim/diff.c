@@ -2423,9 +2423,11 @@ void linematch_3buffers(diff_T * dp)
   populate_tensor(df_iterators, 0, dp, diffcomparisonpath_flat, comparison_mem);
 
   int maxlines = 0;
-  if (dp->df_count[b0] > maxlines) { maxlines = dp->df_count[b0]; }
-  if (dp->df_count[b1] > maxlines) { maxlines = dp->df_count[b1]; }
-  if (dp->df_count[b2] > maxlines) { maxlines = dp->df_count[b2]; }
+  for (int i = 0; i < dp->df_valid_buffers_max; i++) {
+    if (dp->df_count[dp->df_valid_buffers[i]] > maxlines) {
+      maxlines = dp->df_count[dp->df_valid_buffers[i]];
+    }
+  }
   dp->df_arr_col_size = maxlines+1;
   dp->df_comparisonlines =
     xmalloc(DB_COUNT *(dp->df_arr_col_size) * sizeof(df_linecompare_T));
