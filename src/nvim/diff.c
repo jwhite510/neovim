@@ -2410,12 +2410,12 @@ void linematch_3buffers(diff_T * dp)
   // memory for avoiding repetitive calculations of score
   df_iterators_T df_iterators;
   df_iterators.n = 0;
+  df_iterators.buffers = xmalloc(sizeof(int) * dp->df_valid_buffers_max);
+  df_iterators.iterators = xmalloc(sizeof(int) * dp->df_valid_buffers_max);
   for (int i = 0; i < dp->df_valid_buffers_max; i++) {
     df_iterators.buffers[i] = dp->df_valid_buffers[i];
     df_iterators.n++;
   }
-  df_iterators.iterators = xmalloc(sizeof(int) * df_iterators.n);
-  df_iterators.buffers = xmalloc(sizeof(int) * df_iterators.n);
 
   int*** comparison_mem = allocate_comparison_mem(df_iterators, dp);
 
