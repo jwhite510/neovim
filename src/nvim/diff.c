@@ -2404,8 +2404,7 @@ void linematch_3buffers(diff_T * dp)
   for (int i = 0; i < (
         memsize); i++) {
     diffcomparisonpath_flat[i].decision = xmalloc(
-        (memsize_decisions) *
-          sizeof(int));
+        (memsize_decisions) * sizeof(int));
   }
 
   // memory for avoiding repetitive calculations of score
