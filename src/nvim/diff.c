@@ -2156,7 +2156,8 @@ void populate_tensor(df_iterators_T df_iterators, int ch_dim, diff_T* dp, diffco
     int choice = 0;
     int unwrapper_index_to = unwrap_indexes(df_iterators.iterators, df_iterators, dp);
     diffcomparisonpath_flat[unwrapper_index_to].df_lev_score = -1;
-    try_possible_paths(df_iterators, paths, 0, &choice, dp, diffcomparisonpath_flat, comparison_mem);
+    try_possible_paths(df_iterators, paths, 0, &choice, dp, diffcomparisonpath_flat,
+                       comparison_mem);
 
     xfree(paths.index);
     return;
