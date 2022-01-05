@@ -2132,7 +2132,8 @@ void diff_allign_extraction(df_iterators_T df_iterators, diff_T* dp, int df_path
   xfree(pointers);
 }
 
-void free_comparison_mem(int*** comparison_mem, df_iterators_T df_iterators, diff_T* dp) {
+void free_comparison_mem(int ***comparison_mem, df_iterators_T df_iterators, diff_T *dp)
+{
   // free comparison memory
   int cpointer = 0;
   for (int i = 0; i < df_iterators.n; i++) {
