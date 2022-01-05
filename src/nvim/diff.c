@@ -1850,9 +1850,7 @@ long count_matched_chars_f(char_u** stringps, int* fromValues, int n, int*** com
         int i1 = fromValues[i]; // index of where to get the buffer
         int j1 = fromValues[j];
         if (comparison_mem[pointerindex][i1][j1] == -1) {
-          comparison_mem[pointerindex][i1][j1] = count_matched_chars(
-              stringps[i], stringps[j]
-              );
+          comparison_mem[pointerindex][i1][j1] = count_matched_chars(stringps[i], stringps[j]);
         }
         matched ++;
         matched_chars += comparison_mem[pointerindex][i1][j1];
