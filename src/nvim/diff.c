@@ -1904,7 +1904,9 @@ long count_matched_chars(const char_u *s1, const char_u *s2)
   return matching_characters(s1, s2);
 }
 
-void update_path_flat(diffcomparisonpath_flat_T* diffcomparisonpath_flat, int score, int to, int from, const int choice) {
+void update_path_flat(diffcomparisonpath_flat_T *diffcomparisonpath_flat,
+                      int score, int to, int from, const int choice)
+{
   for (int k = 0; k < diffcomparisonpath_flat[from].df_path_index; k++) {
     diffcomparisonpath_flat[to].decision[k] = diffcomparisonpath_flat[from].decision[k];
   }
