@@ -2141,7 +2141,9 @@ void free_comparison_mem(int*** comparison_mem, df_iterators_T df_iterators, dif
   xfree(comparison_mem);
 }
 
-void populate_tensor(df_iterators_T df_iterators, int ch_dim, diff_T* dp, diffcomparisonpath_flat_T* diffcomparisonpath_flat, int*** comparison_mem) {
+void populate_tensor(df_iterators_T df_iterators, int ch_dim, diff_T *dp,
+                     diffcomparisonpath_flat_T *diffcomparisonpath_flat, int ***comparison_mem)
+{
   if (ch_dim == df_iterators.n) {
     paths_T paths;
     paths.n = 0;
