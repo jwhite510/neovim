@@ -1841,8 +1841,8 @@ int count_virtual_to_real(win_T *win, const linenr_T lnum,
   return real_offset;
 }
 
-long count_matched_chars_f(char_u** stringps, int* fromValues, int n, int*** comparison_mem) {
-
+long count_matched_chars_f(char_u **stringps, int *fromValues, int n, int ***comparison_mem)
+{
   int matched_chars = 0, pointerindex = 0, matched = 0;
   for (int i = 0; i < n; i++) {
     for (int j = i + 1; j < n; j++) {
