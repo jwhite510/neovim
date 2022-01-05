@@ -1965,7 +1965,7 @@ int unwrap_indexes(int *values, df_iterators_T df_iterators, diff_T *dp)
   int num_unwrap_scalar = 1;
   int path_index = 0;
   for (int k = 0; k < df_iterators.n; k++) {
-    num_unwrap_scalar *= ( dp->df_count[df_iterators.buffers[k]] + 1 );
+    num_unwrap_scalar *= (dp->df_count[df_iterators.buffers[k]] + 1);
   }
   for (int k = 0; k < df_iterators.n; k++) {
     num_unwrap_scalar = num_unwrap_scalar / (dp->df_count[df_iterators.buffers[k]] + 1);
