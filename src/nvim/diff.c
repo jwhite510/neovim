@@ -1998,8 +1998,7 @@ void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, i
           stringps[k] = ml_get_buf(
               curtab->tp_diffbuf[df_iterators.buffers[k]],
               dp->df_lnum[df_iterators.buffers[k]] + df_iterators.iterators[k] - 1,
-              false
-              );
+              false);
         } else {
           stringps[k] = NULL;
         }
