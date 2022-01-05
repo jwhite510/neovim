@@ -2258,7 +2258,7 @@ void linematch_nbuffers(diff_T * dp)
     xmalloc(DB_COUNT *(dp->df_arr_col_size) * sizeof(df_linecompare_T));
 
   // initialize lines
-  int* values_final = xmalloc(sizeof(int) * df_iterators.n);
+  int *values_final = xmalloc(sizeof(int) * df_iterators.n);
   for (int i = 0; i < dp->df_valid_buffers_max; i++) {
     values_final[i] = dp->df_count[dp->df_valid_buffers[i]];
   }
