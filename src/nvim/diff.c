@@ -2014,8 +2014,7 @@ void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, i
             score,
             unwrapped_index_to,
             unwrapped_index_from,
-            *choice
-            );
+            *choice);
       }
 
       xfree(fromValues);
