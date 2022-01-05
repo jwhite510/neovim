@@ -2043,7 +2043,8 @@ void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, i
                      comparison_mem);
 }
 
-int*** allocate_comparison_mem(df_iterators_T df_iterators, diff_T* dp) {
+int ***allocate_comparison_mem(df_iterators_T df_iterators, diff_T *dp)
+{
   int pointercount = 0;
   for (int i = 0; i < df_iterators.n; i++) {
     for (int j = i + 1; j < df_iterators.n; j++) {
