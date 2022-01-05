@@ -2006,8 +2006,7 @@ void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, i
       int unwrapped_index_from = unwrap_indexes(fromValues, df_iterators, dp);
       int unwrapped_index_to = unwrap_indexes(toValues, df_iterators, dp);
       long matched_chars = count_matched_chars_f(
-          stringps, fromValues, df_iterators.n, comparison_mem
-          );
+          stringps, fromValues, df_iterators.n, comparison_mem);
       int score = diffcomparisonpath_flat[unwrapped_index_from].df_lev_score + matched_chars;
       if (score > diffcomparisonpath_flat[unwrapped_index_to].df_lev_score) {
         update_path_flat(
