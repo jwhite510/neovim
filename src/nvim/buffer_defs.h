@@ -911,7 +911,7 @@ struct paths_S {
 };
 
 typedef struct diffcomparisonpath_flat_S diffcomparisonpath_flat_T;
-struct diffcomparisonpath_flat_S{
+struct diffcomparisonpath_flat_S {
   int *decision;  // to keep track of this path traveled
   int df_lev_score;  // to keep track of the total score of this path
   int df_path_index;  // current index of this path
