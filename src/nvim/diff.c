@@ -2216,14 +2216,10 @@ void linematch_nbuffers(diff_T * dp)
   // int b1 = dp->df_valid_buffers[1];
   // int b2 = dp->df_valid_buffers[2];
 
-  int memsize = 1, i = 0, memsize_decisions = 0;
-  while (i < dp->df_valid_buffers_max) {
-    memsize *= (
-        i == 0 ? 2 :
-          ( dp->df_count[dp->df_valid_buffers[i]]  + 1)
-        );
+  int memsize = 1, memsize_decisions = 0;
+  for (int i = 0; i < dp->df_valid_buffers_max; i++) {
+    memsize *= (i == 0 ? 2 : (dp->df_count[dp->df_valid_buffers[i]] + 1));
     memsize_decisions += dp->df_count[dp->df_valid_buffers[i]];
-    i++;
   }
 
   // create the flattened path matrix
