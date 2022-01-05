@@ -2266,7 +2266,7 @@ void linematch_nbuffers(diff_T * dp)
   xfree(values_final);
   int df_path_index2 = diffcomparisonpath_flat[u].df_path_index;
   int df_lev_score2 = diffcomparisonpath_flat[u].df_lev_score;
-  int* decision2 = diffcomparisonpath_flat[u].decision; // [i]
+  int *decision2 = diffcomparisonpath_flat[u].decision;  // [i]
 
 
   diff_allign_extraction(df_iterators, dp, df_path_index2, decision2);
