@@ -1980,7 +1980,10 @@ int unwrap_indexes(int *values, df_iterators_T df_iterators, diff_T *dp)
   return path_index;
 }
 
-void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, int* choice, diff_T* dp, diffcomparisonpath_flat_T* diffcomparisonpath_flat, int*** comparison_mem) {
+void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, int *choice,
+                        diff_T *dp, diffcomparisonpath_flat_T *diffcomparisonpath_flat,
+                        int ***comparison_mem)
+{
   if (index == paths.n) {
     if ((*choice) > 0) {
       int* fromValues = xmalloc(sizeof(int) * df_iterators.n);
