@@ -1831,7 +1831,7 @@ int count_virtual_to_real(win_T *win, const linenr_T lnum,
       virtual_offset += n;  // filler lines
     }
     if (virtual_offset > virtual_lines) {
-        break;
+      break;
     }
     real_offset++;
   }
