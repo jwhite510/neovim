@@ -1770,7 +1770,7 @@ void diff_clear(tabpage_T *tp)
 bool diff_linematch(diff_T *dp)
 {
   if (!(diff_flags & DIFF_LINEMATCH)) {
-        return 0;
+    return 0;
   }
   // are there more than three diff buffers?
   int diffbuffers = 0;
