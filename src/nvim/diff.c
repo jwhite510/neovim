@@ -1986,9 +1986,9 @@ void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, i
 {
   if (index == paths.n) {
     if ((*choice) > 0) {
-      int* fromValues = xmalloc(sizeof(int) * df_iterators.n);
-      int* toValues = xmalloc(sizeof(int) * df_iterators.n);
-      char_u** stringps = xmalloc(sizeof(char_u*) * df_iterators.n);
+      int *fromValues = xmalloc(sizeof(int) * df_iterators.n);
+      int *toValues = xmalloc(sizeof(int) * df_iterators.n);
+      char_u **stringps = xmalloc(sizeof(char_u*) * df_iterators.n);
       for ( int k = 0; k < df_iterators.n; k++ ) {
         fromValues[k] = df_iterators.iterators[k];
         toValues[k] = df_iterators.iterators[k];
