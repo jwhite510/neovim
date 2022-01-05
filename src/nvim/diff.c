@@ -1972,7 +1972,7 @@ int unwrap_indexes(int *values, df_iterators_T df_iterators, diff_T *dp)
 
     if (k == 0) {
       // space optimization
-      path_index += num_unwrap_scalar * ( values[k] % 2 );
+      path_index += num_unwrap_scalar * (values[k] % 2);
     } else {
       path_index += num_unwrap_scalar * values[k];
     }
