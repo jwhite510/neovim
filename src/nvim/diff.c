@@ -2035,10 +2035,12 @@ void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, i
     return;
   }
   int bit_place = paths.index[index];
-  *(choice) |= (1 << bit_place); // set it to 1
-  try_possible_paths(df_iterators, paths, index + 1, choice, dp, diffcomparisonpath_flat, comparison_mem);
-  *(choice) &= ~(1 << bit_place); // set it to 0
-  try_possible_paths(df_iterators, paths, index + 1, choice, dp, diffcomparisonpath_flat, comparison_mem);
+  *(choice) |= (1 << bit_place);  // set it to 1
+  try_possible_paths(df_iterators, paths, index + 1, choice, dp, diffcomparisonpath_flat,
+                     comparison_mem);
+  *(choice) &= ~(1 << bit_place);  // set it to 0
+  try_possible_paths(df_iterators, paths, index + 1, choice, dp, diffcomparisonpath_flat,
+                     comparison_mem);
 }
 
 int*** allocate_comparison_mem(df_iterators_T df_iterators, diff_T* dp) {
