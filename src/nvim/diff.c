@@ -2223,9 +2223,8 @@ void linematch_nbuffers(diff_T * dp)
   }
 
   // create the flattened path matrix
-  diffcomparisonpath_flat_T* diffcomparisonpath_flat = xmalloc(sizeof(diffcomparisonpath_flat_T) *
-      memsize
-      );
+  diffcomparisonpath_flat_T *diffcomparisonpath_flat = xmalloc(sizeof(diffcomparisonpath_flat_T) *
+                                                               memsize);
   // allocate memory here
   for (int i = 0; i < memsize; i++) {
     diffcomparisonpath_flat[i].decision = xmalloc(
