@@ -955,9 +955,9 @@ struct diffblock_S {
   // correlate them with axes of 2d or 3d tensor (0,1, or 2)
   int df_valid_buffers[DB_COUNT];
 
-  //  diffopt linematch algorithm parameter: count the current buffers
-  //  with diffthis enabled. If it's more than 3, cannot use linematch
-  //  algorithm
+  // diffopt linematch algorithm parameter: count the current buffers
+  // with diffthis enabled. If it's more than 3, cannot use linematch
+  // algorithm
   int df_valid_buffers_max;
 
   // diffopt linematch algorithm parameter: pointer to a 2d array of
