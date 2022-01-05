@@ -2241,7 +2241,7 @@ void linematch_nbuffers(diff_T * dp)
     df_iterators.n++;
   }
 
-  int*** comparison_mem = allocate_comparison_mem(df_iterators, dp);
+  int ***comparison_mem = allocate_comparison_mem(df_iterators, dp);
 
   populate_tensor(df_iterators, 0, dp, diffcomparisonpath_flat, comparison_mem);
 
