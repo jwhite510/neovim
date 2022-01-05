@@ -2074,7 +2074,7 @@ int ***allocate_comparison_mem(df_iterators_T df_iterators, diff_T *dp)
 
 void diff_allign_extraction(df_iterators_T df_iterators, diff_T* dp, int df_path_index2, int* decision2) {
   int* pointers = xmalloc(sizeof(int)*df_iterators.n);
-  for(int i = 0; i < df_iterators.n; i++) {
+  for (int i = 0; i < df_iterators.n; i++) {
     pointers[i] = 0;
   }
 
