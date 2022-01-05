@@ -1804,7 +1804,7 @@ int count_virtual_lines(win_T *win, linenr_T start, linenr_T endline)
   for (int k = start; k <= endline; k++) {
     int n = diff_check(win, k, NULL);
     if (n > 0) {
-        virtual_lines+=n;  // filler lines
+      virtual_lines += n;  // filler lines
     }
     virtual_lines++;
   }
