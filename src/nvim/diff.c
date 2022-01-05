@@ -2227,8 +2227,7 @@ void linematch_nbuffers(diff_T * dp)
       memsize
       );
   // allocate memory here
-  for (int i = 0; i < (
-        memsize); i++) {
+  for (int i = 0; i < memsize; i++) {
     diffcomparisonpath_flat[i].decision = xmalloc(
         (memsize_decisions) * sizeof(int));
   }
