@@ -2161,7 +2161,7 @@ void populate_tensor(df_iterators_T df_iterators, int ch_dim, diff_T* dp, diffco
     xfree(paths.index);
     return;
   }
-  for(int i = 0; i <= dp->df_count[df_iterators.buffers[ch_dim]]; i++ ) {
+  for (int i = 0; i <= dp->df_count[df_iterators.buffers[ch_dim]]; i++) {
     df_iterators.iterators[ch_dim] = i;
     populate_tensor(df_iterators, ch_dim + 1, dp, diffcomparisonpath_flat, comparison_mem);
   }
