@@ -2055,9 +2055,7 @@ int ***allocate_comparison_mem(df_iterators_T df_iterators, diff_T *dp)
   int cpointer = 0;
   for (int i = 0; i < df_iterators.n; i++) {
     for (int j = i + 1; j < df_iterators.n; j++) {
-
-      comparison_mem[cpointer] = xmalloc(sizeof(int*) *
-          dp->df_count[df_iterators.buffers[i]]);
+      comparison_mem[cpointer] = xmalloc(sizeof(int *) * dp->df_count[df_iterators.buffers[i]]);
       for (int k = 0; k < dp->df_count[df_iterators.buffers[i]]; k++) {
         comparison_mem[cpointer][k] = xmalloc(sizeof(int) * dp->df_count[df_iterators.buffers[j]]);
         // initialize to -1
