@@ -1960,7 +1960,8 @@ long matching_characters(const char_u *s1, const char_u *s2)
     xfree(matrix[0]), xfree(matrix[1]);
     return rvalue;
 }
-int unwrap_indexes(int* values, df_iterators_T df_iterators, diff_T* dp) {
+int unwrap_indexes(int *values, df_iterators_T df_iterators, diff_T *dp)
+{
   int num_unwrap_scalar = 1;
   int path_index = 0;
   for (int k = 0; k < df_iterators.n; k++) {
