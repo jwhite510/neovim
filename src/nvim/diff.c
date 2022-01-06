@@ -836,7 +836,7 @@ static void diff_try_update(diffio_T *dio, int idx_orig, exarg_T *eap)
 
   // Write the first buffer to a tempfile or mmfile_t.
   buf = curtab->tp_diffbuf[idx_orig];
-  if (diff_write(buf, &dio->dio_orig) == FAIL) {
+  if (diff_write(buf, &dio->dio_orig) == FAIL) { // TODO this writes exactly what I need
     goto theend;
   }
 
@@ -1841,8 +1841,8 @@ int count_virtual_to_real(win_T *win, const linenr_T lnum,
   return real_offset;
 }
 
-long count_matched_chars_f(char_u **stringps, int *fromValues, int n, int ***comparison_mem)
-{
+long count_matched_chars_f(char_u** stringps, int* fromValues, int n, int*** comparison_mem) {
+
   int matched_chars = 0, pointerindex = 0, matched = 0;
   for (int i = 0; i < n; i++) {
     for (int j = i + 1; j < n; j++) {
@@ -1993,6 +1993,7 @@ void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, i
         // get the index at all of the places
         if ( (*choice) & (1 << k) ) {
           fromValues[k]--;
+          // get the line here from a pointer
           stringps[k] = ml_get_buf(
               curtab->tp_diffbuf[df_iterators.buffers[k]],
               dp->df_lnum[df_iterators.buffers[k]] + df_iterators.iterators[k] - 1,
@@ -2354,14 +2355,50 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
   }
 
   if (dp->df_redraw && diff_linematch(dp)) {
+
+    // define buffers for diff algorithm
+    diffin_T *diffbuffers = xmalloc(sizeof(diffin_T) * DB_COUNT);
+    int diffbuffers_count = 0;
+
     dp->df_valid_buffers_max = 0;
     for (i = 0; i < DB_COUNT; i++) {
       if (curtab->tp_diffbuf[i] != NULL) {
+
         dp->df_valid_buffers[dp->df_valid_buffers_max] = i;
         dp->df_valid_buffers_max++;
+
+        // write to a buffer
+        // diffio_T diffio;
+        memset(&diffbuffers[diffbuffers_count], 0, sizeof(diffbuffers[diffbuffers_count]));
+        diff_write(curtab->tp_diffbuf[i], &diffbuffers[diffbuffers_count]);
+        diffbuffers_count++;
       }
     }
+
+    // call the linematch algorithm something like this
+    // linematch_nbuffers(diffbuffers, diffbuffers_count);
+    // clear the diff buffers after running the diff algorithm
+    for (i = 0; i < diffbuffers_count; i++) {
+      clear_diffin(&diffbuffers[i]);
+    }
+    xfree(diffbuffers);
+
+
+
     if (dp->df_valid_buffers_max == 2) {
+      // TODO THIS SHOULD TAKE AN ARGUMENT AS A SET OF BUFFERS
+      // apply suggested white space changes
+      //
+      // figure out all the things that are needed from dp and make them as input
+      //
+      // things the algorithm needs to run:
+      //
+      // dp->df_valid_buffers_max - how many things diffed at once?
+      // dp->df_count[dp->df_valid_buffers[i]] - the length (lines) of the buffer i
+      //
+      // dp->df_valid_buffers -> mapping from curtab->tp_diffbuf[i] to to axes
+      // of algorithm - will be a little challenging
+      //
       linematch_nbuffers(dp);
     } else if (dp->df_valid_buffers_max == 3) {
       linematch_nbuffers(dp);
