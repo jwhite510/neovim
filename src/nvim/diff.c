@@ -2218,7 +2218,7 @@ void populate_tensor(df_iterators_T df_iterators, int ch_dim, diff_T *dp,
 /// characters) of the 3 buffers, so a redundant calculation of the
 /// scores does not occur
 /// @param dp
-void linematch_nbuffers(diff_T * dp)
+void linematch_nbuffers(diff_T * dp, char** diff_block, int* diff_length, int nDiffs)
 {
   // int b0 = dp->df_valid_buffers[0];
   // int b1 = dp->df_valid_buffers[1];
@@ -2375,15 +2375,24 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
       }
     }
 
-    // call the linematch algorithm something like this
-    // linematch_nbuffers(diffbuffers, diffbuffers_count);
-    // clear the diff buffers after running the diff algorithm
+    // get an array of chars
+    char **diff_begin = xmalloc(sizeof(char *) * DB_COUNT);
+    int *diff_length = xmalloc(sizeof(int) * DB_COUNT);
     for (i = 0; i < diffbuffers_count; i++) {
-      clear_diffin(&diffbuffers[i]);
+      diff_begin[i] = diffbuffers[i].din_mmfile.ptr;
+      // move the pointer to the start of the diff
+      for (int j = 0; j < dp->df_lnum[i] - 1; j++) {
+        // advance the pointer until it hits a newline
+        while (*diff_begin[i] != '\n') {
+          diff_begin[i] ++;
+        }
+        diff_begin[i] ++;
+      }
+      diff_length[i] = dp->df_count[i];
+      // get the start line of the diff
     }
-    xfree(diffbuffers);
 
-
+    // pass the begin and lengths to the algorithm
 
     if (dp->df_valid_buffers_max == 2) {
       // TODO THIS SHOULD TAKE AN ARGUMENT AS A SET OF BUFFERS
@@ -2399,10 +2408,20 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
       // dp->df_valid_buffers -> mapping from curtab->tp_diffbuf[i] to to axes
       // of algorithm - will be a little challenging
       //
-      linematch_nbuffers(dp);
+      linematch_nbuffers(dp, diff_begin, diff_length, diffbuffers_count);
     } else if (dp->df_valid_buffers_max == 3) {
-      linematch_nbuffers(dp);
+      linematch_nbuffers(dp, diff_begin, diff_length, diffbuffers_count);
     }
+    // call the linematch algorithm something like this
+    // linematch_nbuffers(diffbuffers, diffbuffers_count);
+    // clear the diff buffers after running the diff algorithm
+    for (i = 0; i < diffbuffers_count; i++) {
+      clear_diffin(&diffbuffers[i]);
+    }
+    xfree(diffbuffers);
+    xfree(diff_begin);
+    xfree(diff_length);
+
     dp->df_redraw = false;
   }
   if (diff_linematch(dp)) {
