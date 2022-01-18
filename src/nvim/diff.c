@@ -2042,23 +2042,23 @@ void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, i
                      comparison_mem);
 }
 
-int ***allocate_comparison_mem(df_iterators_T df_iterators, diff_T *dp)
+int ***allocate_comparison_mem(int* diff_length, int nDiffs)
 {
   int pointercount = 0;
-  for (int i = 0; i < df_iterators.n; i++) {
-    for (int j = i + 1; j < df_iterators.n; j++) {
+  for (int i = 0; i < nDiffs; i++) {
+    for (int j = i + 1; j < nDiffs; j++) {
       pointercount++;
     }
   }
   int ***comparison_mem = xmalloc(sizeof(int **) * pointercount);
   int cpointer = 0;
-  for (int i = 0; i < df_iterators.n; i++) {
-    for (int j = i + 1; j < df_iterators.n; j++) {
-      comparison_mem[cpointer] = xmalloc(sizeof(int *) * dp->df_count[df_iterators.buffers[i]]);
-      for (int k = 0; k < dp->df_count[df_iterators.buffers[i]]; k++) {
-        comparison_mem[cpointer][k] = xmalloc(sizeof(int) * dp->df_count[df_iterators.buffers[j]]);
+  for (int i = 0; i < nDiffs; i++) {
+    for (int j = i + 1; j < nDiffs; j++) {
+      comparison_mem[cpointer] = xmalloc(sizeof(int *) * diff_length[i]);
+      for (int k = 0; k < diff_length[i]; k++) {
+        comparison_mem[cpointer][k] = xmalloc(sizeof(int) * diff_length[j]);
         // initialize to -1
-        for (int l = 0; l < dp->df_count[df_iterators.buffers[j]]; l++) {
+        for (int l = 0; l < diff_length[j]; l++) {
           comparison_mem[cpointer][k][l] = -1;
         }
       }
@@ -2225,9 +2225,9 @@ void linematch_nbuffers(diff_T * dp, char** diff_block, int* diff_length, int nD
   // int b2 = dp->df_valid_buffers[2];
 
   int memsize = 1, memsize_decisions = 0;
-  for (int i = 0; i < dp->df_valid_buffers_max; i++) {
-    memsize *= (i == 0 ? 2 : (dp->df_count[dp->df_valid_buffers[i]] + 1));
-    memsize_decisions += dp->df_count[dp->df_valid_buffers[i]];
+  for (int i = 0; i < nDiffs; i++) {
+    memsize *= (i == 0 ? 2 : (diff_length[i] + 1));
+    memsize_decisions += diff_length[i];
   }
 
   // create the flattened path matrix
@@ -2242,14 +2242,14 @@ void linematch_nbuffers(diff_T * dp, char** diff_block, int* diff_length, int nD
   // memory for avoiding repetitive calculations of score
   df_iterators_T df_iterators;
   df_iterators.n = 0;
-  df_iterators.buffers = xmalloc(sizeof(int) * dp->df_valid_buffers_max);
-  df_iterators.iterators = xmalloc(sizeof(int) * dp->df_valid_buffers_max);
-  for (int i = 0; i < dp->df_valid_buffers_max; i++) {
+  df_iterators.buffers = xmalloc(sizeof(int) * nDiffs);
+  df_iterators.iterators = xmalloc(sizeof(int) * nDiffs);
+  for (int i = 0; i < nDiffs; i++) {
     df_iterators.buffers[i] = dp->df_valid_buffers[i];
     df_iterators.n++;
   }
 
-  int ***comparison_mem = allocate_comparison_mem(df_iterators, dp);
+  int ***comparison_mem = allocate_comparison_mem(diff_length, nDiffs);
 
   populate_tensor(df_iterators, 0, dp, diffcomparisonpath_flat, comparison_mem);
 
