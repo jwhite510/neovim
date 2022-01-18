@@ -1980,7 +1980,7 @@ int unwrap_indexes(int *values, int *diff_length, int nDiffs)
 
 void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, int *choice,
                         diff_T *dp, diffcomparisonpath_flat_T *diffcomparisonpath_flat,
-                        int ***comparison_mem, int *diff_length, int nDiffs)
+                        int ***comparison_mem, int *diff_length, int nDiffs, char **diff_block)
 {
   if (index == paths.n) {
     if ((*choice) > 0) {
@@ -1998,6 +1998,41 @@ void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, i
               curtab->tp_diffbuf[df_iterators.buffers[k]],
               dp->df_lnum[df_iterators.buffers[k]] + df_iterators.iterators[k] - 1,
               false);
+
+          // getting string from buffer:
+          FILE *fp = fopen("debug.txt","a");
+
+          fprintf(fp, "--------------------\n");
+          fprintf(fp, "GETTING STRING FROM BUFFER\n");
+          fprintf(fp, "k %i\n", k);
+          fprintf(fp, "df_iterators.iterators[k]: %i\n", df_iterators.iterators[k]);
+
+          fprintf(fp, "stringps[k]: %s\n", stringps[k]);
+          // fprintf(fp, "diff_block[k]: %s", diff_block[k]);
+
+          // get the pointer to the line number
+          char *p = diff_block[k];
+          for (int j = 0; j < df_iterators.iterators[k] - 1; j++) {
+            // advance the pointer until it hits a newline
+            while (*p != '\n') {
+              p++;
+            }
+            p++;
+          }
+          // copy the line
+          int line_length = 0;
+          while (p[line_length] != '\n') {
+            line_length++;
+          }
+          char* current_line = xmalloc(line_length * sizeof(char));
+          for (int l = 0; l < line_length; l++) {
+            current_line[l] = p[l];
+          }
+
+          fprintf(fp, "current_line: %s\n", current_line);
+
+          fclose(fp);
+
         } else {
           stringps[k] = NULL;
         }
@@ -2036,10 +2071,10 @@ void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, i
   int bit_place = paths.index[index];
   *(choice) |= (1 << bit_place);  // set it to 1
   try_possible_paths(df_iterators, paths, index + 1, choice, dp, diffcomparisonpath_flat,
-                     comparison_mem, diff_length, nDiffs);
+                     comparison_mem, diff_length, nDiffs, diff_block);
   *(choice) &= ~(1 << bit_place);  // set it to 0
   try_possible_paths(df_iterators, paths, index + 1, choice, dp, diffcomparisonpath_flat,
-                     comparison_mem, diff_length, nDiffs);
+                     comparison_mem, diff_length, nDiffs, diff_block);
 }
 
 int ***allocate_comparison_mem(int* diff_length, int nDiffs)
@@ -2148,7 +2183,7 @@ void free_comparison_mem(int ***comparison_mem, df_iterators_T df_iterators, dif
 
 void populate_tensor(df_iterators_T df_iterators, int ch_dim, diff_T *dp,
                      diffcomparisonpath_flat_T *diffcomparisonpath_flat, int ***comparison_mem,
-                     int* diff_length, int nDiffs)
+                     int* diff_length, int nDiffs, char **diff_block)
 {
   if (ch_dim == df_iterators.n) {
     paths_T paths;
@@ -2165,14 +2200,14 @@ void populate_tensor(df_iterators_T df_iterators, int ch_dim, diff_T *dp,
     int unwrapper_index_to = unwrap_indexes(df_iterators.iterators, diff_length, nDiffs);
     diffcomparisonpath_flat[unwrapper_index_to].df_lev_score = -1;
     try_possible_paths(df_iterators, paths, 0, &choice, dp, diffcomparisonpath_flat,
-                       comparison_mem, diff_length, nDiffs);
+                       comparison_mem, diff_length, nDiffs, diff_block);
 
     xfree(paths.index);
     return;
   }
   for (int i = 0; i <= diff_length[ch_dim]; i++) {
     df_iterators.iterators[ch_dim] = i;
-    populate_tensor(df_iterators, ch_dim + 1, dp, diffcomparisonpath_flat, comparison_mem, diff_length, nDiffs);
+    populate_tensor(df_iterators, ch_dim + 1, dp, diffcomparisonpath_flat, comparison_mem, diff_length, nDiffs, diff_block);
   }
 }
 
@@ -2219,7 +2254,7 @@ void populate_tensor(df_iterators_T df_iterators, int ch_dim, diff_T *dp,
 /// characters) of the 3 buffers, so a redundant calculation of the
 /// scores does not occur
 /// @param dp
-void linematch_nbuffers(diff_T *dp, char** diff_block, int* diff_length, int nDiffs)
+void linematch_nbuffers(diff_T *dp, char **diff_block, int* diff_length, int nDiffs)
 {
   int memsize = 1, memsize_decisions = 0;
   for (int i = 0; i < nDiffs; i++) {
@@ -2248,7 +2283,10 @@ void linematch_nbuffers(diff_T *dp, char** diff_block, int* diff_length, int nDi
 
   int ***comparison_mem = allocate_comparison_mem(diff_length, nDiffs);
 
-  populate_tensor(df_iterators, 0, dp, diffcomparisonpath_flat, comparison_mem, diff_length, nDiffs);
+  FILE *fp = fopen("debug.txt","a");
+  fprintf(fp, "RUNNING POPULATE_TENSOR\n");
+  fclose(fp);
+  populate_tensor(df_iterators, 0, dp, diffcomparisonpath_flat, comparison_mem, diff_length, nDiffs, diff_block);
 
   int maxlines = 0;
   for (int i = 0; i < dp->df_valid_buffers_max; i++) {
