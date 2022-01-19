@@ -1984,33 +1984,16 @@ void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, i
 {
   if (index == paths.n) {
     if ((*choice) > 0) {
-      int *fromValues = xmalloc(sizeof(int) * df_iterators.n);
-      int *toValues = xmalloc(sizeof(int) * df_iterators.n);
-      char_u **stringps = xmalloc(sizeof(char_u*) * df_iterators.n);
-      for ( int k = 0; k < df_iterators.n; k++ ) {
+      int *fromValues = xmalloc(sizeof(int) * nDiffs);
+      int *toValues = xmalloc(sizeof(int) * nDiffs);
+      char **current_lines = xmalloc(sizeof(char*) * nDiffs);
+      char_u **stringps = xmalloc(sizeof(char_u*) * nDiffs);
+      for ( int k = 0; k < nDiffs; k++ ) {
         fromValues[k] = df_iterators.iterators[k];
         toValues[k] = df_iterators.iterators[k];
         // get the index at all of the places
         if ( (*choice) & (1 << k) ) {
           fromValues[k]--;
-          // get the line here from a pointer
-          stringps[k] = ml_get_buf(
-              curtab->tp_diffbuf[df_iterators.buffers[k]],
-              dp->df_lnum[df_iterators.buffers[k]] + df_iterators.iterators[k] - 1,
-              false);
-
-          // getting string from buffer:
-          FILE *fp = fopen("debug.txt","a");
-
-          fprintf(fp, "--------------------\n");
-          fprintf(fp, "GETTING STRING FROM BUFFER\n");
-          fprintf(fp, "k %i\n", k);
-          fprintf(fp, "df_iterators.iterators[k]: %i\n", df_iterators.iterators[k]);
-
-          fprintf(fp, "stringps[k]: %s\n", stringps[k]);
-          // fprintf(fp, "diff_block[k]: %s", diff_block[k]);
-
-          // get the pointer to the line number
           char *p = diff_block[k];
           for (int j = 0; j < df_iterators.iterators[k] - 1; j++) {
             // advance the pointer until it hits a newline
@@ -2024,23 +2007,20 @@ void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, i
           while (p[line_length] != '\n') {
             line_length++;
           }
-          char* current_line = xmalloc(line_length * sizeof(char));
+          current_lines[k] = xmalloc(line_length * sizeof(char));
           for (int l = 0; l < line_length; l++) {
-            current_line[l] = p[l];
+            current_lines[k][l] = p[l];
           }
-
-          fprintf(fp, "current_line: %s\n", current_line);
-
-          fclose(fp);
-
+          stringps[k] = (char_u*)current_lines[k]; // cast to char_u
         } else {
+          current_lines[k] = NULL;
           stringps[k] = NULL;
         }
       }
       int unwrapped_index_from = unwrap_indexes(fromValues, diff_length, nDiffs);
       int unwrapped_index_to = unwrap_indexes(toValues, diff_length, nDiffs);
       long matched_chars = count_matched_chars_f(
-          stringps, fromValues, df_iterators.n, comparison_mem);
+          stringps, fromValues, nDiffs, comparison_mem);
       int score = diffcomparisonpath_flat[unwrapped_index_from].df_lev_score + matched_chars;
       if (score > diffcomparisonpath_flat[unwrapped_index_to].df_lev_score) {
         update_path_flat(
@@ -2050,7 +2030,10 @@ void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, i
             unwrapped_index_from,
             *choice);
       }
-
+      for (int i = 0; i < nDiffs; i++) {
+        xfree(current_lines[i]);
+      }
+      xfree(current_lines);
       xfree(fromValues);
       xfree(toValues);
       xfree(stringps);
@@ -2058,9 +2041,9 @@ void try_possible_paths(df_iterators_T df_iterators, paths_T paths, int index, i
     } else {
       // initialize the 0, 0, 0 ... choice
       int i = 0;
-      while (df_iterators.iterators[i] == 0 && i < df_iterators.n) {
+      while (df_iterators.iterators[i] == 0 && i < nDiffs) {
         i++;
-        if (i == df_iterators.n) {
+        if (i == nDiffs) {
           diffcomparisonpath_flat[0].df_lev_score = 0;
           diffcomparisonpath_flat[0].df_path_index = 0;
         }
