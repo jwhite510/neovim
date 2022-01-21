@@ -2373,22 +2373,14 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
     int *diff_length = xmalloc(sizeof(int) * DB_COUNT);
     int* outputmap = xmalloc(sizeof(int) * DB_COUNT);
     int diffbuffers_count = 0;
-    dp->df_valid_buffers_max = 0;
     for (i = 0; i < DB_COUNT; i++) {
       if (curtab->tp_diffbuf[i] != NULL) {
 
-        dp->df_valid_buffers[dp->df_valid_buffers_max] = i;
-        dp->df_valid_buffers_max++;
-
-        // write to a buffer
-        // diffio_T diffio;
         memset(&diffbuffers[diffbuffers_count], 0, sizeof(diffbuffers[diffbuffers_count]));
         diff_write(curtab->tp_diffbuf[i], &diffbuffers[diffbuffers_count]);
-
         diff_begin[diffbuffers_count] = diffbuffers[diffbuffers_count].din_mmfile.ptr;
 
         for (int j = 0; j < dp->df_lnum[i] - 1; j++) {
-          // advance the pointer until it hits a newline
           while (*diff_begin[diffbuffers_count] != '\n') {
             diff_begin[diffbuffers_count] ++;
           }
@@ -2402,28 +2394,9 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
       }
     }
 
-    // pass the begin and lengths to the algorithm
-    if (dp->df_valid_buffers_max == 2) {
-      // TODO THIS SHOULD TAKE AN ARGUMENT AS A SET OF BUFFERS
-      // apply suggested white space changes
-      //
-      // figure out all the things that are needed from dp and make them as input
-      //
-      // things the algorithm needs to run:
-      //
-      // dp->df_valid_buffers_max - how many things diffed at once?
-      // dp->df_count[dp->df_valid_buffers[i]] - the length (lines) of the buffer i
-      //
-      // dp->df_valid_buffers -> mapping from curtab->tp_diffbuf[i] to to axes
-      // of algorithm - will be a little challenging
-      //
-      linematch_nbuffers(diff_begin, diff_length, diffbuffers_count,
-          &dp->df_comparisonlines, &dp->df_arr_col_size, outputmap);
-    } else if (dp->df_valid_buffers_max == 3) {
-      // return a struct
-      linematch_nbuffers(diff_begin, diff_length, diffbuffers_count,
-          &dp->df_comparisonlines, &dp->df_arr_col_size, outputmap);
-    }
+    linematch_nbuffers(diff_begin, diff_length, diffbuffers_count,
+        &dp->df_comparisonlines, &dp->df_arr_col_size, outputmap);
+
     // call the linematch algorithm something like this
     // linematch_nbuffers(diffbuffers, diffbuffers_count);
     // clear the diff buffers after running the diff algorithm

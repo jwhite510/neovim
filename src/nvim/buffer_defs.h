@@ -944,15 +944,6 @@ struct diffblock_S {
   // scrolled into view, or if it has been changed
   int df_redraw;
 
-  // diffopt linematch algorithm parameter: mark the current buffer ids to
-  // correlate them with axes of 2d or 3d tensor (0,1, or 2)
-  int df_valid_buffers[DB_COUNT];
-
-  // diffopt linematch algorithm parameter: count the current buffers
-  // with diffthis enabled. If it's more than 3, cannot use linematch
-  // algorithm
-  int df_valid_buffers_max;
-
   // diffopt linematch algorithm parameter: pointer to a 2d array of
   // df_linecompare_T, for each diff buffer (axis 0) for each line of that
   // buffer in the diff (axis 1), contains the information which lines in the
