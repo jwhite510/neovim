@@ -1773,11 +1773,9 @@ bool diff_linematch(diff_T *dp)
     return 0;
   }
   // are there more than three diff buffers?
-  int diffbuffers = 0;
   int tsize = 0;
   for (int i = 0; i < DB_COUNT; i++) {
     if ( curtab->tp_diffbuf[i] != NULL ) {
-      diffbuffers++;
       tsize += dp->df_count[i];
     }
   }
@@ -1785,10 +1783,7 @@ bool diff_linematch(diff_T *dp)
   if (tsize > linematch_lines) {
     return 0;
   }
-  if (diffbuffers <= 3) {  // can diff up to 3 buffers
-    return 1;
-  }
-  return 0;
+  return 1;
 }
 
 ///
