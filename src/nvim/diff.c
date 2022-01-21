@@ -2420,6 +2420,23 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
       linematch_nbuffers(diff_begin, diff_length, diffbuffers_count,
           &dp->df_comparisonlines, &dp->df_arr_col_size);
     }
+
+    // copy the memory to the correct location if it's not already
+    for (int j = DB_COUNT - 1, k = diffbuffers_count - 1; j >= 0; j--) {
+      if ((curtab->tp_diffbuf[j] != NULL)) {
+        // copy memory from index k to index j
+        if (j != k) {
+          for (int p = 0; p < dp->df_arr_col_size; p++) {
+            dp->df_comparisonlines[dp->df_arr_col_size * j + p] =
+              dp->df_comparisonlines[dp->df_arr_col_size * k + p];
+          }
+        }
+        k--;
+      }
+    }
+
+
+
     // call the linematch algorithm something like this
     // linematch_nbuffers(diffbuffers, diffbuffers_count);
     // clear the diff buffers after running the diff algorithm
