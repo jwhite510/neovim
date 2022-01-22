@@ -897,16 +897,16 @@ struct file_buffer {
  */
 #define DB_COUNT 8     // up to four buffers can be diff'ed
 
+// struct for running the diff linematch algorithm
 typedef struct diffcomparisonpath_flat_S diffcomparisonpath_flat_T;
 struct diffcomparisonpath_flat_S {
-  int *decision;  // to keep track of this path traveled
+  int *df_decision;  // to keep track of this path traveled
   int df_lev_score;  // to keep track of the total score of this path
   int df_path_index;  // current index of this path
 };
 
 // contains the information for how to construct diff views when linematch
-// diffopt is enabled, it is populated after running linematch_3buffers or
-// linematch_2buffers.
+// diffopt is enabled, it is populated after running linematch_nbuffers
 typedef struct df_linecompare_S df_linecompare_T;
 struct df_linecompare_S {
   bool df_newline;  // is this line skipped in other buffers?
@@ -944,7 +944,8 @@ struct diffblock_S {
   // other buffers should this line be compared to, how many filler lines
   // should be drawn above this line, and is this a new line
   df_linecompare_T *df_comparisonlines;
-  int df_arr_col_size;  // used for referencing 2d array
+
+  int df_arr_col_size;  // used for referencing 2d array df_comparisonlines
 };
 
 #define SNAP_HELP_IDX   0

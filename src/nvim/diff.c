@@ -1836,7 +1836,15 @@ int count_virtual_to_real(win_T *win, const linenr_T lnum,
   return real_offset;
 }
 
-long count_matched_chars_f(char_u** stringps, int* fromValues, int n, int*** comparison_mem) {
+/// count the matching characters between a variable number of strings "stringps"
+/// mark the strings that have already been compared to extract them later
+/// without re-running the character match counting.
+/// @param stringps
+/// @param fromValues
+/// @param n
+/// @param comparison_mem
+long count_n_matched_chars(char_u** stringps, int* fromValues, int n, int***
+    comparison_mem) {
 
   int matched_chars = 0, pointerindex = 0, matched = 0;
   for (int i = 0; i < n; i++) {
@@ -1845,7 +1853,8 @@ long count_matched_chars_f(char_u** stringps, int* fromValues, int n, int*** com
         int i1 = fromValues[i];  // index of where to get the buffer
         int j1 = fromValues[j];
         if (comparison_mem[pointerindex][i1][j1] == -1) {
-          comparison_mem[pointerindex][i1][j1] = count_matched_chars(stringps[i], stringps[j]);
+          comparison_mem[pointerindex][i1][j1] =
+            count_matched_chars(stringps[i], stringps[j]);
         }
         matched ++;
         matched_chars += comparison_mem[pointerindex][i1][j1];
@@ -1900,16 +1909,22 @@ long count_matched_chars(const char_u *s1, const char_u *s2)
   return matching_characters(s1, s2);
 }
 
+/// update the path of a point in the diff linematch algorithm
+/// @param  diffcomparisonpath_flat
+/// @param score
+/// @param to
+/// @param from
+/// @param choice
 void update_path_flat(diffcomparisonpath_flat_T *diffcomparisonpath_flat,
                       int score, int to, int from, const int choice)
 {
   for (int k = 0; k < diffcomparisonpath_flat[from].df_path_index; k++) {
-    diffcomparisonpath_flat[to].decision[k] = diffcomparisonpath_flat[from].decision[k];
+    diffcomparisonpath_flat[to].df_decision[k] = diffcomparisonpath_flat[from].df_decision[k];
   }
   diffcomparisonpath_flat[to].df_path_index = diffcomparisonpath_flat[from].df_path_index;
 
   diffcomparisonpath_flat[to].df_lev_score = score;
-  diffcomparisonpath_flat[to].decision[diffcomparisonpath_flat[to].df_path_index] = choice;
+  diffcomparisonpath_flat[to].df_decision[diffcomparisonpath_flat[to].df_path_index] = choice;
   diffcomparisonpath_flat[to].df_path_index++;
 }
 /// return matching characters between "s1" and "s2"
@@ -1956,6 +1971,11 @@ long matching_characters(const char_u *s1, const char_u *s2)
     xfree(matrix[0]), xfree(matrix[1]);
     return rvalue;
 }
+
+/// unwrap indexes to access n dimmensional tensor
+/// @param values
+/// @param diff_length
+/// @param nDiffs
 int unwrap_indexes(int *values, int *diff_length, int nDiffs)
 {
   int num_unwrap_scalar = 1;
@@ -1976,6 +1996,18 @@ int unwrap_indexes(int *values, int *diff_length, int nDiffs)
   return path_index;
 }
 
+/// try all the different ways to compare these lines and use the one that
+/// results in the most matching characters
+/// @param df_iterators
+/// @param paths
+/// @param nPaths
+/// @param pathIndex
+/// @param choice
+/// @param diffcomparisonpath_flat
+/// @param comparison_mem
+/// @param diff_length
+/// @param nDiffs
+/// @param diff_block
 void try_possible_paths(int *df_iterators, int* paths, int nPaths, int pathIndex,
     int *choice, diffcomparisonpath_flat_T *diffcomparisonpath_flat,
     int ***comparison_mem, int *diff_length, int nDiffs, char **diff_block)
@@ -2017,9 +2049,10 @@ void try_possible_paths(int *df_iterators, int* paths, int nPaths, int pathIndex
       }
       int unwrapped_index_from = unwrap_indexes(fromValues, diff_length, nDiffs);
       int unwrapped_index_to = unwrap_indexes(toValues, diff_length, nDiffs);
-      long matched_chars = count_matched_chars_f(
+      long matched_chars = count_n_matched_chars(
           stringps, fromValues, nDiffs, comparison_mem);
-      int score = diffcomparisonpath_flat[unwrapped_index_from].df_lev_score + matched_chars;
+      int score = diffcomparisonpath_flat[unwrapped_index_from].df_lev_score +
+        matched_chars;
       if (score > diffcomparisonpath_flat[unwrapped_index_to].df_lev_score) {
         update_path_flat(
             diffcomparisonpath_flat,
@@ -2058,6 +2091,11 @@ void try_possible_paths(int *df_iterators, int* paths, int nPaths, int pathIndex
       diffcomparisonpath_flat, comparison_mem, diff_length, nDiffs, diff_block);
 }
 
+/// allocate the memory for comparisons run with the diff linematch algorithm.
+/// this memory is used to prevent counting the matching characters on the same
+/// line twice
+/// @param diff_length
+/// @param nDiffs
 int ***allocate_comparison_mem(int* diff_length, int nDiffs)
 {
   int pointercount = 0;
@@ -2084,7 +2122,17 @@ int ***allocate_comparison_mem(int* diff_length, int nDiffs)
   return comparison_mem;
 }
 
-void diff_allign_extraction(int df_path_index2, int *decision2, int nDiffs,
+/// extract the results of the linematch algorithm and write them to
+/// "df_comparisonlines" using df_arr_col_size to determine which buffer the
+/// diffs are respective to. "outmap" is used to swap the indexes of the diff
+/// buffers to match the required format of the output.
+/// @param best_path_index
+/// @param best_path_decisions
+/// @param nDiffs
+/// @param df_comparisonlines
+/// @param df_arr_col_size
+/// @param outmap
+void diff_allign_extraction(int best_path_index, int *best_path_decisions, int nDiffs,
     df_linecompare_T **df_comparisonlines, int* df_arr_col_size, int* outmap)
 {
   int *pointers = xmalloc(sizeof(int) * nDiffs);
@@ -2102,17 +2150,17 @@ void diff_allign_extraction(int df_path_index2, int *decision2, int nDiffs,
       }
     }
   }
-  for (int p = 0; p < df_path_index2; p++) {
+  for (int p = 0; p < best_path_index; p++) {
     // perform the extraction
 
     // for each thing that gets compared
     for (int bit_place = 0; bit_place < nDiffs; bit_place++) {
-      if ( decision2[p] & (1 << bit_place) ) {
+      if ( best_path_decisions[p] & (1 << bit_place) ) {
 
         bool newline = true;
         for (int _bit_place = 0; _bit_place < nDiffs; _bit_place++) {
           if (_bit_place != bit_place) {
-            if ( decision2[p] & (1 << _bit_place) ) {
+            if ( best_path_decisions[p] & (1 << _bit_place) ) {
               newline = false;
               (*df_comparisonlines)[ (*df_arr_col_size) * outmap[bit_place] + pointers[bit_place] ].df_compare[outmap[_bit_place]] = pointers[_bit_place];
             }
@@ -2127,12 +2175,12 @@ void diff_allign_extraction(int df_path_index2, int *decision2, int nDiffs,
       }
     }
     for (int bit_place = 0; bit_place < nDiffs; bit_place++) {
-      if (decision2[p] & (1 << bit_place)) {
+      if (best_path_decisions[p] & (1 << bit_place)) {
         pointers[bit_place]++;
       }
     }
     for (int bit_place = 0; bit_place < nDiffs; bit_place++) {
-      if (decision2[p] & (1 << bit_place)) {
+      if (best_path_decisions[p] & (1 << bit_place)) {
         (*df_comparisonlines)[ (*df_arr_col_size) * outmap[bit_place] + pointers[bit_place] ].df_newline = false;
         (*df_comparisonlines)[ (*df_arr_col_size) * outmap[bit_place] + pointers[bit_place] ].df_filler = 0;
         for (int _bit_place = 0; _bit_place < nDiffs; _bit_place++) {
@@ -2146,6 +2194,12 @@ void diff_allign_extraction(int df_path_index2, int *decision2, int nDiffs,
   xfree(pointers);
 }
 
+/// free the memory for comparisons run with the diff linematch algorithm.
+/// this memory is used to prevent counting the matching characters on the same
+/// line twice
+/// @param comparison_mem
+/// @param diff_length
+/// @param nDiffs
 void free_comparison_mem(int ***comparison_mem, int* diff_length, int nDiffs)
 {
   // free comparison memory
@@ -2162,6 +2216,16 @@ void free_comparison_mem(int ***comparison_mem, int* diff_length, int nDiffs)
   xfree(comparison_mem);
 }
 
+/// populate the values of the linematch algorithm tensor, and find the best
+/// decision for how to compare the relevant lines from each of the buffers at
+/// each point in the tensor
+/// @param df_iterators
+/// @param ch_dim
+/// @param diffcomparisonpath_flat
+/// @param comparison_mem
+/// @param diff_length
+/// @param nDiffs
+/// @param diff_block
 void populate_tensor(int *df_iterators, int ch_dim,
                      diffcomparisonpath_flat_T *diffcomparisonpath_flat, int ***comparison_mem,
                      int* diff_length, int nDiffs, char **diff_block)
@@ -2191,6 +2255,14 @@ void populate_tensor(int *df_iterators, int ch_dim,
   }
 }
 
+/// algorithm to find an optimal alignment of lines of a diff block with 2 or
+/// more files. The algorithm is generalized to work for any number of files
+/// which corresponds to another dimmension added to the tensor used in the
+/// algorithm
+///
+/// for explanation, a summary of the algorithm in 3 dimmensions (3 files
+///     compared) follows
+///
 /// The 3d case (for 3 buffers) of the algorithm implemented when diffopt
 /// 'linematch' is enabled. The algorithm constructs a 3d tensor to
 /// compare a diff between 3 buffers. The dimmensions of the tensor are
@@ -2233,7 +2305,12 @@ void populate_tensor(int *df_iterators, int ch_dim,
 /// In the 3d case, 3 arrays are populated to memorize the score (matched
 /// characters) of the 3 buffers, so a redundant calculation of the
 /// scores does not occur
-/// @param dp
+/// @param diff_block
+/// @param diff_length
+/// @param nDiffs
+/// @param df_comparisonlines
+/// @param df_arr_col_size
+/// @param outmap
 void linematch_nbuffers(char **diff_block, int* diff_length,
     int nDiffs, df_linecompare_T **df_comparisonlines,
     int *df_arr_col_size, int *outmap)
@@ -2249,7 +2326,7 @@ void linematch_nbuffers(char **diff_block, int* diff_length,
                                                                memsize);
   // allocate memory here
   for (int i = 0; i < memsize; i++) {
-    diffcomparisonpath_flat[i].decision = xmalloc(
+    diffcomparisonpath_flat[i].df_decision = xmalloc(
         (memsize_decisions) * sizeof(int));
   }
 
@@ -2259,7 +2336,8 @@ void linematch_nbuffers(char **diff_block, int* diff_length,
 
   int ***comparison_mem = allocate_comparison_mem(diff_length, nDiffs);
 
-  populate_tensor(df_iterators, 0, diffcomparisonpath_flat, comparison_mem, diff_length, nDiffs, diff_block);
+  populate_tensor(df_iterators, 0, diffcomparisonpath_flat, comparison_mem,
+      diff_length, nDiffs, diff_block);
 
   int maxlines = 0;
   for (int i = 0; i < nDiffs; i++) {
@@ -2277,19 +2355,18 @@ void linematch_nbuffers(char **diff_block, int* diff_length,
     values_final[i] = diff_length[i];
   }
   int u = unwrap_indexes(values_final, diff_length, nDiffs);
-  int df_path_index2 = diffcomparisonpath_flat[u].df_path_index;
-  int df_lev_score2 = diffcomparisonpath_flat[u].df_lev_score;
-  int *decision2 = diffcomparisonpath_flat[u].decision;  // [i]
+  int best_path_index = diffcomparisonpath_flat[u].df_path_index;
+  int *best_path_decisions = diffcomparisonpath_flat[u].df_decision;  // [i]
 
 
-  diff_allign_extraction(df_path_index2, decision2, nDiffs,
+  diff_allign_extraction(best_path_index, best_path_decisions, nDiffs,
       df_comparisonlines, df_arr_col_size, outmap);
   free_comparison_mem(comparison_mem, diff_length, nDiffs);
 
   xfree(values_final);
   xfree(df_iterators);
   for (int i = 0; i < memsize; i++) {
-    xfree(diffcomparisonpath_flat[i].decision);
+    xfree(diffcomparisonpath_flat[i].df_decision);
   }
   xfree(diffcomparisonpath_flat);
 }
