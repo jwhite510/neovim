@@ -1843,7 +1843,7 @@ int count_virtual_to_real(win_T *win, const linenr_T lnum,
 /// @param fromValues
 /// @param n
 /// @param comparison_mem
-long count_n_matched_chars(char_u** stringps, int* fromValues, int n, int***
+long count_n_matched_chars(const char_u** stringps, const int* fromValues, const int n, int***
     comparison_mem) {
 
   int matched_chars = 0, pointerindex = 0, matched = 0;
@@ -1976,7 +1976,7 @@ long matching_characters(const char_u *s1, const char_u *s2)
 /// @param values
 /// @param diff_length
 /// @param nDiffs
-int unwrap_indexes(int *values, int *diff_length, int nDiffs)
+int unwrap_indexes(const int *values, const int *diff_length, const int nDiffs)
 {
   int num_unwrap_scalar = 1;
   int path_index = 0;
@@ -2008,23 +2008,23 @@ int unwrap_indexes(int *values, int *diff_length, int nDiffs)
 /// @param diff_length
 /// @param nDiffs
 /// @param diff_block
-void try_possible_paths(int *df_iterators, int* paths, int nPaths, int pathIndex,
+void try_possible_paths(const int *df_iterators, const int* paths, const int nPaths, const int pathIndex,
     int *choice, diffcomparisonpath_flat_T *diffcomparisonpath_flat,
-    int ***comparison_mem, int *diff_length, int nDiffs, char **diff_block)
+    int ***comparison_mem, const int *diff_length, const int nDiffs, const char **diff_block)
 {
   if (pathIndex == nPaths) {
     if ((*choice) > 0) {
       int *fromValues = xmalloc(sizeof(int) * nDiffs);
       int *toValues = xmalloc(sizeof(int) * nDiffs);
       char **current_lines = xmalloc(sizeof(char*) * nDiffs);
-      char_u **stringps = xmalloc(sizeof(char_u*) * nDiffs);
+      const char_u **stringps = xmalloc(sizeof(char_u*) * nDiffs);
       for ( int k = 0; k < nDiffs; k++ ) {
         fromValues[k] = df_iterators[k];
         toValues[k] = df_iterators[k];
         // get the index at all of the places
         if ( (*choice) & (1 << k) ) {
           fromValues[k]--;
-          char *p = diff_block[k];
+          const char *p = diff_block[k];
           for (int j = 0; j < df_iterators[k] - 1; j++) {
             // advance the pointer until it hits a newline
             while (*p != '\n') {
@@ -2096,7 +2096,7 @@ void try_possible_paths(int *df_iterators, int* paths, int nPaths, int pathIndex
 /// line twice
 /// @param diff_length
 /// @param nDiffs
-int ***allocate_comparison_mem(int* diff_length, int nDiffs)
+int ***allocate_comparison_mem(const int* diff_length, const int nDiffs)
 {
   int pointercount = 0;
   for (int i = 0; i < nDiffs; i++) {
@@ -2132,8 +2132,8 @@ int ***allocate_comparison_mem(int* diff_length, int nDiffs)
 /// @param df_comparisonlines
 /// @param df_arr_col_size
 /// @param outmap
-void diff_allign_extraction(int best_path_index, int *best_path_decisions, int nDiffs,
-    df_linecompare_T **df_comparisonlines, int* df_arr_col_size, int* outmap)
+void diff_allign_extraction(const int best_path_index, const int *best_path_decisions, int nDiffs,
+    df_linecompare_T **df_comparisonlines, int* df_arr_col_size, const int* outmap)
 {
   int *pointers = xmalloc(sizeof(int) * nDiffs);
   for (int i = 0; i < nDiffs; i++) {
@@ -2200,7 +2200,7 @@ void diff_allign_extraction(int best_path_index, int *best_path_decisions, int n
 /// @param comparison_mem
 /// @param diff_length
 /// @param nDiffs
-void free_comparison_mem(int ***comparison_mem, int* diff_length, int nDiffs)
+void free_comparison_mem(int ***comparison_mem, const int* diff_length, const int nDiffs)
 {
   // free comparison memory
   int cpointer = 0;
@@ -2226,9 +2226,9 @@ void free_comparison_mem(int ***comparison_mem, int* diff_length, int nDiffs)
 /// @param diff_length
 /// @param nDiffs
 /// @param diff_block
-void populate_tensor(int *df_iterators, int ch_dim,
+void populate_tensor(int *df_iterators, const int ch_dim,
                      diffcomparisonpath_flat_T *diffcomparisonpath_flat, int ***comparison_mem,
-                     int* diff_length, int nDiffs, char **diff_block)
+                     const int* diff_length, const int nDiffs, const char **diff_block)
 {
   if (ch_dim == nDiffs) {
     int nPaths = 0;
@@ -2311,9 +2311,9 @@ void populate_tensor(int *df_iterators, int ch_dim,
 /// @param df_comparisonlines
 /// @param df_arr_col_size
 /// @param outmap
-void linematch_nbuffers(char **diff_block, int* diff_length,
-    int nDiffs, df_linecompare_T **df_comparisonlines,
-    int *df_arr_col_size, int *outmap)
+void linematch_nbuffers(const char **diff_block, const int* diff_length,
+    const int nDiffs, df_linecompare_T **df_comparisonlines,
+    int *df_arr_col_size, const int *outmap)
 {
   int memsize = 1, memsize_decisions = 0;
   for (int i = 0; i < nDiffs; i++) {
@@ -2354,9 +2354,9 @@ void linematch_nbuffers(char **diff_block, int* diff_length,
   for (int i = 0; i < nDiffs; i++) {
     values_final[i] = diff_length[i];
   }
-  int u = unwrap_indexes(values_final, diff_length, nDiffs);
-  int best_path_index = diffcomparisonpath_flat[u].df_path_index;
-  int *best_path_decisions = diffcomparisonpath_flat[u].df_decision;  // [i]
+  const int u = unwrap_indexes(values_final, diff_length, nDiffs);
+  const int best_path_index = diffcomparisonpath_flat[u].df_path_index;
+  const int *best_path_decisions = diffcomparisonpath_flat[u].df_decision;  // [i]
 
 
   diff_allign_extraction(best_path_index, best_path_decisions, nDiffs,
@@ -2443,7 +2443,7 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
 
     // define buffers for diff algorithm
     diffin_T *diffbuffers = xmalloc(sizeof(diffin_T) * DB_COUNT);
-    char **diff_begin = xmalloc(sizeof(char *) * DB_COUNT);
+    const char **diff_begin = xmalloc(sizeof(char *) * DB_COUNT);
     int *diff_length = xmalloc(sizeof(int) * DB_COUNT);
     int *outputmap = xmalloc(sizeof(int) * DB_COUNT);
     int diffbuffers_count = 0;
