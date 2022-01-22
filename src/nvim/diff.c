@@ -1853,9 +1853,10 @@ long count_matched_chars_f(char_u** stringps, int* fromValues, int n, int*** com
       pointerindex++;
     }
   }
-  if (matched == 3) {
-    matched_chars *= 2, matched_chars /= 3;
-  }
+
+  // prioritize a match of 3 (or more lines) equally to a match of 2 lines
+  matched_chars *= 2;
+  matched_chars /= matched;
 
   return matched_chars;
 }
