@@ -897,12 +897,6 @@ struct file_buffer {
  */
 #define DB_COUNT 8     // up to four buffers can be diff'ed
 
-typedef struct paths_S paths_T;
-struct paths_S {
-  int* index;  // current index of this path
-  int n;
-};
-
 typedef struct diffcomparisonpath_flat_S diffcomparisonpath_flat_T;
 struct diffcomparisonpath_flat_S {
   int *decision;  // to keep track of this path traveled

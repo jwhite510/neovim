@@ -1973,11 +1973,11 @@ int unwrap_indexes(int *values, int *diff_length, int nDiffs)
   return path_index;
 }
 
-void try_possible_paths(int *df_iterators, paths_T paths, int index, int *choice,
-                        diffcomparisonpath_flat_T *diffcomparisonpath_flat,
-                        int ***comparison_mem, int *diff_length, int nDiffs, char **diff_block)
+void try_possible_paths(int *df_iterators, int* paths, int nPaths, int pathIndex,
+    int *choice, diffcomparisonpath_flat_T *diffcomparisonpath_flat,
+    int ***comparison_mem, int *diff_length, int nDiffs, char **diff_block)
 {
-  if (index == paths.n) {
+  if (pathIndex == nPaths) {
     if ((*choice) > 0) {
       int *fromValues = xmalloc(sizeof(int) * nDiffs);
       int *toValues = xmalloc(sizeof(int) * nDiffs);
@@ -2046,13 +2046,13 @@ void try_possible_paths(int *df_iterators, paths_T paths, int index, int *choice
     }
     return;
   }
-  int bit_place = paths.index[index];
+  int bit_place = paths[pathIndex];
   *(choice) |= (1 << bit_place);  // set it to 1
-  try_possible_paths(df_iterators, paths, index + 1, choice, diffcomparisonpath_flat,
-                     comparison_mem, diff_length, nDiffs, diff_block);
+  try_possible_paths(df_iterators, paths, nPaths, pathIndex + 1, choice,
+      diffcomparisonpath_flat, comparison_mem, diff_length, nDiffs, diff_block);
   *(choice) &= ~(1 << bit_place);  // set it to 0
-  try_possible_paths(df_iterators, paths, index + 1, choice, diffcomparisonpath_flat,
-                     comparison_mem, diff_length, nDiffs, diff_block);
+  try_possible_paths(df_iterators, paths, nPaths, pathIndex + 1, choice,
+      diffcomparisonpath_flat, comparison_mem, diff_length, nDiffs, diff_block);
 }
 
 int ***allocate_comparison_mem(int* diff_length, int nDiffs)
@@ -2164,23 +2164,22 @@ void populate_tensor(int *df_iterators, int ch_dim,
                      int* diff_length, int nDiffs, char **diff_block)
 {
   if (ch_dim == nDiffs) {
-    paths_T paths;
-    paths.n = 0;
-    paths.index = xmalloc(sizeof(int) * nDiffs);
+    int nPaths = 0;
+    int *paths = xmalloc(sizeof(int) * nDiffs);
 
     for (int j = 0; j < nDiffs; j++) {
       if (df_iterators[j] > 0) {
-        paths.index[paths.n] = j;
-        paths.n++;
+        paths[nPaths] = j;
+        nPaths++;
       }
     }
     int choice = 0;
     int unwrapper_index_to = unwrap_indexes(df_iterators, diff_length, nDiffs);
     diffcomparisonpath_flat[unwrapper_index_to].df_lev_score = -1;
-    try_possible_paths(df_iterators, paths, 0, &choice, diffcomparisonpath_flat,
+    try_possible_paths(df_iterators, paths, nPaths, 0, &choice, diffcomparisonpath_flat,
                        comparison_mem, diff_length, nDiffs, diff_block);
 
-    xfree(paths.index);
+    xfree(paths);
     return;
   }
   for (int i = 0; i <= diff_length[ch_dim]; i++) {
