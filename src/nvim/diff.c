@@ -836,7 +836,7 @@ static void diff_try_update(diffio_T *dio, int idx_orig, exarg_T *eap)
 
   // Write the first buffer to a tempfile or mmfile_t.
   buf = curtab->tp_diffbuf[idx_orig];
-  if (diff_write(buf, &dio->dio_orig) == FAIL) { // TODO this writes exactly what I need
+  if (diff_write(buf, &dio->dio_orig) == FAIL) {
     goto theend;
   }
 
@@ -2275,7 +2275,6 @@ void linematch_nbuffers(char **diff_block, int* diff_length,
     values_final[i] = diff_length[i];
   }
   int u = unwrap_indexes(values_final, diff_length, nDiffs);
-  xfree(values_final);
   int df_path_index2 = diffcomparisonpath_flat[u].df_path_index;
   int df_lev_score2 = diffcomparisonpath_flat[u].df_lev_score;
   int *decision2 = diffcomparisonpath_flat[u].decision;  // [i]
@@ -2284,8 +2283,9 @@ void linematch_nbuffers(char **diff_block, int* diff_length,
   diff_allign_extraction(df_path_index2, decision2, nDiffs,
       df_comparisonlines, df_arr_col_size, outmap);
   free_comparison_mem(comparison_mem, diff_length, nDiffs);
-  xfree(df_iterators);
 
+  xfree(values_final);
+  xfree(df_iterators);
   for (int i = 0; i < memsize; i++) {
     xfree(diffcomparisonpath_flat[i].decision);
   }
@@ -2366,7 +2366,7 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
     diffin_T *diffbuffers = xmalloc(sizeof(diffin_T) * DB_COUNT);
     char **diff_begin = xmalloc(sizeof(char *) * DB_COUNT);
     int *diff_length = xmalloc(sizeof(int) * DB_COUNT);
-    int* outputmap = xmalloc(sizeof(int) * DB_COUNT);
+    int *outputmap = xmalloc(sizeof(int) * DB_COUNT);
     int diffbuffers_count = 0;
     for (i = 0; i < DB_COUNT; i++) {
       if (curtab->tp_diffbuf[i] != NULL) {
