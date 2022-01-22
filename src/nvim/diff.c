@@ -2412,16 +2412,11 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
           dp->df_arr_col_size * idx + lnum-dp->df_lnum[idx]].df_newline) {
         *linestatus=-2;   // line was added
       } else if (linestatus != NULL) { *linestatus=-1; }  // line was changed
-      return (
-          diff_flags&DIFF_FILLER?
-          dp->df_comparisonlines[
-              dp->df_arr_col_size * idx + lnum-dp->df_lnum[idx]].df_filler:0);
-    } else {
-      return (
-          diff_flags&DIFF_FILLER?
-          dp->df_comparisonlines[
-              dp->df_arr_col_size * idx + lnum-dp->df_lnum[idx]].df_filler:0);
     }
+    return (
+        diff_flags&DIFF_FILLER?
+        dp->df_comparisonlines[
+            dp->df_arr_col_size * idx + lnum-dp->df_lnum[idx]].df_filler:0);
   }
   if (lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
     int zero = false;
