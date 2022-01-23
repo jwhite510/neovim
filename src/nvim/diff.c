@@ -1927,6 +1927,7 @@ void update_path_flat(diffcomparisonpath_flat_T *diffcomparisonpath_flat,
   diffcomparisonpath_flat[to].df_decision[diffcomparisonpath_flat[to].df_path_index] = choice;
   diffcomparisonpath_flat[to].df_path_index++;
 }
+
 /// return matching characters between "s1" and "s2"
 /// between string "s1" and "s2".
 /// Consider the case of two strings 'AAACCC' and 'CCCAAA', the
@@ -2306,12 +2307,9 @@ void populate_tensor(int *df_iterators, const int ch_dim,
 /// scored path is, then in the end represented by the cell in the
 /// opposite corner from the start location.  The entire algorithm
 /// consits of populating the 3d cube with the optimal paths from which
-/// it may have came.  However, we cannot apply the general 3d case
-/// before first populating the edges and the surfaces of the cube.
-/// Therefore, there are several sets of if / else statements inside the
-/// main loops which determine which case to evaluate.
+/// it may have came.
 ///
-/// Optimizations
+/// Optimizations:
 /// As the function to calculate the cell of a tensor at point i,j,k is a
 /// function of the cells at i-1, j-1, k-1, the whole tensor doesn't need
 /// to be stored in memory at once. In the case of the 3d cube, only two
@@ -2373,7 +2371,7 @@ void linematch_nbuffers(const char **diff_block, const int *diff_length,
   }
   const int u = unwrap_indexes(values_final, diff_length, nDiffs);
   const int best_path_index = diffcomparisonpath_flat[u].df_path_index;
-  const int *best_path_decisions = diffcomparisonpath_flat[u].df_decision;  // [i]
+  const int *best_path_decisions = diffcomparisonpath_flat[u].df_decision;
 
 
   diff_allign_extraction(best_path_index, best_path_decisions, nDiffs,
@@ -2486,9 +2484,6 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
     linematch_nbuffers(diff_begin, diff_length, diffbuffers_count,
                        &dp->df_comparisonlines, &dp->df_arr_col_size, outputmap);
 
-    // call the linematch algorithm something like this
-    // linematch_nbuffers(diffbuffers, diffbuffers_count);
-    // clear the diff buffers after running the diff algorithm
     for (i = 0; i < diffbuffers_count; i++) {
       clear_diffin(&diffbuffers[i]);
     }
