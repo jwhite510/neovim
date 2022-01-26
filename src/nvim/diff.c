@@ -1909,8 +1909,8 @@ long count_matched_chars(const char_u *s1, const char_u *s2)
       || diff_flags & DIFF_ICASE ) {
     bool iwhite = (diff_flags & DIFF_IWHITEALL || diff_flags & DIFF_IWHITE);
     // the newly processed strings that will be compared
-    char_u *s1_proc = xmalloc(STRLEN(s1) * sizeof(char_u));
-    char_u *s2_proc = xmalloc(STRLEN(s2) * sizeof(char_u));
+    char_u *s1_proc = xmalloc((STRLEN(s1) + 1) * sizeof(char_u));
+    char_u *s2_proc = xmalloc((STRLEN(s2) + 1) * sizeof(char_u));
     // delete the white space characters,
     // and/or replace all upper case with lower
     char_u *strsproc[2] = { s1_proc, s2_proc };
@@ -2066,10 +2066,11 @@ void try_possible_paths(const int *df_iterators, const int *paths,
           while (p[line_length] != '\n') {
             line_length++;
           }
-          current_lines[k] = xmalloc(line_length * sizeof(char));
+          current_lines[k] = xmalloc((line_length + 1) * sizeof(char));
           for (int l = 0; l < line_length; l++) {
             current_lines[k][l] = p[l];
           }
+          current_lines[k][line_length] = '\0';
           stringps[k] = (char_u *)current_lines[k];  // cast to char_u
         } else {
           current_lines[k] = NULL;
