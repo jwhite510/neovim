@@ -2102,7 +2102,7 @@ void try_possible_paths(const int *df_iterators, const int *paths,
     } else {
       // initialize the 0, 0, 0 ... choice
       int i = 0;
-      while (df_iterators[i] == 0 && i < nDiffs) {
+      while (i < nDiffs && df_iterators[i] == 0) {
         i++;
         if (i == nDiffs) {
           diffcomparisonpath_flat[0].df_lev_score = 0;
