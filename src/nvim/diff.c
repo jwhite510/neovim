@@ -2305,6 +2305,9 @@ void populate_tensor(int *df_iterators, const int ch_dim,
 /// which corresponds to another dimmension added to the tensor used in the
 /// algorithm
 ///
+/// for questions and information about the linematch algorithm please contact
+/// Jonathon White (jonathonwhite@protonmail.com)
+///
 /// for explanation, a summary of the algorithm in 3 dimmensions (3 files
 ///     compared) follows
 ///
