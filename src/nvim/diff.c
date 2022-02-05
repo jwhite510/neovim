@@ -1864,6 +1864,12 @@ int diff_check(win_T *wp, linenr_T lnum)
     // count, check if the lines are identical.
     cmp = false;
 
+    // check for double pointer condition
+    int retval = INT_MIN; // switch to something null
+    if (double_pointer) {
+      diff_T* dp_0 = dp;
+      dp = dp->next;
+    }
     for (i = 0; i < DB_COUNT; ++i) {
       if ((i != idx) && (curtab->tp_diffbuf[i] != NULL)) {
         if (dp->df_count[i] == 0) {
@@ -1871,7 +1877,11 @@ int diff_check(win_T *wp, linenr_T lnum)
         } else {
           if (dp->df_count[i] != dp->df_count[idx]) {
             // nr of lines changed.
-            return -1;
+            if (linematch && !retval && double_pointer) {
+              retval = -1;
+            } else {
+              return -1;
+            }
           }
           cmp = true;
         }
@@ -1886,7 +1896,11 @@ int diff_check(win_T *wp, linenr_T lnum)
             && (curtab->tp_diffbuf[i] != NULL)
             && (dp->df_count[i] != 0)) {
           if (!diff_equal_entry(dp, idx, i)) {
-            return -1;
+            if (linematch && !retval && double_pointer) {
+              retval = -1;
+            } else {
+              return -1;
+            }
           }
         }
       }
@@ -1898,9 +1912,27 @@ int diff_check(win_T *wp, linenr_T lnum)
     // through updating the window.  Just report the text as unchanged.
     // Other windows might still show the change though.
     if (zero == false) {
-      return 0;
+      if (linematch && !retval && double_pointer) {
+        retval = 0;
+      } else {
+        return 0;
+      }
     }
-    return -2;
+    if (linematch && !retval && double_pointer) {
+      retval = -2;
+    } else{
+      return -2;
+    }
+  }
+
+  if (linematch && double_pointer) {
+    // check for double dp at same line number and df_count = 0
+    *linestatus = retval;
+
+    return dp_0[] // something to get the filler count
+      // check array value that df_count is non zero, and that will be the
+      // number of filler lines
+
   }
 
   // If 'diffopt' doesn't contain "filler", return 0.
