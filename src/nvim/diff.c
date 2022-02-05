@@ -828,12 +828,15 @@ static void diff_try_update(diffio_T    *dio,
     if (diff_write(buf, &dio->dio_new) == FAIL) {
       continue;
     }
-    if (diff_file(dio) == FAIL) {
+    if (diff_file(dio) == FAIL) { // xdl_diff is called from here
       continue;
     }
 
     // Read the diff output and add each entry to the diff list.
     diff_read(idx_orig, idx_new, &dio->dio_diff);
+
+    // modify the diff values here, after they've already been created
+    // I need to make it a function that is applied to dp
 
     clear_diffin(&dio->dio_new);
     clear_diffout(&dio->dio_diff);
@@ -1528,7 +1531,7 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
     }
   }
 
-  int diffn = 0;
+  // int diffn = 0;
   for (;;) {
     if (fd == NULL) {
       if (line_idx >= dout->dout_ga.ga_len) {
@@ -1594,24 +1597,24 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
     // have two differences, as long as they files are not
     // modifies, the two differences will be overwritten with
     // these line numbers
-    if(diffn == 0){
-      lnum_orig = 1;
-      count_orig = 1;
-      lnum_new = 1;
-      count_new = 0;
-      diffn++;
-    }else if (diffn == 1){
-      lnum_orig = 2; // try setting it to 2
-      count_orig = 0;
-      lnum_new = 1; // try setting it to 1
-      count_new = 1;
-      diffn++;
-    }
+    // if(diffn == 0){
+    //   lnum_orig = 1;
+    //   count_orig = 1;
+    //   lnum_new = 1;
+    //   count_new = 0;
+    //   diffn++;
+    // }else if (diffn == 1){
+    //   lnum_orig = 2; // try setting it to 2
+    //   count_orig = 0;
+    //   lnum_new = 1; // try setting it to 1
+    //   count_new = 1;
+    //   diffn++;
+    // }
 
     // Go over blocks before the change, for which orig and new are equal.
     // Copy blocks from orig to new.
     while (dp != NULL
-           && lnum_orig >= dp->df_lnum[idx_orig] + dp->df_count[idx_orig]) {
+           && lnum_orig > dp->df_lnum[idx_orig] + dp->df_count[idx_orig]) {
       if (notset) {
         diff_copy_entry(dprev, dp, idx_orig, idx_new);
       }
@@ -1620,8 +1623,9 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
       notset = true;
     }
 
+    // I think this should only run when there's a diff with 3 files?
     // this will merge the two blocks together
-    if ((dp != NULL) && 0 // override this behaviour by adding 0
+    if ((dp != NULL)
         && (lnum_orig <= dp->df_lnum[idx_orig] + dp->df_count[idx_orig])
         && (lnum_orig + count_orig >= dp->df_lnum[idx_orig])) {
       // New block overlaps with existing block(s).
@@ -1696,11 +1700,11 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
       dp->df_lnum[idx_new] = lnum_new;
       dp->df_count[idx_new] = count_new;
 
-      FILE*fp=fopen("debug.txt","a");
-      fprintf(fp,"allocating new diff block\n");
-      fprintf(fp,"lnum_orig: %li, count_orig: %li \n", lnum_orig,count_orig);
-      fprintf(fp,"lnum_new: %li, count_new: %li \n", lnum_new,count_new);
-      fclose(fp);
+      // FILE*fp=fopen("debug.txt","a");
+      // fprintf(fp,"allocating new diff block\n");
+      // fprintf(fp,"lnum_orig: %li, count_orig: %li \n", lnum_orig,count_orig);
+      // fprintf(fp,"lnum_new: %li, count_new: %li \n", lnum_new,count_new);
+      // fclose(fp);
 
       // Set values for other buffers, these must be equal to the
       // original buffer, otherwise there would have been a change
@@ -1821,6 +1825,8 @@ int diff_check(win_T *wp, linenr_T lnum)
     }
   }
 
+  // make it a function that runs here. modify the linked list of dp
+
   // idk ?? cant do this, because both diffs are on the same line number
   // if(dp != NULL && dp->df_count[idx] == 0
   //    && dp->df_next != NULL
@@ -1832,6 +1838,23 @@ int diff_check(win_T *wp, linenr_T lnum)
   if ((dp == NULL) || (lnum < dp->df_lnum[idx])) {
     return 0;
   }
+
+  FILE *fp = fopen("debug.txt", "a");
+  fprintf(fp, "-----------------------");
+  fprintf(fp, "\ndp->df_lnum:[");
+  for (int j = 0; j < DB_COUNT; j++) {
+    fprintf(fp, "%i, ", (int)dp->df_lnum[j]);
+  }
+  fprintf(fp, "]\n");
+
+  fprintf(fp, "\ndp->df_count:[");
+  for (int j = 0; j < DB_COUNT; j++) {
+    fprintf(fp, "%i, ", (int)dp->df_count[j]);
+  }
+  fprintf(fp, "]\n");
+
+  fclose(fp);
+
 
   if (lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
     int zero = false;
