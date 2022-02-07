@@ -30,3 +30,7 @@ svn up -rxxxxxx
 
 push remotes from one git branch to another remote
 git push usb "refs/remotes/src/*:refs/heads/*"
+
+# remove artifacts on ubuntu gnome desktop maybe?
+https://askubuntu.com/questions/1238080/every-time-i-turn-on-computer-green-square-shows-over-wallpaper-ubuntu-20-04
+sudo apt purge xserver-xorg-video-intel
