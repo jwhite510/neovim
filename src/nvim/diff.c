@@ -1858,7 +1858,27 @@ int diff_check(win_T *wp, linenr_T lnum)
 
 
     // divide the diff block into different hunks
-    fprintf("dividing diff block into two")
+    fprintf(fp, "dividing diff block into two");
+
+    // this is the test case for now
+    // dp->df_lnum:[5, 5, 1307681366, 12, 0, 1308012400, 1307681378, 12, ]
+    // dp->df_count:[4, 2, 1307681390, 12, 0, 1307399280, 0, 1059087360, ]
+    // dp->df_lnum[0] = 5;
+    // dp->df_lnum[1] = 5;
+    // dp->df_count[0] = 1;
+    // dp->df_count[1] = 0;
+
+    // diff_T *dp_new = diff_alloc_new(curtab, dp, dp->df_next);
+    // dp_new->df_lnum[0] = 6;
+    // dp_new->df_lnum[1] = 5;
+    // dp_new->df_count[0] = 2;
+    // dp_new->df_count[1] = 2;
+
+    // diff_T *dp_new2 = diff_alloc_new(curtab, dp_new, dp_new->df_next);
+    // dp_new2->df_lnum[0] = 8;
+    // dp_new2->df_lnum[1] = 7;
+    // dp_new2->df_count[0] = 1;
+    // dp_new2->df_count[1] = 0;
 
     fclose(fp);
     dp->df_redraw = 0;
