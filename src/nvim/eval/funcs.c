@@ -1739,7 +1739,7 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       || changedtick != buf_get_changedtick(curbuf)
       || fnum != curbuf->b_fnum) {
     // New line, buffer, change: need to get the values.
-    filler_lines = diff_check(curwin, lnum);
+    filler_lines = diff_check(curwin, lnum, NULL);
     if (filler_lines < 0) {
       if (filler_lines == -1) {
         change_start = MAXCOL;

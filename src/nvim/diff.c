@@ -652,7 +652,7 @@ void diff_redraw(bool dofold)
 
     // A change may have made filler lines invalid, need to take care
     // of that for other windows.
-    int n = diff_check(wp, wp->w_topline);
+    int n = diff_check(wp, wp->w_topline, NULL);
 
     if (((wp != curwin) && (wp->w_topfill > 0)) || (n > 0)) {
       if (wp->w_topfill > n) {
@@ -1783,7 +1783,7 @@ void diff_clear(tabpage_T *tp)
 /// @param lnum
 ///
 /// @return diff status.
-int diff_check(win_T *wp, linenr_T lnum)
+int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
 {
   int idx; // index in tp_diffbuf[] for this buffer
   diff_T *dp;
@@ -1824,6 +1824,16 @@ int diff_check(win_T *wp, linenr_T lnum)
     if (lnum <= dp->df_lnum[idx] + dp->df_count[idx]) {
       break;
     }
+  }
+
+  int testv = 1;
+  // prefer the count number
+  while (dp && dp->df_next &&
+      ( (dp->df_lnum[idx] + dp->df_count[idx]) >= dp->df_next->df_lnum[idx] )
+      &&
+      (dp->df_next->df_lnum[idx] >= lnum)
+      ) {
+    dp = dp->df_next;
   }
 
   // make it a function that runs here. modify the linked list of dp
@@ -1895,12 +1905,12 @@ int diff_check(win_T *wp, linenr_T lnum)
   int retval = INT_MIN; // switch to something null
   int double_pointer = 0;
   int linematch = 1;
+  int filler_lines_d = 0;
   diff_T *dp_0 = NULL;
   if (dp->df_count[idx] == 0 && dp->df_next && dp->df_lnum[idx] == dp->df_next->df_lnum[idx]) {
     // get the filler lines count
-    int filler_lines_d = 0;
     for (int k = 0; k < DB_COUNT; k ++) {
-      if (curtab->tp_diffbuff[k] != NULL) {
+      if (curtab->tp_diffbuf[k] != NULL) {
         filler_lines_d = (dp->df_count[k] > filler_lines_d) ? dp->df_count[k] : filler_lines_d;
       }
     }
@@ -1976,23 +1986,26 @@ int diff_check(win_T *wp, linenr_T lnum)
   }
 
   if (linematch && double_pointer) {
-    FILE *fp = fopen("debug.txt", "a");
-    fprintf(fp, "ret val: %i", retval);
-    fprintf(fp, "idx: %i, lnum: %i \n", idx, lnum);
-    fclose(fp);
-    // TODO also return filler_lines_d
-    if (retval != INT_MIN) {
-      return retval;
-    } else {
-      // return the number of filler lines that should be here
-      return 0;
-    }
-    // check for double dp at same line number and df_count = 0
-    // *linestatus = retval;
+    // set line status value
+    (*linestatus) = retval;
+    return filler_lines_d;
+    // FILE *fp = fopen("debug.txt", "a");
+    // fprintf(fp, "ret val: %i", retval);
+    // fprintf(fp, "idx: %i, lnum: %i \n", idx, lnum);
+    // fclose(fp);
+    // // TODO also return filler_lines_d
+    // if (retval != INT_MIN) {
+    //   return retval;
+    // } else {
+    //   // return the number of filler lines that should be here
+    //   return 0;
+    // }
+    // // check for double dp at same line number and df_count = 0
+    // // *linestatus = retval;
 
-    // return dp_0[] // something to get the filler count
-      // check array value that df_count is non zero, and that will be the
-      // number of filler lines
+    // // return dp_0[] // something to get the filler count
+    //   // check array value that df_count is non zero, and that will be the
+    //   // number of filler lines
 
   }
 
@@ -2138,7 +2151,7 @@ int diff_check_fill(win_T *wp, linenr_T lnum)
   if (!(diff_flags & DIFF_FILLER)) {
     return 0;
   }
-  int n = diff_check(wp, lnum);
+  int n = diff_check(wp, lnum, NULL);
 
   if (n <= 0) {
     return 0;
@@ -2726,8 +2739,8 @@ void ex_diffgetput(exarg_T *eap)
     // the cursor line when there is no difference above the cursor.
     if ((eap->cmdidx == CMD_diffget)
         && (eap->line1 == curbuf->b_ml.ml_line_count)
-        && (diff_check(curwin, eap->line1) == 0)
-        && ((eap->line1 == 1) || (diff_check(curwin, eap->line1 - 1) == 0))) {
+        && (diff_check(curwin, eap->line1, NULL) == 0)
+        && ((eap->line1 == 1) || (diff_check(curwin, eap->line1 - 1, NULL) == 0))) {
       ++eap->line2;
     } else if (eap->line1 > 0) {
       --eap->line1;
