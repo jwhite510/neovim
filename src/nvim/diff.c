@@ -1863,35 +1863,54 @@ int diff_check(win_T *wp, linenr_T lnum)
     // this is the test case for now
     // dp->df_lnum:[5, 5, 1307681366, 12, 0, 1308012400, 1307681378, 12, ]
     // dp->df_count:[4, 2, 1307681390, 12, 0, 1307399280, 0, 1059087360, ]
-    // dp->df_lnum[0] = 5;
-    // dp->df_lnum[1] = 5;
-    // dp->df_count[0] = 1;
-    // dp->df_count[1] = 0;
+    dp->df_lnum[0] = 5;
+    dp->df_lnum[1] = 5;
+    dp->df_count[0] = 1;
+    dp->df_count[1] = 0;
 
-    // diff_T *dp_new = diff_alloc_new(curtab, dp, dp->df_next);
-    // dp_new->df_lnum[0] = 6;
-    // dp_new->df_lnum[1] = 5;
-    // dp_new->df_count[0] = 2;
-    // dp_new->df_count[1] = 2;
+    diff_T *dp_new = diff_alloc_new(curtab, dp, dp->df_next);
+    dp_new->df_lnum[0] = 6;
+    dp_new->df_lnum[1] = 5;
+    dp_new->df_count[0] = 2;
+    dp_new->df_count[1] = 2;
+    dp_new->df_redraw = 0;
 
-    // diff_T *dp_new2 = diff_alloc_new(curtab, dp_new, dp_new->df_next);
-    // dp_new2->df_lnum[0] = 8;
-    // dp_new2->df_lnum[1] = 7;
-    // dp_new2->df_count[0] = 1;
-    // dp_new2->df_count[1] = 0;
+    diff_T *dp_new2 = diff_alloc_new(curtab, dp_new, dp_new->df_next);
+    dp_new2->df_lnum[0] = 8;
+    dp_new2->df_lnum[1] = 7;
+    dp_new2->df_count[0] = 1;
+    dp_new2->df_count[1] = 0;
+    dp_new2->df_redraw = 0;
 
     fclose(fp);
     dp->df_redraw = 0;
   }
+
+  // FILE *fp = fopen("debug.txt", "a");
+  // print this buffer id
+  // find out what it returns
+  // fclose(fp);
 
   // check for double pointer condition
   int retval = INT_MIN; // switch to something null
   int double_pointer = 0;
   int linematch = 1;
   diff_T *dp_0 = NULL;
-  if (double_pointer) {
-    dp_0 = dp;
+  if (dp->df_count[idx] == 0 && dp->df_next && dp->df_lnum[idx] == dp->df_next->df_lnum[idx]) {
+    // get the filler lines count
+    int filler_lines_d = 0;
+    for (int k = 0; k < DB_COUNT; k ++) {
+      if (curtab->tp_diffbuff[k] != NULL) {
+        filler_lines_d = (dp->df_count[k] > filler_lines_d) ? dp->df_count[k] : filler_lines_d;
+      }
+    }
+
+    // check for double pointer and if so, then set that to true
+    double_pointer = 1;
     dp = dp->df_next;
+    // use both pointers previous and current
+    // dp_0 = dp;
+    // dp = dp->df_next;
   }
   if (lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
     int zero = false;
@@ -1957,6 +1976,17 @@ int diff_check(win_T *wp, linenr_T lnum)
   }
 
   if (linematch && double_pointer) {
+    FILE *fp = fopen("debug.txt", "a");
+    fprintf(fp, "ret val: %i", retval);
+    fprintf(fp, "idx: %i, lnum: %i \n", idx, lnum);
+    fclose(fp);
+    // TODO also return filler_lines_d
+    if (retval != INT_MIN) {
+      return retval;
+    } else {
+      // return the number of filler lines that should be here
+      return 0;
+    }
     // check for double dp at same line number and df_count = 0
     // *linestatus = retval;
 
