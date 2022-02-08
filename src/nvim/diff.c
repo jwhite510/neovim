@@ -513,6 +513,7 @@ static diff_T* diff_alloc_new(tabpage_T *tp, diff_T *dprev, diff_T *dp)
 {
   diff_T *dnew = xmalloc(sizeof(*dnew));
 
+  dnew->df_redraw = 1;
   dnew->df_next = dp;
   if (dprev == NULL) {
     tp->tp_first_diff = dnew;
@@ -1839,23 +1840,39 @@ int diff_check(win_T *wp, linenr_T lnum)
     return 0;
   }
 
-  FILE *fp = fopen("debug.txt", "a");
-  fprintf(fp, "-----------------------");
-  fprintf(fp, "\ndp->df_lnum:[");
-  for (int j = 0; j < DB_COUNT; j++) {
-    fprintf(fp, "%i, ", (int)dp->df_lnum[j]);
+  if (dp->df_redraw) {
+
+    FILE *fp = fopen("debug.txt", "a");
+    fprintf(fp, "-----------------------");
+    fprintf(fp, "\ndp->df_lnum:[");
+    for (int j = 0; j < DB_COUNT; j++) {
+      fprintf(fp, "%i, ", (int)dp->df_lnum[j]);
+    }
+    fprintf(fp, "]\n");
+
+    fprintf(fp, "\ndp->df_count:[");
+    for (int j = 0; j < DB_COUNT; j++) {
+      fprintf(fp, "%i, ", (int)dp->df_count[j]);
+    }
+    fprintf(fp, "]\n");
+
+
+    // divide the diff block into different hunks
+    fprintf("dividing diff block into two")
+
+    fclose(fp);
+    dp->df_redraw = 0;
   }
-  fprintf(fp, "]\n");
 
-  fprintf(fp, "\ndp->df_count:[");
-  for (int j = 0; j < DB_COUNT; j++) {
-    fprintf(fp, "%i, ", (int)dp->df_count[j]);
+  // check for double pointer condition
+  int retval = INT_MIN; // switch to something null
+  int double_pointer = 0;
+  int linematch = 1;
+  diff_T *dp_0 = NULL;
+  if (double_pointer) {
+    dp_0 = dp;
+    dp = dp->df_next;
   }
-  fprintf(fp, "]\n");
-
-  fclose(fp);
-
-
   if (lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
     int zero = false;
 
@@ -1864,12 +1881,6 @@ int diff_check(win_T *wp, linenr_T lnum)
     // count, check if the lines are identical.
     cmp = false;
 
-    // check for double pointer condition
-    int retval = INT_MIN; // switch to something null
-    if (double_pointer) {
-      diff_T* dp_0 = dp;
-      dp = dp->next;
-    }
     for (i = 0; i < DB_COUNT; ++i) {
       if ((i != idx) && (curtab->tp_diffbuf[i] != NULL)) {
         if (dp->df_count[i] == 0) {
@@ -1877,7 +1888,7 @@ int diff_check(win_T *wp, linenr_T lnum)
         } else {
           if (dp->df_count[i] != dp->df_count[idx]) {
             // nr of lines changed.
-            if (linematch && !retval && double_pointer) {
+            if (linematch && (retval != INT_MIN) && double_pointer) {
               retval = -1;
             } else {
               return -1;
@@ -1896,7 +1907,7 @@ int diff_check(win_T *wp, linenr_T lnum)
             && (curtab->tp_diffbuf[i] != NULL)
             && (dp->df_count[i] != 0)) {
           if (!diff_equal_entry(dp, idx, i)) {
-            if (linematch && !retval && double_pointer) {
+            if (linematch && (retval != INT_MIN) && double_pointer) {
               retval = -1;
             } else {
               return -1;
@@ -1912,13 +1923,13 @@ int diff_check(win_T *wp, linenr_T lnum)
     // through updating the window.  Just report the text as unchanged.
     // Other windows might still show the change though.
     if (zero == false) {
-      if (linematch && !retval && double_pointer) {
+      if (linematch && (retval != INT_MIN) && double_pointer) {
         retval = 0;
       } else {
         return 0;
       }
     }
-    if (linematch && !retval && double_pointer) {
+    if (linematch && (retval != INT_MIN) && double_pointer) {
       retval = -2;
     } else{
       return -2;
@@ -1927,9 +1938,9 @@ int diff_check(win_T *wp, linenr_T lnum)
 
   if (linematch && double_pointer) {
     // check for double dp at same line number and df_count = 0
-    *linestatus = retval;
+    // *linestatus = retval;
 
-    return dp_0[] // something to get the filler count
+    // return dp_0[] // something to get the filler count
       // check array value that df_count is non zero, and that will be the
       // number of filler lines
 

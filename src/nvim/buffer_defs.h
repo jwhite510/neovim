@@ -910,6 +910,7 @@ struct diffblock_S {
   diff_T      *df_next;
   linenr_T df_lnum[DB_COUNT];           // line number in buffer
   linenr_T df_count[DB_COUNT];          // nr of inserted/changed lines
+  int df_redraw;
 };
 
 #define SNAP_HELP_IDX   0
