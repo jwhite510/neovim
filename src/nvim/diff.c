@@ -1732,6 +1732,33 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
   if (fd != NULL) {
     fclose(fd);
   }
+
+  int testthings = 1;
+
+  dp = dprev;
+
+  dp->df_lnum[0] = 5;
+  dp->df_lnum[1] = 5;
+  dp->df_count[0] = 1;
+  dp->df_count[1] = 0;
+
+  diff_T *dp_new = diff_alloc_new(curtab, dp, dp->df_next);
+  dp_new->df_lnum[0] = 6;
+  dp_new->df_lnum[1] = 5;
+  dp_new->df_count[0] = 2;
+  dp_new->df_count[1] = 2;
+  dp_new->df_redraw = 0;
+
+  diff_T *dp_new2 = diff_alloc_new(curtab, dp_new, dp_new->df_next);
+  dp_new2->df_lnum[0] = 8;
+  dp_new2->df_lnum[1] = 7;
+  dp_new2->df_count[0] = 1;
+  dp_new2->df_count[1] = 0;
+  dp_new2->df_redraw = 0;
+
+
+
+  // modify the diff block after
 }
 
 /// Copy an entry at "dp" from "idx_orig" to "idx_new".
@@ -1828,23 +1855,54 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
 
   int testv = 1;
   // prefer the count number
-  while (dp && dp->df_next &&
-      ( (dp->df_lnum[idx] + dp->df_count[idx]) >= dp->df_next->df_lnum[idx] )
-      &&
-      (dp->df_next->df_lnum[idx] >= lnum)
-      ) {
-    dp = dp->df_next;
-  }
-
-  // make it a function that runs here. modify the linked list of dp
-
-  // idk ?? cant do this, because both diffs are on the same line number
-  // if(dp != NULL && dp->df_count[idx] == 0
-  //    && dp->df_next != NULL
-  //    && dp->df_next->df_lnum[idx] == dp->df_lnum[idx]
-  //    ){
-  //   dp = dp->df_next; 
+  // int lnum_and_count;
+  // int lnumd;
+  // if (dp) {
+  //   lnumd = dp->df_lnum[idx];
+  //   lnum_and_count = dp->df_lnum[idx] + dp->df_count[idx];
   // }
+  int filler_lines_d1 = 0;
+  int filler_lines_d2 = 0;
+  int double_pointer = 0;
+  int retval = INT_MIN;
+  int linematch = 1;
+  if (
+      (dp && dp->df_next) &&
+      (lnum == (dp->df_count[idx] + dp->df_lnum[idx])) &&
+      (dp->df_next->df_lnum[idx] == lnum)
+      ) {
+
+    // trigger special condition
+    // get the number of filler lines
+    if (dp->df_count[idx] == 0) {
+      for (int k = 0, m = 0; k < DB_COUNT; k++) {
+        if (curtab->tp_diffbuf[k] != NULL) {
+          if (k && dp->df_count[k] != dp->df_count[m]) {
+            filler_lines_d1 = dp->df_count[k] > dp->df_count[m] ?
+              dp->df_count[k] : dp->df_count[m];
+          }
+          m = k;
+        }
+      }
+    }
+    dp = dp->df_next;
+    double_pointer = 1;
+    if (dp->df_count[idx] == 0) {
+      retval = 0; // i doubt this .... but maybe
+      for (int k = 0, m = 0; k < DB_COUNT; k++) {
+        if (curtab->tp_diffbuf[k] != NULL) {
+          if (k && dp->df_count[k] != dp->df_count[m]) {
+            filler_lines_d2 = dp->df_count[k] > dp->df_count[m] ?
+              dp->df_count[k] : dp->df_count[m];
+          }
+          m = k;
+        }
+      }
+    }
+    filler_lines_d1 += filler_lines_d2;
+    // set the linestatus to the normal return value for next dp
+
+  }
 
   if ((dp == NULL) || (lnum < dp->df_lnum[idx])) {
     return 0;
@@ -1873,54 +1931,27 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
     // this is the test case for now
     // dp->df_lnum:[5, 5, 1307681366, 12, 0, 1308012400, 1307681378, 12, ]
     // dp->df_count:[4, 2, 1307681390, 12, 0, 1307399280, 0, 1059087360, ]
-    dp->df_lnum[0] = 5;
-    dp->df_lnum[1] = 5;
-    dp->df_count[0] = 1;
-    dp->df_count[1] = 0;
+    // dp->df_lnum[0] = 5;
+    // dp->df_lnum[1] = 5;
+    // dp->df_count[0] = 1;
+    // dp->df_count[1] = 0;
 
-    diff_T *dp_new = diff_alloc_new(curtab, dp, dp->df_next);
-    dp_new->df_lnum[0] = 6;
-    dp_new->df_lnum[1] = 5;
-    dp_new->df_count[0] = 2;
-    dp_new->df_count[1] = 2;
-    dp_new->df_redraw = 0;
+    // diff_T *dp_new = diff_alloc_new(curtab, dp, dp->df_next);
+    // dp_new->df_lnum[0] = 6;
+    // dp_new->df_lnum[1] = 5;
+    // dp_new->df_count[0] = 2;
+    // dp_new->df_count[1] = 2;
+    // dp_new->df_redraw = 0;
 
-    diff_T *dp_new2 = diff_alloc_new(curtab, dp_new, dp_new->df_next);
-    dp_new2->df_lnum[0] = 8;
-    dp_new2->df_lnum[1] = 7;
-    dp_new2->df_count[0] = 1;
-    dp_new2->df_count[1] = 0;
-    dp_new2->df_redraw = 0;
+    // diff_T *dp_new2 = diff_alloc_new(curtab, dp_new, dp_new->df_next);
+    // dp_new2->df_lnum[0] = 8;
+    // dp_new2->df_lnum[1] = 7;
+    // dp_new2->df_count[0] = 1;
+    // dp_new2->df_count[1] = 0;
+    // dp_new2->df_redraw = 0;
 
     fclose(fp);
     dp->df_redraw = 0;
-  }
-
-  // FILE *fp = fopen("debug.txt", "a");
-  // print this buffer id
-  // find out what it returns
-  // fclose(fp);
-
-  // check for double pointer condition
-  int retval = INT_MIN; // switch to something null
-  int double_pointer = 0;
-  int linematch = 1;
-  int filler_lines_d = 0;
-  diff_T *dp_0 = NULL;
-  if (dp->df_count[idx] == 0 && dp->df_next && dp->df_lnum[idx] == dp->df_next->df_lnum[idx]) {
-    // get the filler lines count
-    for (int k = 0; k < DB_COUNT; k ++) {
-      if (curtab->tp_diffbuf[k] != NULL) {
-        filler_lines_d = (dp->df_count[k] > filler_lines_d) ? dp->df_count[k] : filler_lines_d;
-      }
-    }
-
-    // check for double pointer and if so, then set that to true
-    double_pointer = 1;
-    dp = dp->df_next;
-    // use both pointers previous and current
-    // dp_0 = dp;
-    // dp = dp->df_next;
   }
   if (lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
     int zero = false;
@@ -1937,8 +1968,10 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
         } else {
           if (dp->df_count[i] != dp->df_count[idx]) {
             // nr of lines changed.
-            if (linematch && (retval != INT_MIN) && double_pointer) {
-              retval = -1;
+            if (linematch && double_pointer) {
+              if (retval == INT_MIN) {
+                retval = -1;
+              }
             } else {
               return -1;
             }
@@ -1956,8 +1989,10 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
             && (curtab->tp_diffbuf[i] != NULL)
             && (dp->df_count[i] != 0)) {
           if (!diff_equal_entry(dp, idx, i)) {
-            if (linematch && (retval != INT_MIN) && double_pointer) {
-              retval = -1;
+            if (linematch && double_pointer) {
+              if (retval == INT_MIN) {
+                retval = -1;
+              }
             } else {
               return -1;
             }
@@ -1972,14 +2007,18 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
     // through updating the window.  Just report the text as unchanged.
     // Other windows might still show the change though.
     if (zero == false) {
-      if (linematch && (retval != INT_MIN) && double_pointer) {
-        retval = 0;
+      if (linematch && double_pointer) {
+        if (retval == INT_MIN) {
+          retval = 0;
+        }
       } else {
         return 0;
       }
     }
-    if (linematch && (retval != INT_MIN) && double_pointer) {
-      retval = -2;
+    if (linematch && double_pointer) {
+      if (retval == INT_MIN) {
+        retval = -2;
+      }
     } else{
       return -2;
     }
@@ -1987,26 +2026,10 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
 
   if (linematch && double_pointer) {
     // set line status value
-    (*linestatus) = retval;
-    return filler_lines_d;
-    // FILE *fp = fopen("debug.txt", "a");
-    // fprintf(fp, "ret val: %i", retval);
-    // fprintf(fp, "idx: %i, lnum: %i \n", idx, lnum);
-    // fclose(fp);
-    // // TODO also return filler_lines_d
-    // if (retval != INT_MIN) {
-    //   return retval;
-    // } else {
-    //   // return the number of filler lines that should be here
-    //   return 0;
-    // }
-    // // check for double dp at same line number and df_count = 0
-    // // *linestatus = retval;
-
-    // // return dp_0[] // something to get the filler count
-    //   // check array value that df_count is non zero, and that will be the
-    //   // number of filler lines
-
+    if (linestatus) {
+      (*linestatus) = retval;
+    }
+    return filler_lines_d1;
   }
 
   // If 'diffopt' doesn't contain "filler", return 0.
