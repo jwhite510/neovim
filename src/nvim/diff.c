@@ -829,15 +829,12 @@ static void diff_try_update(diffio_T    *dio,
     if (diff_write(buf, &dio->dio_new) == FAIL) {
       continue;
     }
-    if (diff_file(dio) == FAIL) { // xdl_diff is called from here
+    if (diff_file(dio) == FAIL) {
       continue;
     }
 
     // Read the diff output and add each entry to the diff list.
     diff_read(idx_orig, idx_new, &dio->dio_diff);
-
-    // modify the diff values here, after they've already been created
-    // I need to make it a function that is applied to dp
 
     clear_diffin(&dio->dio_new);
     clear_diffout(&dio->dio_diff);
@@ -1532,7 +1529,6 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
     }
   }
 
-  // int diffn = 0;
   for (;;) {
     if (fd == NULL) {
       if (line_idx >= dout->dout_ga.ga_len) {
@@ -1592,25 +1588,6 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
         continue;
       }
     }
-    // override what the output from the diff was
-    // ----
-    // testdiff1.txt and testdiff2.txt
-    // have two differences, as long as they files are not
-    // modifies, the two differences will be overwritten with
-    // these line numbers
-    // if(diffn == 0){
-    //   lnum_orig = 1;
-    //   count_orig = 1;
-    //   lnum_new = 1;
-    //   count_new = 0;
-    //   diffn++;
-    // }else if (diffn == 1){
-    //   lnum_orig = 2; // try setting it to 2
-    //   count_orig = 0;
-    //   lnum_new = 1; // try setting it to 1
-    //   count_new = 1;
-    //   diffn++;
-    // }
 
     // Go over blocks before the change, for which orig and new are equal.
     // Copy blocks from orig to new.
@@ -1624,8 +1601,6 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
       notset = true;
     }
 
-    // I think this should only run when there's a diff with 3 files?
-    // this will merge the two blocks together
     if ((dp != NULL)
         && (lnum_orig <= dp->df_lnum[idx_orig] + dp->df_count[idx_orig])
         && (lnum_orig + count_orig >= dp->df_lnum[idx_orig])) {
@@ -1701,12 +1676,6 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
       dp->df_lnum[idx_new] = lnum_new;
       dp->df_count[idx_new] = count_new;
 
-      // FILE*fp=fopen("debug.txt","a");
-      // fprintf(fp,"allocating new diff block\n");
-      // fprintf(fp,"lnum_orig: %li, count_orig: %li \n", lnum_orig,count_orig);
-      // fprintf(fp,"lnum_new: %li, count_new: %li \n", lnum_new,count_new);
-      // fclose(fp);
-
       // Set values for other buffers, these must be equal to the
       // original buffer, otherwise there would have been a change
       // already.
@@ -1732,33 +1701,6 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
   if (fd != NULL) {
     fclose(fd);
   }
-
-  int testthings = 1;
-
-  dp = dprev;
-
-  dp->df_lnum[0] = 5;
-  dp->df_lnum[1] = 5;
-  dp->df_count[0] = 1;
-  dp->df_count[1] = 0;
-
-  diff_T *dp_new = diff_alloc_new(curtab, dp, dp->df_next);
-  dp_new->df_lnum[0] = 6;
-  dp_new->df_lnum[1] = 5;
-  dp_new->df_count[0] = 2;
-  dp_new->df_count[1] = 2;
-  dp_new->df_redraw = 0;
-
-  diff_T *dp_new2 = diff_alloc_new(curtab, dp_new, dp_new->df_next);
-  dp_new2->df_lnum[0] = 8;
-  dp_new2->df_lnum[1] = 7;
-  dp_new2->df_count[0] = 1;
-  dp_new2->df_count[1] = 0;
-  dp_new2->df_redraw = 0;
-
-
-
-  // modify the diff block after
 }
 
 /// Copy an entry at "dp" from "idx_orig" to "idx_new".
@@ -1853,6 +1795,55 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
     }
   }
 
+  if ((dp == NULL) || (lnum < dp->df_lnum[idx])) {
+    return 0;
+  }
+
+  if (dp->df_redraw) {
+
+    FILE *fp = fopen("debug.txt", "a");
+    fprintf(fp, "-----------------------");
+    fprintf(fp, "\ndp->df_lnum:[");
+    for (int j = 0; j < DB_COUNT; j++) {
+      fprintf(fp, "%i, ", (int)dp->df_lnum[j]);
+    }
+    fprintf(fp, "]\n");
+
+    fprintf(fp, "\ndp->df_count:[");
+    for (int j = 0; j < DB_COUNT; j++) {
+      fprintf(fp, "%i, ", (int)dp->df_count[j]);
+    }
+    fprintf(fp, "]\n");
+
+
+    // divide the diff block into different hunks
+    fprintf(fp, "dividing diff block into two");
+
+    // this is the test case for now
+    // dp->df_lnum:[5, 5, 1307681366, 12, 0, 1308012400, 1307681378, 12, ]
+    // dp->df_count:[4, 2, 1307681390, 12, 0, 1307399280, 0, 1059087360, ]
+    dp->df_lnum[0] = 5;
+    dp->df_lnum[1] = 5;
+    dp->df_count[0] = 1;
+    dp->df_count[1] = 0;
+
+    diff_T *dp_new = diff_alloc_new(curtab, dp, dp->df_next);
+    dp_new->df_lnum[0] = 6;
+    dp_new->df_lnum[1] = 5;
+    dp_new->df_count[0] = 2;
+    dp_new->df_count[1] = 2;
+    dp_new->df_redraw = 0;
+
+    diff_T *dp_new2 = diff_alloc_new(curtab, dp_new, dp_new->df_next);
+    dp_new2->df_lnum[0] = 8;
+    dp_new2->df_lnum[1] = 7;
+    dp_new2->df_count[0] = 1;
+    dp_new2->df_count[1] = 0;
+    dp_new2->df_redraw = 0;
+
+    fclose(fp);
+    dp->df_redraw = 0;
+  }
   int testv = 1;
   // prefer the count number
   // int lnum_and_count;
@@ -1904,55 +1895,6 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
 
   }
 
-  if ((dp == NULL) || (lnum < dp->df_lnum[idx])) {
-    return 0;
-  }
-
-  if (dp->df_redraw) {
-
-    FILE *fp = fopen("debug.txt", "a");
-    fprintf(fp, "-----------------------");
-    fprintf(fp, "\ndp->df_lnum:[");
-    for (int j = 0; j < DB_COUNT; j++) {
-      fprintf(fp, "%i, ", (int)dp->df_lnum[j]);
-    }
-    fprintf(fp, "]\n");
-
-    fprintf(fp, "\ndp->df_count:[");
-    for (int j = 0; j < DB_COUNT; j++) {
-      fprintf(fp, "%i, ", (int)dp->df_count[j]);
-    }
-    fprintf(fp, "]\n");
-
-
-    // divide the diff block into different hunks
-    fprintf(fp, "dividing diff block into two");
-
-    // this is the test case for now
-    // dp->df_lnum:[5, 5, 1307681366, 12, 0, 1308012400, 1307681378, 12, ]
-    // dp->df_count:[4, 2, 1307681390, 12, 0, 1307399280, 0, 1059087360, ]
-    // dp->df_lnum[0] = 5;
-    // dp->df_lnum[1] = 5;
-    // dp->df_count[0] = 1;
-    // dp->df_count[1] = 0;
-
-    // diff_T *dp_new = diff_alloc_new(curtab, dp, dp->df_next);
-    // dp_new->df_lnum[0] = 6;
-    // dp_new->df_lnum[1] = 5;
-    // dp_new->df_count[0] = 2;
-    // dp_new->df_count[1] = 2;
-    // dp_new->df_redraw = 0;
-
-    // diff_T *dp_new2 = diff_alloc_new(curtab, dp_new, dp_new->df_next);
-    // dp_new2->df_lnum[0] = 8;
-    // dp_new2->df_lnum[1] = 7;
-    // dp_new2->df_count[0] = 1;
-    // dp_new2->df_count[1] = 0;
-    // dp_new2->df_redraw = 0;
-
-    fclose(fp);
-    dp->df_redraw = 0;
-  }
   if (lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
     int zero = false;
 
