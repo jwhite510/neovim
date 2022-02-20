@@ -2421,7 +2421,10 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
       filler_lines_d1 += get_max_diff_length(dp);
     }
     dp = dp->df_next;
-    // set the linestatus to the normal return value for next dp
+  }
+
+  if (dp->df_count[idx] == 0) {
+    filler_lines_d1 += get_max_diff_length(dp);
   }
 
   if (lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
@@ -2498,7 +2501,7 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
   if (linematch && double_pointer) {
     // set line status value
     if (linestatus) {
-      (*linestatus) = retval;
+      (*linestatus) = (retval != INT_MIN) ? retval : 0;
     }
     return filler_lines_d1;
   }
