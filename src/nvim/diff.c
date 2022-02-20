@@ -2312,6 +2312,36 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
     linematch_nbuffers(diff_begin, diff_length, diffbuffers_count, outputmap,
         &decisions_length, &decisions);
 
+    // get the start line number here in each diff buffer, and then increment
+    int line_numbers[DB_COUNT];
+    for (i = 0; i < DB_COUNT; i++) {
+      if (curtab->tp_diffbuf[i] != NULL) {
+        line_numbers[i] = dp->df_lnum[i];
+        dp->df_count[i] = 0;
+      }
+    }
+    // write the diffs to the current diff block
+    diff_T *dp_s = dp;
+    // it
+    for (i = 0; i < decisions_length; i++) {
+      if (i && (decisions[i - 1] != decisions[i])) {
+        dp_s = diff_alloc_new(curtab, dp_s, dp_s->df_next);
+        dp_s->df_redraw = 0;
+        for (int j = 0; j < DB_COUNT; j++) {
+          if (curtab->tp_diffbuf[j] != NULL) {
+            dp_s->df_lnum[j] = line_numbers[j];
+            dp_s->df_count[j] = 0;
+          }
+        }
+      }
+      for (int j = 0; j < diffbuffers_count; j++) {
+        if (decisions[i] & (1 << j)) {
+          // will need to use the map here
+          dp_s->df_count[outputmap[j]]++;
+          line_numbers[outputmap[j]]++;
+        }
+      }
+    }
     for (i = 0; i < diffbuffers_count; i++) {
       clear_diffin(&diffbuffers[i]);
     }
@@ -2324,24 +2354,24 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
     // this is the test case for now
     // dp->df_lnum:[5, 5, 1307681366, 12, 0, 1308012400, 1307681378, 12, ]
     // dp->df_count:[4, 2, 1307681390, 12, 0, 1307399280, 0, 1059087360, ]
-    dp->df_lnum[0] = 5;
-    dp->df_lnum[1] = 5;
-    dp->df_count[0] = 1;
-    dp->df_count[1] = 0;
+    // dp->df_lnum[0] = 5;
+    // dp->df_lnum[1] = 5;
+    // dp->df_count[0] = 1;
+    // dp->df_count[1] = 0;
 
-    diff_T *dp_new = diff_alloc_new(curtab, dp, dp->df_next);
-    dp_new->df_lnum[0] = 6;
-    dp_new->df_lnum[1] = 5;
-    dp_new->df_count[0] = 2;
-    dp_new->df_count[1] = 2;
-    dp_new->df_redraw = 0;
+    // diff_T *dp_new = diff_alloc_new(curtab, dp, dp->df_next);
+    // dp_new->df_lnum[0] = 6;
+    // dp_new->df_lnum[1] = 5;
+    // dp_new->df_count[0] = 2;
+    // dp_new->df_count[1] = 2;
+    // dp_new->df_redraw = 0;
 
-    diff_T *dp_new2 = diff_alloc_new(curtab, dp_new, dp_new->df_next);
-    dp_new2->df_lnum[0] = 8;
-    dp_new2->df_lnum[1] = 7;
-    dp_new2->df_count[0] = 1;
-    dp_new2->df_count[1] = 0;
-    dp_new2->df_redraw = 0;
+    // diff_T *dp_new2 = diff_alloc_new(curtab, dp_new, dp_new->df_next);
+    // dp_new2->df_lnum[0] = 8;
+    // dp_new2->df_lnum[1] = 7;
+    // dp_new2->df_count[0] = 1;
+    // dp_new2->df_count[1] = 0;
+    // dp_new2->df_redraw = 0;
 
     dp->df_redraw = 0;
   }
