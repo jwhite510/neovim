@@ -2217,6 +2217,21 @@ void linematch_nbuffers(const char **diff_block, const int *diff_length,
   xfree(diffcomparisonpath_flat);
 }
 
+int get_max_diff_length(diff_T *dp)
+{
+  int filler_lines = 0;
+  for (int k = 0, m = 0; k < DB_COUNT; k++) {
+    if (curtab->tp_diffbuf[k] != NULL) {
+      if (k && dp->df_count[k] != dp->df_count[m]) {
+        filler_lines = dp->df_count[k] > dp->df_count[m] ?
+          dp->df_count[k] : dp->df_count[m];
+      }
+      m = k;
+    }
+  }
+  return filler_lines;
+}
+
 /// Check diff status for line "lnum" in buffer "buf":
 ///
 /// Returns 0 for nothing special
@@ -2388,42 +2403,25 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
   int double_pointer = 0;
   int retval = INT_MIN;
   int linematch = 1;
-  if (
+
+
+  // TODO while(dp->df_next->df_lnum[idx] == (dp->df_lnum[idx]+dp->df_count[idx]) ) {
+  // collect the number of filler lines
+  //
+  // }
+  // turn this into a while loop, and allow normal return values after also
+  while (
       (dp && dp->df_next) &&
       (lnum == (dp->df_count[idx] + dp->df_lnum[idx])) &&
       (dp->df_next->df_lnum[idx] == lnum)
       ) {
 
-    // trigger special condition
-    // get the number of filler lines
-    if (dp->df_count[idx] == 0) {
-      for (int k = 0, m = 0; k < DB_COUNT; k++) {
-        if (curtab->tp_diffbuf[k] != NULL) {
-          if (k && dp->df_count[k] != dp->df_count[m]) {
-            filler_lines_d1 = dp->df_count[k] > dp->df_count[m] ?
-              dp->df_count[k] : dp->df_count[m];
-          }
-          m = k;
-        }
-      }
-    }
-    dp = dp->df_next;
     double_pointer = 1;
     if (dp->df_count[idx] == 0) {
-      retval = 0; // i doubt this .... but maybe
-      for (int k = 0, m = 0; k < DB_COUNT; k++) {
-        if (curtab->tp_diffbuf[k] != NULL) {
-          if (k && dp->df_count[k] != dp->df_count[m]) {
-            filler_lines_d2 = dp->df_count[k] > dp->df_count[m] ?
-              dp->df_count[k] : dp->df_count[m];
-          }
-          m = k;
-        }
-      }
+      filler_lines_d1 += get_max_diff_length(dp);
     }
-    filler_lines_d1 += filler_lines_d2;
+    dp = dp->df_next;
     // set the linestatus to the normal return value for next dp
-
   }
 
   if (lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
