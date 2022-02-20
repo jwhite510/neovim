@@ -891,6 +891,14 @@ struct file_buffer {
  */
 # define DB_COUNT 8     // up to four buffers can be diff'ed
 
+// struct for running the diff linematch algorithm
+typedef struct diffcomparisonpath_flat_S diffcomparisonpath_flat_T;
+struct diffcomparisonpath_flat_S {
+  int *df_decision;  // to keep track of this path traveled
+  int df_lev_score;  // to keep track of the total score of this path
+  int df_path_index;  // current index of this path
+};
+
 /*
  * Each diffblock defines where a block of lines starts in each of the buffers
  * and how many lines it occupies in that buffer.  When the lines are missing
