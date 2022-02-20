@@ -2154,8 +2154,7 @@ int ***allocate_comparison_mem(const int *diff_length, const int nDiffs)
 /// @param df_arr_col_size
 /// @param outmap
 void linematch_nbuffers(const char **diff_block, const int *diff_length,
-                        const int nDiffs, // df_linecompare_T **df_comparisonlines,
-                        int *df_arr_col_size, const int *outmap)
+                        const int nDiffs, const int *outmap, int *decisions_length, int **decisions)
 {
   int memsize = 1, memsize_decisions = 0;
   for (int i = 0; i < nDiffs; i++) {
@@ -2187,7 +2186,7 @@ void linematch_nbuffers(const char **diff_block, const int *diff_length,
       maxlines = diff_length[i];
     }
   }
-  *df_arr_col_size = maxlines + 1;
+  // *df_arr_col_size = maxlines + 1;
   // *df_comparisonlines =
   //   xmalloc(DB_COUNT *(*df_arr_col_size) * sizeof(df_linecompare_T));
 
@@ -2200,6 +2199,11 @@ void linematch_nbuffers(const char **diff_block, const int *diff_length,
   const int best_path_index = diffcomparisonpath_flat[u].df_path_index;
   const int *best_path_decisions = diffcomparisonpath_flat[u].df_decision;
 
+  *decisions_length = best_path_index;
+  *decisions = xmalloc(sizeof(int) * best_path_index);
+  for (int i = 0; i < best_path_index; i++) {
+    (*decisions)[i] = best_path_decisions[i];
+  }
 
   // diff_allign_extraction(best_path_index, best_path_decisions, nDiffs,
   //                        df_comparisonlines, df_arr_col_size, outmap);
@@ -2277,23 +2281,45 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
 
     // include the algorithm and run it here
 
-    FILE *fp = fopen("debug.txt", "a");
-    fprintf(fp, "-----------------------");
-    fprintf(fp, "\ndp->df_lnum:[");
-    for (int j = 0; j < DB_COUNT; j++) {
-      fprintf(fp, "%i, ", (int)dp->df_lnum[j]);
+    // define buffers for diff algorithm
+    diffin_T *diffbuffers = xmalloc(sizeof(diffin_T) * DB_COUNT);
+    const char **diff_begin = xmalloc(sizeof(char *) * DB_COUNT);
+    int *diff_length = xmalloc(sizeof(int) * DB_COUNT);
+    int *outputmap = xmalloc(sizeof(int) * DB_COUNT);
+    int diffbuffers_count = 0;
+    for (i = 0; i < DB_COUNT; i++) {
+      if (curtab->tp_diffbuf[i] != NULL) {
+        memset(&diffbuffers[diffbuffers_count], 0, sizeof(diffbuffers[diffbuffers_count]));
+        diff_write(curtab->tp_diffbuf[i], &diffbuffers[diffbuffers_count]);
+        diff_begin[diffbuffers_count] = diffbuffers[diffbuffers_count].din_mmfile.ptr;
+
+        for (int j = 0; j < dp->df_lnum[i] - 1; j++) {
+          while (*diff_begin[diffbuffers_count] != '\n') {
+            diff_begin[diffbuffers_count]++;
+          }
+          diff_begin[diffbuffers_count]++;
+        }
+        diff_length[diffbuffers_count] = dp->df_count[i];
+
+        outputmap[diffbuffers_count] = i;
+
+        diffbuffers_count++;
+      }
     }
-    fprintf(fp, "]\n");
 
-    fprintf(fp, "\ndp->df_count:[");
-    for (int j = 0; j < DB_COUNT; j++) {
-      fprintf(fp, "%i, ", (int)dp->df_count[j]);
+    int decisions_length = 0;
+    int *decisions = NULL;
+    linematch_nbuffers(diff_begin, diff_length, diffbuffers_count, outputmap,
+        &decisions_length, &decisions);
+
+    for (i = 0; i < diffbuffers_count; i++) {
+      clear_diffin(&diffbuffers[i]);
     }
-    fprintf(fp, "]\n");
-
-
-    // divide the diff block into different hunks
-    fprintf(fp, "dividing diff block into two");
+    xfree(diffbuffers);
+    xfree(diff_begin);
+    xfree(diff_length);
+    xfree(outputmap);
+    xfree(decisions);
 
     // this is the test case for now
     // dp->df_lnum:[5, 5, 1307681366, 12, 0, 1308012400, 1307681378, 12, ]
@@ -2317,7 +2343,6 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
     dp_new2->df_count[1] = 0;
     dp_new2->df_redraw = 0;
 
-    fclose(fp);
     dp->df_redraw = 0;
   }
   int testv = 1;
