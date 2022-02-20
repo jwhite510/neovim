@@ -4,14 +4,14 @@ if [ "$1" = "gdb" ]
 then
   gdb \
       -ex "b screen.c:2338"\
-      -ex "r"\
       --args ./nvim -u NONE -d ../../testdiff3_1.txt ../../testdiff3_2.txt ../../testdiff3_3.txt
       # --args ./nvim -d ../../testdiffb.txt ../../testdiffa.txt
       # -ex "b screen.c:2338"\
       # -ex "b diff.c:free_comparison_mem"\
       # -ex "b diff.c:try_possible_paths"\
 else
-  ./nvim -u NONE -d ../../testdiff3_1.txt ../../testdiff3_2.txt ../../testdiff3_3.txt
+  # ./nvim -u NONE -d ../../testdiff3_1.txt ../../testdiff3_2.txt ../../testdiff3_3.txt
+  ./nvim -u NONE -d ../../testdiffb.txt ../../testdiffa.txt
 
 fi
 # gdb \
