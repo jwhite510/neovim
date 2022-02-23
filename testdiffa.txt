@@ -2,7 +2,11 @@ same things
 same things
 same things
 same things
+something2
 file 1 line 1
+
+
+
 file 1 line 2
 same things
 same things

@@ -2719,17 +2719,17 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
       }
       if (dpbottom != dp) {
         FILE *fp = fopen("debug.txt", "a");
-        fprintf(fp, "CASE TRIGGERED\n");
-        fprintf(fp, "filler_lines_d1: %i\n", filler_lines_d1);
-        fprintf(fp, "fromwin->w_topline: %i \n:",fromwin->w_topline);
-        fprintf(fp, "fromwin->w_topfill: %i \n:",fromwin->w_topfill);
+        // fprintf(fp, "CASE TRIGGERED\n");
+        // fprintf(fp, "filler_lines_d1: %i\n", filler_lines_d1);
+        // fprintf(fp, "fromwin->w_topline: %i \n:",fromwin->w_topline);
+        // fprintf(fp, "fromwin->w_topfill: %i \n:",fromwin->w_topfill);
         // fprintf(fp, "dp->df_count[fromidx]: %i\n", dp->df_count[fromidx]);
         // // fprintf(fp, "dp->df_lnum[fromidx]: %i\n", dp->df_lnum[fromidx]);
         // fprintf(fp, "dp->df_count[toidx]: %i\n", dp->df_count[toidx]);
         // // fprintf(fp, "dp->df_lnum[toidx]: %i\n", dp->df_lnum[toidx]);
-        fprintf(fp, "dpbottom->df_count[fromidx]: %i\n", dpbottom->df_count[fromidx]);
+        // fprintf(fp, "dpbottom->df_count[fromidx]: %i\n", dpbottom->df_count[fromidx]);
         // fprintf(fp, "dpbottom->df_lnum[fromidx]: %i\n", dpbottom->df_lnum[fromidx]);
-        fprintf(fp, "dpbottom->df_count[toidx]: %i\n", dpbottom->df_count[toidx]);
+        // fprintf(fp, "dpbottom->df_count[toidx]: %i\n", dpbottom->df_count[toidx]);
 
         int testval1 = filler_lines_d1 - fromwin->w_topfill;
 
@@ -2742,9 +2742,19 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
           ){
           dpbottom2 = dpbottom2->df_next;
         }
+
+        // if (testval1 == -1) {
+        if (dpbottom2->df_next && dpbottom2->df_next->df_next == NULL) {
+          dpbottom2 = dpbottom2->df_next;
+        }
+
+
         towin->w_topline = lnum + (dpbottom2->df_lnum[toidx] - dpbottom2->df_lnum[fromidx]);
 
+        // if (testval1 != -1) {
         towin->w_topline += testval1;
+        // }
+
         fprintf(fp, "testval1: %i\n", testval1);
 
         fprintf(fp, "dpbottom->df_count[toidx]: %i\n", dpbottom->df_count[toidx]);
