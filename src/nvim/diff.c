@@ -2703,47 +2703,118 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
     }
     towin->w_topline = lnum + (dp->df_lnum[toidx] - dp->df_lnum[fromidx]);
 
+    int retthing = 0;
+    int filler_lines_d1 = 0;
     if (lnum >= dp->df_lnum[fromidx]) {
-      // Inside a change: compute filler lines. With three or more
-      // buffers we need to know the largest count.
-      max_count = 0;
-
-      for (i = 0; i < DB_COUNT; ++i) {
-        if ((curtab->tp_diffbuf[i] != NULL) && (max_count < dp->df_count[i])) {
-          max_count = dp->df_count[i];
+      diff_T *dpbottom = dp;
+      while (
+          (dpbottom && dpbottom->df_next) &&
+          (lnum == (dpbottom->df_count[fromidx] + dpbottom->df_lnum[fromidx])) &&
+          (dpbottom->df_next->df_lnum[fromidx] == lnum)
+          ) {
+        if (dpbottom->df_count[fromidx] == 0) {
+          filler_lines_d1 += get_max_diff_length(dpbottom);
         }
+        dpbottom = dpbottom->df_next;
       }
+      if (dpbottom != dp) {
+        FILE *fp = fopen("debug.txt", "a");
+        fprintf(fp, "CASE TRIGGERED\n");
+        fprintf(fp, "filler_lines_d1: %i\n", filler_lines_d1);
+        fprintf(fp, "fromwin->w_topline: %i \n:",fromwin->w_topline);
+        fprintf(fp, "fromwin->w_topfill: %i \n:",fromwin->w_topfill);
+        // fprintf(fp, "dp->df_count[fromidx]: %i\n", dp->df_count[fromidx]);
+        // // fprintf(fp, "dp->df_lnum[fromidx]: %i\n", dp->df_lnum[fromidx]);
+        // fprintf(fp, "dp->df_count[toidx]: %i\n", dp->df_count[toidx]);
+        // // fprintf(fp, "dp->df_lnum[toidx]: %i\n", dp->df_lnum[toidx]);
+        fprintf(fp, "dpbottom->df_count[fromidx]: %i\n", dpbottom->df_count[fromidx]);
+        // fprintf(fp, "dpbottom->df_lnum[fromidx]: %i\n", dpbottom->df_lnum[fromidx]);
+        fprintf(fp, "dpbottom->df_count[toidx]: %i\n", dpbottom->df_count[toidx]);
 
-      if (dp->df_count[toidx] == dp->df_count[fromidx]) {
-        // same number of lines: use same filler count
-        towin->w_topfill = fromwin->w_topfill;
-      } else if (dp->df_count[toidx] > dp->df_count[fromidx]) {
-        if (lnum == dp->df_lnum[fromidx] + dp->df_count[fromidx]) {
-          // more lines in towin and fromwin doesn't show diff
-          // lines, only filler lines
-          if (max_count - fromwin->w_topfill >= dp->df_count[toidx]) {
-            // towin also only shows filler lines
-            towin->w_topline = dp->df_lnum[toidx] + dp->df_count[toidx];
-            towin->w_topfill = fromwin->w_topfill;
-          } else {
-            // towin still has some diff lines to show
-            towin->w_topline = dp->df_lnum[toidx]
-                               + max_count - fromwin->w_topfill;
+        int testval1 = filler_lines_d1 - fromwin->w_topfill;
+
+        diff_T *dpbottom2 = dp;
+        while(
+          (dpbottom2 && dpbottom2->df_next) &&
+          (lnum == (dpbottom2->df_count[fromidx] + dpbottom2->df_lnum[fromidx])) &&
+          (dpbottom2->df_next->df_lnum[fromidx] == lnum) &&
+          (dpbottom2->df_next->df_count[fromidx] > 0)
+          ){
+          dpbottom2 = dpbottom2->df_next;
+        }
+        towin->w_topline = lnum + (dpbottom2->df_lnum[toidx] - dpbottom2->df_lnum[fromidx]);
+
+        towin->w_topline += testval1;
+        fprintf(fp, "testval1: %i\n", testval1);
+
+        fprintf(fp, "dpbottom->df_count[toidx]: %i\n", dpbottom->df_count[toidx]);
+
+
+        fclose(fp);
+
+        if (dpbottom->df_count[fromidx] && !dpbottom->df_count[toidx]) {
+          // return this as the number of filler lines
+          // int testv = 1;
+          // retthing = dpbottom->df_count[fromidx];
+          towin->w_topfill = dpbottom->df_count[fromidx];
+          // dp = dpbottom;
+          // retthing = 1;
+        }
+
+        // fprintf(fp, "dpbottom->df_lnum[toidx]: %i\n", dpbottom->df_lnum[toidx]);
+
+        // count how many filler lines have been passed to get to
+        // fromwin->w_topline
+
+        // int topdifflnum = dp->df_lnum[fromidx];
+        // int testv = fromwin->w_topline;
+
+        // towin->w_topfill = fromwin->w_topfill;
+        // towin->w_topline = 1;
+
+        // return;
+      } else {
+        // Inside a change: compute filler lines. With three or more
+        // buffers we need to know the largest count.
+        max_count = 0;
+
+        for (i = 0; i < DB_COUNT; ++i) {
+          if ((curtab->tp_diffbuf[i] != NULL) && (max_count < dp->df_count[i])) {
+            max_count = dp->df_count[i];
           }
         }
-      } else if (towin->w_topline >= dp->df_lnum[toidx]
-                 + dp->df_count[toidx]) {
-        // less lines in towin and no diff lines to show: compute
-        // filler lines
-        towin->w_topline = dp->df_lnum[toidx] + dp->df_count[toidx];
 
-        if (diff_flags & DIFF_FILLER) {
+        if (dp->df_count[toidx] == dp->df_count[fromidx]) {
+          // same number of lines: use same filler count
+          towin->w_topfill = fromwin->w_topfill;
+        } else if (dp->df_count[toidx] > dp->df_count[fromidx]) {
           if (lnum == dp->df_lnum[fromidx] + dp->df_count[fromidx]) {
-            // fromwin is also out of diff lines
-            towin->w_topfill = fromwin->w_topfill;
-          } else {
-            // fromwin has some diff lines
-            towin->w_topfill = dp->df_lnum[fromidx] + max_count - lnum;
+            // more lines in towin and fromwin doesn't show diff
+            // lines, only filler lines
+            if (max_count - fromwin->w_topfill >= dp->df_count[toidx]) {
+              // towin also only shows filler lines
+              towin->w_topline = dp->df_lnum[toidx] + dp->df_count[toidx];
+              towin->w_topfill = fromwin->w_topfill;
+            } else {
+              // towin still has some diff lines to show
+              towin->w_topline = dp->df_lnum[toidx]
+                                 + max_count - fromwin->w_topfill;
+            }
+          }
+        } else if (towin->w_topline >= dp->df_lnum[toidx]
+                   + dp->df_count[toidx]) {
+          // less lines in towin and no diff lines to show: compute
+          // filler lines
+          towin->w_topline = dp->df_lnum[toidx] + dp->df_count[toidx];
+
+          if (diff_flags & DIFF_FILLER) {
+            if (lnum == dp->df_lnum[fromidx] + dp->df_count[fromidx]) {
+              // fromwin is also out of diff lines
+              towin->w_topfill = fromwin->w_topfill;
+            } else {
+              // fromwin has some diff lines
+              towin->w_topfill = dp->df_lnum[fromidx] + max_count - lnum;
+            }
           }
         }
       }
