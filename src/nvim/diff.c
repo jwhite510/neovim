@@ -2752,11 +2752,15 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
         towin->w_topline = lnum + (dpbottom2->df_lnum[toidx] - dpbottom2->df_lnum[fromidx]);
 
         // check that it's not the last diff block in the group
-        if (dpbottom2->df_next != NULL) {
+        // towin->w_topline += testval1;
+
+        if (dpbottom->df_next != NULL) {
           towin->w_topline += testval1;
         } else {
           int fillermax2 = get_max_diff_length(dpbottom);
-          towin->w_topline += (fillermax2 + testval1);
+          if (!dpbottom->df_count[fromidx]) {
+            towin->w_topline += (fillermax2 + testval1);
+          }
           int testhere = 1;
         }
 

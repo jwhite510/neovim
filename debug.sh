@@ -3,7 +3,7 @@ cd build/bin/
 if [ "$1" = "gdb" ]
 then
   gdb \
-      -ex "b diff.c:2758"\
+      -ex "b diff.c:2760"\
       --args ./nvim -u NONE -d ../../testdiffb.txt ../../testdiffa.txt
       # --args ./nvim -u NONE -d ../../testdiff3_1.txt ../../testdiff3_2.txt ../../testdiff3_3.txt
       # -ex "b screen.c:2338"\
