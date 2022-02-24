@@ -2705,93 +2705,54 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
 
     int retthing = 0;
     int filler_lines_d1 = 0;
+    int actual_lines = 0;
+    int linematch = 1;
     if (lnum >= dp->df_lnum[fromidx]) {
-      diff_T *dpbottom = dp;
-      while (
-          (dpbottom && dpbottom->df_next) &&
-          (lnum == (dpbottom->df_count[fromidx] + dpbottom->df_lnum[fromidx])) &&
-          (dpbottom->df_next->df_lnum[fromidx] == lnum)
-          ) {
-        if (dpbottom->df_count[fromidx] == 0) {
-          filler_lines_d1 += get_max_diff_length(dpbottom);
-        }
-        dpbottom = dpbottom->df_next;
-      }
-      if (dpbottom != dp) {
-        FILE *fp = fopen("debug.txt", "a");
-        // fprintf(fp, "CASE TRIGGERED\n");
-        // fprintf(fp, "filler_lines_d1: %i\n", filler_lines_d1);
-        // fprintf(fp, "fromwin->w_topline: %i \n:",fromwin->w_topline);
-        // fprintf(fp, "fromwin->w_topfill: %i \n:",fromwin->w_topfill);
-        // fprintf(fp, "dp->df_count[fromidx]: %i\n", dp->df_count[fromidx]);
-        // // fprintf(fp, "dp->df_lnum[fromidx]: %i\n", dp->df_lnum[fromidx]);
-        // fprintf(fp, "dp->df_count[toidx]: %i\n", dp->df_count[toidx]);
-        // // fprintf(fp, "dp->df_lnum[toidx]: %i\n", dp->df_lnum[toidx]);
-        // fprintf(fp, "dpbottom->df_count[fromidx]: %i\n", dpbottom->df_count[fromidx]);
-        // fprintf(fp, "dpbottom->df_lnum[fromidx]: %i\n", dpbottom->df_lnum[fromidx]);
-        // fprintf(fp, "dpbottom->df_count[toidx]: %i\n", dpbottom->df_count[toidx]);
+      if (linematch) {
+        // 1. find the position from the top of the diff block
+        diff_T *dp2 = dp;
+        while (
+            (dp2 && dp2->df_next) &&
+            (lnum == (dp2->df_count[fromidx] + dp2->df_lnum[fromidx])) &&
+            (dp2->df_next->df_lnum[fromidx] == lnum)
+            ) {
 
-        int testval1 = filler_lines_d1 - fromwin->w_topfill;
-
-        diff_T *dpbottom2 = dp;
-        while(
-          (dpbottom2 && dpbottom2->df_next) &&
-          (lnum == (dpbottom2->df_count[fromidx] + dpbottom2->df_lnum[fromidx])) &&
-          (dpbottom2->df_next->df_lnum[fromidx] == lnum) &&
-          (dpbottom2->df_next->df_count[fromidx] > 0)
-          ){
-          dpbottom2 = dpbottom2->df_next;
-        }
-
-        // if (testval1 == -1) {
-        if (dpbottom2->df_next && dpbottom2->df_next->df_next == NULL) {
-          dpbottom2 = dpbottom2->df_next;
-        }
-
-
-        towin->w_topline = lnum + (dpbottom2->df_lnum[toidx] - dpbottom2->df_lnum[fromidx]);
-
-        // check that it's not the last diff block in the group
-        // towin->w_topline += testval1;
-
-        if (dpbottom->df_next != NULL) {
-          towin->w_topline += testval1;
-        } else {
-          int fillermax2 = get_max_diff_length(dpbottom);
-          if (!dpbottom->df_count[fromidx]) {
-            towin->w_topline += (fillermax2 + testval1);
+          if (dp2->df_count[fromidx] == 0) {
+            filler_lines_d1 += get_max_diff_length(dp2);
+          } else {
+            actual_lines += dp2->df_count[fromidx];
           }
-          int testhere = 1;
+          dp2 = dp2->df_next;
+        }
+        if (dp2->df_count[fromidx] == 0) {
+          filler_lines_d1 += get_max_diff_length(dp2);
+        } else {
+          actual_lines += ((lnum + dp2->df_count[fromidx]) - (dp2->df_count[fromidx] + dp2->df_lnum[fromidx]));
         }
 
-        fprintf(fp, "testval1: %i\n", testval1);
 
-        fprintf(fp, "dpbottom->df_count[toidx]: %i\n", dpbottom->df_count[toidx]);
+        int total_lines_passed = (actual_lines + filler_lines_d1) - fromwin->w_topfill;
+
+        FILE *fp = fopen("debug.txt", "a");
+        fprintf(fp, "dp: %p  \n", (void*)dp);
+        fprintf(fp, "dp->df_lnum[fromidx]: %i \n", dp->df_lnum[fromidx]);
+        // fprintf(fp, "dp->df_lnum[toidx]: %i \n", dp->df_lnum[toidx]);
+
+        // fprintf(fp, "actual_lines: %i\n", actual_lines);
+        // fprintf(fp, "filler_lines_d1: %i\n", filler_lines_d1);
+        // fprintf(fp, "fromwin->w_topfill: %i\n", fromwin->w_topfill);
+        fprintf(fp, "total_lines_passed: %i\n", total_lines_passed);
 
 
+        // fprintf(fp, "lnum + dp2->df_count[fromidx]: %i\n", lnum + dp2->df_count[fromidx]);
+        // fprintf(fp, "dp2->df_count[fromidx] + dp2->df_lnum[fromidx]: %i\n", dp2->df_count[fromidx] + dp2->df_lnum[fromidx]);
+        // fprintf(fp, "dp2->df_count[fromidx]: %i\n", dp2->df_count[fromidx]);
+
+
+
+        // back to the drawing board
         fclose(fp);
-
-        if (dpbottom->df_count[fromidx] && !dpbottom->df_count[toidx]) {
-          // return this as the number of filler lines
-          // int testv = 1;
-          // retthing = dpbottom->df_count[fromidx];
-          towin->w_topfill = dpbottom->df_count[fromidx];
-          // dp = dpbottom;
-          // retthing = 1;
-        }
-
-        // fprintf(fp, "dpbottom->df_lnum[toidx]: %i\n", dpbottom->df_lnum[toidx]);
-
-        // count how many filler lines have been passed to get to
-        // fromwin->w_topline
-
-        // int topdifflnum = dp->df_lnum[fromidx];
-        // int testv = fromwin->w_topline;
-
-        // towin->w_topfill = fromwin->w_topfill;
-        // towin->w_topline = 1;
-
-        // return;
+        // set topfill and topline in towin
       } else {
         // Inside a change: compute filler lines. With three or more
         // buffers we need to know the largest count.
