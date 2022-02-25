@@ -2772,6 +2772,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
 
         diff_T *dp3 = dp, *dplast = dp;
         int virtual_lines = 0;
+        int fillermod = 0;
         while (total_lines_passed) {
           // how many lines are available right now?
           if (!virtual_lines) {
@@ -2782,16 +2783,31 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
           } else {
             if (dplast->df_count[toidx]) {
               startline_to++;
+            } else {
+              fillermod++;
             }
             virtual_lines--;
             total_lines_passed--;
           }
 
         }
+        int fillertotal = 0;
+        // count the total filler lines between
+        if (dp3) {
+          for (diff_T *testdp = dp; testdp != dp3->df_next; testdp=testdp->df_next) {
+            if (!testdp->df_count[toidx]) {
+              fillertotal += get_max_diff_length2(testdp);
+            }
+          }
+        }
+
+
         towin->w_topline = startline_to;
-        towin->w_topfill = 0;
+        towin->w_topfill = fillertotal - fillermod;
         fprintf(fp, "2. startline_to: %i \n", startline_to);
         fprintf(fp, "2. virtual_lines: %i \n", virtual_lines);
+        fprintf(fp, "2. fillermod: %i \n", fillermod);
+        fprintf(fp, "2. fillertotal: %i \n", fillertotal);
         // back to the drawing board
         fclose(fp);
         // set topfill and topline in towin
