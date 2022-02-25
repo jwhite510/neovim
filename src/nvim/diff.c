@@ -2734,6 +2734,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
         int total_lines_passed = (actual_lines + filler_lines_d1) - fromwin->w_topfill;
 
         FILE *fp = fopen("debug.txt", "a");
+        fprintf(fp, "----------------------\n");
         fprintf(fp, "dp: %p  \n", (void*)dp);
         fprintf(fp, "dp->df_lnum[fromidx]: %i \n", dp->df_lnum[fromidx]);
         // fprintf(fp, "dp->df_lnum[toidx]: %i \n", dp->df_lnum[toidx]);
@@ -2742,6 +2743,33 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
         // fprintf(fp, "filler_lines_d1: %i\n", filler_lines_d1);
         // fprintf(fp, "fromwin->w_topfill: %i\n", fromwin->w_topfill);
         fprintf(fp, "total_lines_passed: %i\n", total_lines_passed);
+
+        // get the corresponding line in the other buffer
+        int startline_to = dp->df_lnum[toidx];
+        int offsetdp3 = 0;
+        diff_T *dp3 = dp;
+        while (total_lines_passed) {
+
+          total_lines_passed--;
+          startline_to++;
+          if (dp3->df_count[toidx]) {
+            offsetdp3++;
+            while (startline_to >= dp3->df_lnum[toidx] + dp3->df_count[toidx]) {
+              offsetdp3 = 0;
+              dp3 = dp3->df_next; // may want to add a safety check here
+            }
+          }
+
+        }
+        towin->w_topline = dp3->df_lnum[toidx] + offsetdp3;
+
+
+
+        // fprintf(fp, "2. total_lines_passed: %i \n", total_lines_passed);
+
+        fprintf(fp, "dp->df_lnum[toidx]: %i \n", dp->df_lnum[toidx]);
+        fprintf(fp, "dp3->df_lnum[toidx]: %i \n", dp3->df_lnum[toidx]);
+        fprintf(fp, "offsetdp3: %i\n", offsetdp3);
 
 
         // fprintf(fp, "lnum + dp2->df_count[fromidx]: %i\n", lnum + dp2->df_count[fromidx]);
