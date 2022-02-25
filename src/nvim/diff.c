@@ -2770,6 +2770,8 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
 
         fprintf(fp, "startline_to: %i \n", startline_to);
 
+        // first find how many fillers are above this line by starting from the top
+
         diff_T *dp3 = dp, *dplast = dp;
         int virtual_lines = 0;
         int fillermod = 0;
@@ -2791,20 +2793,29 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
           }
 
         }
-        int fillertotal = 0;
-        // count the total filler lines between
-        for (diff_T *testdp = dp; testdp != (dp3?dp3->df_next:NULL); testdp=testdp->df_next) {
-          if (!testdp->df_count[toidx]) {
-            fillertotal += get_max_diff_length2(testdp);
+        int totalfillerlines = 0;
+        for (diff_T *dptest = curtab->tp_first_diff; dp != NULL; dp = dp->df_next) {
+          if (dp->df_lnum[toidx] == startline_to && dp->df_count[toidx] == 0) {
+            totalfillerlines += get_max_diff_length2(dp);
           }
         }
+        // int fillertotal = 0;
+        // // count the total filler lines between
+        // for (diff_T *testdp = dp; testdp != (dp3?dp3->df_next:NULL); testdp=testdp->df_next) {
+        //   if (!testdp->df_count[toidx]) {
+        //     fillertotal += get_max_diff_length2(testdp);
+        //   }
+        // }
+
+        // how many filler lines are normally above this line?
 
         towin->w_topline = startline_to;
-        towin->w_topfill = fillertotal - fillermod;
+        towin->w_topfill = totalfillerlines - fillermod;
         fprintf(fp, "2. startline_to: %i \n", startline_to);
         fprintf(fp, "2. virtual_lines: %i \n", virtual_lines);
         fprintf(fp, "2. fillermod: %i \n", fillermod);
-        fprintf(fp, "2. fillertotal: %i \n", fillertotal);
+        fprintf(fp, "2. totalfillerlines: %i \n", totalfillerlines);
+        // fprintf(fp, "2. fillertotal: %i \n", fillertotal);
         // back to the drawing board
         fclose(fp);
         // set topfill and topline in towin
