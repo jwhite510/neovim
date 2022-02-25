@@ -2731,52 +2731,138 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
         diff_T *localtopdiff = NULL;
         diff_T *thistopdiff = NULL;
         diff_T *topdprev = NULL;
+        diff_T *nextblockblock = NULL;
         // fprintf(fp, "SEARCHING DIFFS FOR LNUM: %i \n", );
 
         int topdiffchange = 0;
         // better structure for this
         for (topdiff = curtab->tp_first_diff; topdiff != NULL; topdiff = topdiff->df_next) {
-          // is this a chain of diff blocks?
 
+          // set the top of the current overlapping diff block set as we
+          // iterate through all of the sets of overlapping diff blocks
           if (!localtopdiff || topdiffchange) {
             localtopdiff = topdiff;
             topdiffchange = 0;
           }
 
-          if (!(topdiff->df_next && (topdiff->df_next->df_lnum[fromidx] ==
-                  (topdiff->df_lnum[fromidx] + topdiff->df_count[fromidx])))) {
-            topdiffchange = 1;
-          }
-
           // check if the fromwin topline is matched by the current diff. if so, set it to the top of the diff block
           if (fromwin->w_topline >= topdiff->df_lnum[fromidx] && fromwin->w_topline <=
               (topdiff->df_lnum[fromidx] + topdiff->df_count[fromidx])) {
-            thistopdiff = localtopdiff;
-            break;
+
+            // this line is inside the current diff block, so we will save the
+            // top block of the set of blocks to refer to later
+            if (thistopdiff == NULL) {
+              thistopdiff = localtopdiff;
+            }
           }
 
-          // if (  (topdiff->df_next && topdiff->df_next->df_lnum[fromidx] ==
-          //       (topdiff->df_lnum[fromidx] + topdiff->df_count[fromidx])) ||
-          //       (topdprev && )
+          // check if the next set of overlapping diff blocks is next
+          if (!(topdiff->df_next && (topdiff->df_next->df_lnum[fromidx] ==
+                  (topdiff->df_lnum[fromidx] + topdiff->df_count[fromidx])))) {
 
-          //     ) {
+            // mark that the next diff block is belongs to a different set of
+            // overlapping diff blocks
+            topdiffchange = 1;
 
-          //   if (!localtopdiff) {
-          //     localtopdiff = topdiff;
-          //   }
+            // if we already have found that the line number is inside a diff block,
+            // set the marker of the next block and finish the iteration
+            if (thistopdiff) {
+              nextblockblock = topdiff->df_next;
+              break;
+            }
+          }
 
-          //   if (topdiff && topdiff->df_lnum[fromidx] == fromwin->w_topline) {
-          //     thistopdiff = localtopdiff;
-          //   }
-
-          // } else {
-          //   localtopdiff = NULL;
-          // }
         }
 
-        fprintf(fp, "thistopdiff->df_lnum[]@3 %i %i %i \n", thistopdiff->df_lnum[0], thistopdiff->df_lnum[1], thistopdiff->df_lnum[2]);
-        fprintf(fp, "thistopdiff->df_count[]@3 %i %i %i \n", thistopdiff->df_count[0], thistopdiff->df_count[1], thistopdiff->df_count[2]);
+        fprintf(fp, "thistopdiff->df_lnum[]@3 %i %i \n", thistopdiff->df_lnum[0], thistopdiff->df_lnum[1]);
+        fprintf(fp, "thistopdiff->df_count[]@3 %i %i \n", thistopdiff->df_count[0], thistopdiff->df_count[1]);
+
+        // count the virtual lines that have been passed
+        int virtual_lines_passed = 0;
+
+        diff_T *curdif = thistopdiff;
+        while (curdif && ( curdif->df_lnum[fromidx] + curdif->df_count[fromidx] ) <= fromwin->w_topline) {
+
+          virtual_lines_passed += get_max_diff_length2(curdif);
+
+          curdif = curdif->df_next;
+        }
+
+        if (curdif != nextblockblock) {
+          virtual_lines_passed += fromwin->w_topline - curdif->df_lnum[fromidx];
+          // virtual_lines_passed -= fromwin->w_topfill;
+        }
+        virtual_lines_passed -= fromwin->w_topfill;
+
+        // the topline is located in this diff block
+        // fprintf(fp, "curdif->df_lnum[fromidx]: %i \n", curdif->df_lnum[fromidx]);
+        // fprintf(fp, "curdif->df_count[fromidx]: %i \n", curdif->df_count[fromidx]);
+        // fprintf(fp, "fromwin->w_topline : %i \n", fromwin->w_topline);
+        // fprintf(fp, "fromwin->w_topline - curdif->df_lnum[fromidx] : %i \n", fromwin->w_topline - curdif->df_lnum[fromidx]);
+        // fprintf(fp, "(curdif != nextblockblock): %i \n", (curdif != nextblockblock));
+        // if (( curdif->df_lnum[fromidx] + curdif->df_count[fromidx] ) ) {
+
+        //   virtual_lines_passed += get_max_diff_length2(curdif);
+
+        // }
+
         // get the coordinate for this diff block of blocks from the start of the top sub block
+        fprintf(fp, "virtual_lines_passed : %i \n", virtual_lines_passed);
+        curdif = thistopdiff;
+        int curlinenum_to = thistopdiff->df_lnum[toidx];
+        int ch_virtual_lines = 0;
+        int ch_block_length = 0;
+        int isfiller = 0;
+        int linesfiller = 0;
+        while (virtual_lines_passed) {
+
+          if (ch_virtual_lines) {
+            virtual_lines_passed--;
+            ch_virtual_lines--;
+            if (!isfiller) {
+              curlinenum_to++;
+            } else {
+              linesfiller++;
+            }
+
+          } else{
+            linesfiller = 0;
+            ch_virtual_lines = get_max_diff_length2(curdif);
+            isfiller = (curdif->df_count[toidx] ? 0 : 1);
+            if (isfiller) {
+              while (curdif && curdif->df_next && curdif->df_lnum[toidx] ==
+                  curdif->df_next->df_lnum[toidx] &&
+                  curdif->df_next->df_count[toidx] == 0) {
+                curdif = curdif->df_next;
+                ch_virtual_lines += get_max_diff_length2(curdif);
+              }
+            }
+            if (curdif) {
+              curdif = curdif->df_next;
+            }
+          }
+        }
+        // count the number of filler lines that would normally be above this line
+        int maxfiller = 0;
+        for (diff_T *dpfillertest = thistopdiff; dpfillertest != NULL; dpfillertest = dpfillertest->df_next) {
+          if (dpfillertest->df_lnum[toidx] == curlinenum_to) {
+            while (dpfillertest && dpfillertest->df_lnum[toidx] == curlinenum_to) {
+              maxfiller += dpfillertest->df_count[toidx] ? 0 : get_max_diff_length2(dpfillertest);
+              dpfillertest = dpfillertest->df_next;
+            }
+            break;
+          }
+        }
+        // count the amount of filler that would be on this line
+
+        fprintf(fp, "ch_virtual_lines : %i \n", ch_virtual_lines);
+        fprintf(fp, "linesfiller : %i \n", linesfiller);
+        fprintf(fp, "maxfiller : %i \n", maxfiller);
+        fprintf(fp, "toidx : %i \n", toidx);
+        towin->w_topfill = maxfiller - linesfiller;
+        towin->w_topline = curlinenum_to;
+
+
 
 
         // diff_T *dp2 = dp;

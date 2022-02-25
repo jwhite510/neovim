@@ -2,9 +2,12 @@ same things
 same things
 same things
 same things
+different line 1
+different line 1
 different line 2
-different line 2
-different line 2
+file line 2
+????
+fil line 2
 different line 3
 different line 4
 same things
