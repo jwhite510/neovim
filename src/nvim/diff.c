@@ -2232,6 +2232,18 @@ int get_max_diff_length(diff_T *dp)
   return filler_lines;
 }
 
+int get_max_diff_length2(diff_T* dp) {
+  int maxlength = 0;
+  for (int k = 0; k < DB_COUNT; k++) {
+    if (curtab->tp_diffbuf[k] != NULL) {
+      if (dp->df_count[k] > maxlength) {
+        maxlength = dp->df_count[k];
+      }
+    }
+  }
+  return maxlength;
+}
+
 /// Check diff status for line "lnum" in buffer "buf":
 ///
 /// Returns 0 for nothing special
@@ -2736,9 +2748,13 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
         FILE *fp = fopen("debug.txt", "a");
         fprintf(fp, "----------------------\n");
         fprintf(fp, "dp: %p  \n", (void*)dp);
-        fprintf(fp, "dp->df_lnum[fromidx]: %i \n", dp->df_lnum[fromidx]);
-        // fprintf(fp, "dp->df_lnum[toidx]: %i \n", dp->df_lnum[toidx]);
 
+        fprintf(fp, "dp->df_lnum[fromidx]: %i \n", dp->df_lnum[fromidx]);
+        fprintf(fp, "dp->df_lnum[toidx]: %i \n", dp->df_lnum[toidx]);
+        fprintf(fp, "dp->df_count[fromidx]: %i \n", dp->df_count[fromidx]);
+        fprintf(fp, "dp->df_count[toidx]: %i \n", dp->df_count[toidx]);
+
+        // fprintf(fp, "dp->df_lnum[toidx]: %i \n", dp->df_lnum[toidx]);
         // fprintf(fp, "actual_lines: %i\n", actual_lines);
         // fprintf(fp, "filler_lines_d1: %i\n", filler_lines_d1);
         // fprintf(fp, "fromwin->w_topfill: %i\n", fromwin->w_topfill);
@@ -2746,38 +2762,36 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
 
         // get the corresponding line in the other buffer
         int startline_to = dp->df_lnum[toidx];
-        int offsetdp3 = 0;
-        diff_T *dp3 = dp;
-        while (total_lines_passed) {
+        int startdp = dp;
+        // get the dp that the line number starts on
+        // while (startdp->df_next && startdp->count[toidx] == 0) {
+        //   startdp = startdp->df_next;
+        // }
 
-          total_lines_passed--;
-          startline_to++;
-          if (dp3->df_count[toidx]) {
-            offsetdp3++;
-            while (startline_to >= dp3->df_lnum[toidx] + dp3->df_count[toidx]) {
-              offsetdp3 = 0;
-              dp3 = dp3->df_next; // may want to add a safety check here
+        fprintf(fp, "startline_to: %i \n", startline_to);
+
+        diff_T *dp3 = dp, *dplast = dp;
+        int virtual_lines = 0;
+        while (total_lines_passed) {
+          // how many lines are available right now?
+          if (!virtual_lines) {
+            virtual_lines = get_max_diff_length2(dp3);
+            dplast = dp3;
+            dp3 = dp3->df_next;
+
+          } else {
+            if (dplast->df_count[toidx]) {
+              startline_to++;
             }
+            virtual_lines--;
+            total_lines_passed--;
           }
 
         }
-        towin->w_topline = dp3->df_lnum[toidx] + offsetdp3;
-
-
-
-        // fprintf(fp, "2. total_lines_passed: %i \n", total_lines_passed);
-
-        fprintf(fp, "dp->df_lnum[toidx]: %i \n", dp->df_lnum[toidx]);
-        fprintf(fp, "dp3->df_lnum[toidx]: %i \n", dp3->df_lnum[toidx]);
-        fprintf(fp, "offsetdp3: %i\n", offsetdp3);
-
-
-        // fprintf(fp, "lnum + dp2->df_count[fromidx]: %i\n", lnum + dp2->df_count[fromidx]);
-        // fprintf(fp, "dp2->df_count[fromidx] + dp2->df_lnum[fromidx]: %i\n", dp2->df_count[fromidx] + dp2->df_lnum[fromidx]);
-        // fprintf(fp, "dp2->df_count[fromidx]: %i\n", dp2->df_count[fromidx]);
-
-
-
+        towin->w_topline = startline_to;
+        towin->w_topfill = 0;
+        fprintf(fp, "2. startline_to: %i \n", startline_to);
+        fprintf(fp, "2. virtual_lines: %i \n", virtual_lines);
         // back to the drawing board
         fclose(fp);
         // set topfill and topline in towin
