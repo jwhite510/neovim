@@ -2793,14 +2793,11 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
         }
         int fillertotal = 0;
         // count the total filler lines between
-        if (dp3) {
-          for (diff_T *testdp = dp; testdp != dp3->df_next; testdp=testdp->df_next) {
-            if (!testdp->df_count[toidx]) {
-              fillertotal += get_max_diff_length2(testdp);
-            }
+        for (diff_T *testdp = dp; testdp != (dp3?dp3->df_next:NULL); testdp=testdp->df_next) {
+          if (!testdp->df_count[toidx]) {
+            fillertotal += get_max_diff_length2(testdp);
           }
         }
-
 
         towin->w_topline = startline_to;
         towin->w_topfill = fillertotal - fillermod;
