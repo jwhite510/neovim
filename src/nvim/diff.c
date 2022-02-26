@@ -3407,6 +3407,13 @@ void ex_diffgetput(exarg_T *eap)
     return;
   }
 
+  int linematch = 1;
+  // range is not currently compatible with linematch enabled
+  if (linematch && eap->addr_count) {
+    EMSG(_("[range] argument is not compatible with linematch enabled "));
+    goto theend;
+  }
+
   if (*eap->arg == NUL) {
     // No argument: Find the other buffer in the list of diff buffers.
     for (idx_other = 0; idx_other < DB_COUNT; ++idx_other) {
@@ -3531,7 +3538,9 @@ void ex_diffgetput(exarg_T *eap)
     dfree = NULL;
 
     // handle the case with overlapping diff blocks
-    while (dp->df_next && dp->df_next->df_lnum[idx_cur] == (eap->line1 + off + 1)) {
+    while (dp->df_next && (dp->df_next->df_lnum[idx_cur] ==
+          dp->df_lnum[idx_cur] + dp->df_count[idx_cur]) &&
+        dp->df_next->df_lnum[idx_cur] == (eap->line1 + off + 1)) {
       dp = dp->df_next;
     }
 

@@ -1,2 +1,3 @@
-display dp->df_count[idx_cur]
-display dp->df_lnum[idx_cur]
+display dp
+display {*dp->df_count@3, *dp->df_lnum@3}
+display {*dp->df_next->df_count@3, *dp->df_next->df_lnum@3}
