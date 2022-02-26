@@ -2439,8 +2439,23 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
     filler_lines_d1 += get_max_diff_length(dp);
   }
 
+
   if (lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
     int zero = false;
+
+    // is this an added line or a changed line?
+    int j = 0;
+    for (i = 0; i < DB_COUNT; i++) {
+      if (curtab->tp_diffbuf[i] != NULL) {
+        if (dp->df_count[i]) {
+          j++;
+        }
+      }
+    }
+    if (linestatus) {
+      (*linestatus) = (j == 1) ? -2 : -1;
+    }
+    return filler_lines_d1;
 
     // Changed or inserted line.  If the other buffers have a count of
     // zero, the lines were inserted.  If the other buffers have the same
@@ -2454,14 +2469,8 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
         } else {
           if (dp->df_count[i] != dp->df_count[idx]) {
             // nr of lines changed.
-            if (linematch && double_pointer) {
-              if (retval == INT_MIN) {
-                retval = -1;
-              }
-            } else {
               return -1;
             }
-          }
           cmp = true;
         }
       }
@@ -2475,17 +2484,11 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
             && (curtab->tp_diffbuf[i] != NULL)
             && (dp->df_count[i] != 0)) {
           if (!diff_equal_entry(dp, idx, i)) {
-            if (linematch && double_pointer) {
-              if (retval == INT_MIN) {
-                retval = -1;
-              }
-            } else {
               return -1;
             }
           }
         }
       }
-    }
 
     // If there is no buffer with zero lines then there is no difference
     // any longer.  Happens when making a change (or undo) that removes
@@ -2493,30 +2496,10 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
     // through updating the window.  Just report the text as unchanged.
     // Other windows might still show the change though.
     if (zero == false) {
-      if (linematch && double_pointer) {
-        if (retval == INT_MIN) {
-          retval = 0;
-        }
-      } else {
         return 0;
       }
-    }
-    if (linematch && double_pointer) {
-      if (retval == INT_MIN) {
-        retval = -2;
-      }
-    } else{
       return -2;
     }
-  }
-
-  if (linematch && double_pointer) {
-    // set line status value
-    if (linestatus) {
-      (*linestatus) = (retval != INT_MIN) ? retval : 0;
-    }
-    return filler_lines_d1;
-  }
 
   // If 'diffopt' doesn't contain "filler", return 0.
   if (!(diff_flags & DIFF_FILLER)) {
