@@ -3530,7 +3530,8 @@ void ex_diffgetput(exarg_T *eap)
     }
     dfree = NULL;
 
-    if (dp->df_next && dp->df_next->df_lnum[idx_cur] == (eap->line1 + off + 1)) {
+    // handle the case with overlapping diff blocks
+    while (dp->df_next && dp->df_next->df_lnum[idx_cur] == (eap->line1 + off + 1)) {
       dp = dp->df_next;
     }
 
