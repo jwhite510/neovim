@@ -2710,7 +2710,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
 
         // find the top most diff block that includes this
 
-        FILE *fp = fopen("debug.txt", "a");
+        // FILE *fp = fopen("debug.txt", "a");
         diff_T *topdiff = NULL;
         diff_T *localtopdiff = NULL;
         diff_T *thistopdiff = NULL;
@@ -2758,8 +2758,8 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
 
         }
 
-        fprintf(fp, "thistopdiff->df_lnum[]@3 %i %i \n", thistopdiff->df_lnum[0], thistopdiff->df_lnum[1]);
-        fprintf(fp, "thistopdiff->df_count[]@3 %i %i \n", thistopdiff->df_count[0], thistopdiff->df_count[1]);
+        // fprintf(fp, "thistopdiff->df_lnum[]@3 %i %i \n", thistopdiff->df_lnum[0], thistopdiff->df_lnum[1]);
+        // fprintf(fp, "thistopdiff->df_count[]@3 %i %i \n", thistopdiff->df_count[0], thistopdiff->df_count[1]);
 
         // count the virtual lines that have been passed
         int virtual_lines_passed = 0;
@@ -2791,7 +2791,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
         // }
 
         // get the coordinate for this diff block of blocks from the start of the top sub block
-        fprintf(fp, "virtual_lines_passed : %i \n", virtual_lines_passed);
+        // fprintf(fp, "virtual_lines_passed : %i \n", virtual_lines_passed);
         curdif = thistopdiff;
         int curlinenum_to = thistopdiff->df_lnum[toidx];
         int ch_virtual_lines = 0;
@@ -2839,10 +2839,10 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
         }
         // count the amount of filler that would be on this line
 
-        fprintf(fp, "ch_virtual_lines : %i \n", ch_virtual_lines);
-        fprintf(fp, "linesfiller : %i \n", linesfiller);
-        fprintf(fp, "maxfiller : %i \n", maxfiller);
-        fprintf(fp, "toidx : %i \n", toidx);
+        // fprintf(fp, "ch_virtual_lines : %i \n", ch_virtual_lines);
+        // fprintf(fp, "linesfiller : %i \n", linesfiller);
+        // fprintf(fp, "maxfiller : %i \n", maxfiller);
+        // fprintf(fp, "toidx : %i \n", toidx);
         towin->w_topfill = maxfiller - linesfiller;
         towin->w_topline = curlinenum_to;
 
@@ -2873,7 +2873,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
 
         int total_lines_passed = (actual_lines + filler_lines_d1) - fromwin->w_topfill;
 
-        fprintf(fp, "----------------------\n");
+        // fprintf(fp, "----------------------\n");
         // fprintf(fp, "dp: %p  \n", (void*)dp);
 
         // fprintf(fp, "thistopdiff->df_lnum[fromidx]: %i \n", thistopdiff->df_lnum[fromidx]);
@@ -2944,7 +2944,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
         // fprintf(fp, "2. totalfillerlines: %i \n", totalfillerlines);
         // fprintf(fp, "2. fillertotal: %i \n", fillertotal);
         // back to the drawing board
-        fclose(fp);
+        // fclose(fp);
         // set topfill and topline in towin
       } else {
         // Inside a change: compute filler lines. With three or more
@@ -3529,6 +3529,11 @@ void ex_diffgetput(exarg_T *eap)
       break;
     }
     dfree = NULL;
+
+    if (dp->df_next && dp->df_next->df_lnum[idx_cur] == (eap->line1 + off + 1)) {
+      dp = dp->df_next;
+    }
+
     lnum = dp->df_lnum[idx_to];
     count = dp->df_count[idx_to];
 
