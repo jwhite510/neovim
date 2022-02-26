@@ -2439,11 +2439,7 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
     filler_lines_d1 += get_max_diff_length(dp);
   }
 
-
-  if (lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
-    int zero = false;
-
-    // is this an added line or a changed line?
+  if (lnum < dp->df_lnum[idx]+ dp->df_count[idx]) {
     int j = 0;
     for (i = 0; i < DB_COUNT; i++) {
       if (curtab->tp_diffbuf[i] != NULL) {
@@ -2451,11 +2447,16 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
           j++;
         }
       }
+      // is this an added line or a changed line?
+      if (linestatus) {
+        (*linestatus) = (j == 1) ? -2 : -1;
+      }
     }
-    if (linestatus) {
-      (*linestatus) = (j == 1) ? -2 : -1;
-    }
-    return filler_lines_d1;
+  }
+  return filler_lines_d1;
+
+  if (lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
+    int zero = false;
 
     // Changed or inserted line.  If the other buffers have a count of
     // zero, the lines were inserted.  If the other buffers have the same
