@@ -3398,11 +3398,6 @@ void ex_diffgetput(exarg_T *eap)
   dprev = NULL;
 
   for (dp = curtab->tp_first_diff; dp != NULL;) {
-    if (dp->df_lnum[idx_cur] > eap->line2 + off) {
-      // past the range that was specified
-      break;
-    }
-    dfree = NULL;
 
     if (linematch) {
       // handle the case with overlapping diff blocks
@@ -3412,6 +3407,12 @@ void ex_diffgetput(exarg_T *eap)
         dp = dp->df_next;
       }
     }
+
+    if (dp->df_lnum[idx_cur] > eap->line2 + off) {
+      // past the range that was specified
+      break;
+    }
+    dfree = NULL;
 
     lnum = dp->df_lnum[idx_to];
     count = dp->df_count[idx_to];
@@ -3546,6 +3547,9 @@ void ex_diffgetput(exarg_T *eap)
       // When changing the current buffer, keep track of line numbers
       if (idx_cur == idx_to) {
         off += added;
+      }
+      if (linematch) {
+        break;
       }
     }
 
