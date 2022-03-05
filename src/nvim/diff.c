@@ -2271,7 +2271,7 @@ void find_top_diff_block(diff_T **thistopdiff, diff_T **nextblockblock, int from
 void count_filler_lines_and_topline(int *curlinenum_to, int *linesfiller,
     const diff_T *thistopdiff, const int toidx, int virtual_lines_passed)
 {
-  diff_T *curdif = thistopdiff;
+  const diff_T *curdif = thistopdiff;
   int ch_virtual_lines = 0;
   int isfiller = 0;
   while (virtual_lines_passed) {
@@ -2355,6 +2355,82 @@ void calculate_topfill_and_topline(const int fromidx, const int toidx, const
   (*topline) = curlinenum_to;
 }
 
+void run_linematch_algorithm(diff_T * dp)
+{
+  int i, j;
+  // include the algorithm and run it here
+
+  // define buffers for diff algorithm
+  diffin_T *diffbuffers = xmalloc(sizeof(diffin_T) * DB_COUNT);
+  const char **diff_begin = xmalloc(sizeof(char *) * DB_COUNT);
+  int *diff_length = xmalloc(sizeof(int) * DB_COUNT);
+  int *outputmap = xmalloc(sizeof(int) * DB_COUNT);
+  int diffbuffers_count = 0;
+  for (i = 0; i < DB_COUNT; i++) {
+    if (curtab->tp_diffbuf[i] != NULL) {
+      memset(&diffbuffers[diffbuffers_count], 0, sizeof(diffbuffers[diffbuffers_count]));
+      diff_write(curtab->tp_diffbuf[i], &diffbuffers[diffbuffers_count]);
+      diff_begin[diffbuffers_count] = diffbuffers[diffbuffers_count].din_mmfile.ptr;
+
+      for (j = 0; j < dp->df_lnum[i] - 1; j++) {
+        while (*diff_begin[diffbuffers_count] != '\n') {
+          diff_begin[diffbuffers_count]++;
+        }
+        diff_begin[diffbuffers_count]++;
+      }
+      diff_length[diffbuffers_count] = dp->df_count[i];
+
+      outputmap[diffbuffers_count] = i;
+
+      diffbuffers_count++;
+    }
+  }
+
+  int decisions_length = 0;
+  int *decisions = NULL;
+  linematch_nbuffers(diff_begin, diff_length, diffbuffers_count,
+      &decisions_length, &decisions);
+
+  // get the start line number here in each diff buffer, and then increment
+  int line_numbers[DB_COUNT];
+  for (i = 0; i < DB_COUNT; i++) {
+    if (curtab->tp_diffbuf[i] != NULL) {
+      line_numbers[i] = dp->df_lnum[i];
+      dp->df_count[i] = 0;
+    }
+  }
+  // write the diffs to the current diff block
+  diff_T *dp_s = dp;
+  for (i = 0; i < decisions_length; i++) {
+    if (i && (decisions[i - 1] != decisions[i])) {
+      dp_s = diff_alloc_new(curtab, dp_s, dp_s->df_next);
+      dp_s->df_redraw = 0;
+      for (j = 0; j < DB_COUNT; j++) {
+        if (curtab->tp_diffbuf[j] != NULL) {
+          dp_s->df_lnum[j] = line_numbers[j];
+          dp_s->df_count[j] = 0;
+        }
+      }
+    }
+    for (j = 0; j < diffbuffers_count; j++) {
+      if (decisions[i] & (1 << j)) {
+        // will need to use the map here
+        dp_s->df_count[outputmap[j]]++;
+        line_numbers[outputmap[j]]++;
+      }
+    }
+  }
+  for (i = 0; i < diffbuffers_count; i++) {
+    clear_diffin(&diffbuffers[i]);
+  }
+  xfree(diffbuffers);
+  xfree(diff_begin);
+  xfree(diff_length);
+  xfree(outputmap);
+  xfree(decisions);
+  dp->df_redraw = 0;
+}
+
 /// Check diff status for line "lnum" in buffer "buf":
 ///
 /// Returns 0 for nothing special
@@ -2417,78 +2493,7 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
 
   int linematch = 1;
   if (dp->df_redraw && linematch) {
-
-    // include the algorithm and run it here
-
-    // define buffers for diff algorithm
-    diffin_T *diffbuffers = xmalloc(sizeof(diffin_T) * DB_COUNT);
-    const char **diff_begin = xmalloc(sizeof(char *) * DB_COUNT);
-    int *diff_length = xmalloc(sizeof(int) * DB_COUNT);
-    int *outputmap = xmalloc(sizeof(int) * DB_COUNT);
-    int diffbuffers_count = 0;
-    for (i = 0; i < DB_COUNT; i++) {
-      if (curtab->tp_diffbuf[i] != NULL) {
-        memset(&diffbuffers[diffbuffers_count], 0, sizeof(diffbuffers[diffbuffers_count]));
-        diff_write(curtab->tp_diffbuf[i], &diffbuffers[diffbuffers_count]);
-        diff_begin[diffbuffers_count] = diffbuffers[diffbuffers_count].din_mmfile.ptr;
-
-        for (int j = 0; j < dp->df_lnum[i] - 1; j++) {
-          while (*diff_begin[diffbuffers_count] != '\n') {
-            diff_begin[diffbuffers_count]++;
-          }
-          diff_begin[diffbuffers_count]++;
-        }
-        diff_length[diffbuffers_count] = dp->df_count[i];
-
-        outputmap[diffbuffers_count] = i;
-
-        diffbuffers_count++;
-      }
-    }
-
-    int decisions_length = 0;
-    int *decisions = NULL;
-    linematch_nbuffers(diff_begin, diff_length, diffbuffers_count,
-        &decisions_length, &decisions);
-
-    // get the start line number here in each diff buffer, and then increment
-    int line_numbers[DB_COUNT];
-    for (i = 0; i < DB_COUNT; i++) {
-      if (curtab->tp_diffbuf[i] != NULL) {
-        line_numbers[i] = dp->df_lnum[i];
-        dp->df_count[i] = 0;
-      }
-    }
-    // write the diffs to the current diff block
-    diff_T *dp_s = dp;
-    for (i = 0; i < decisions_length; i++) {
-      if (i && (decisions[i - 1] != decisions[i])) {
-        dp_s = diff_alloc_new(curtab, dp_s, dp_s->df_next);
-        dp_s->df_redraw = 0;
-        for (int j = 0; j < DB_COUNT; j++) {
-          if (curtab->tp_diffbuf[j] != NULL) {
-            dp_s->df_lnum[j] = line_numbers[j];
-            dp_s->df_count[j] = 0;
-          }
-        }
-      }
-      for (int j = 0; j < diffbuffers_count; j++) {
-        if (decisions[i] & (1 << j)) {
-          // will need to use the map here
-          dp_s->df_count[outputmap[j]]++;
-          line_numbers[outputmap[j]]++;
-        }
-      }
-    }
-    for (i = 0; i < diffbuffers_count; i++) {
-      clear_diffin(&diffbuffers[i]);
-    }
-    xfree(diffbuffers);
-    xfree(diff_begin);
-    xfree(diff_length);
-    xfree(outputmap);
-    xfree(decisions);
-    dp->df_redraw = 0;
+    run_linematch_algorithm(dp);
   }
 
   if (linematch) {
