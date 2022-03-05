@@ -2223,6 +2223,51 @@ int get_max_diff_length2(diff_T* dp) {
   return maxlength;
 }
 
+void find_top_diff_block(diff_T **thistopdiff, diff_T **nextblockblock, int fromidx, int topline)
+{
+  diff_T *topdiff = NULL;
+  diff_T *localtopdiff = NULL;
+
+  int topdiffchange = 0;
+  for (topdiff = curtab->tp_first_diff; topdiff != NULL; topdiff = topdiff->df_next) {
+
+    // set the top of the current overlapping diff block set as we
+    // iterate through all of the sets of overlapping diff blocks
+    if (!localtopdiff || topdiffchange) {
+      localtopdiff = topdiff;
+      topdiffchange = 0;
+    }
+
+    // check if the fromwin topline is matched by the current diff. if so, set it to the top of the diff block
+    if (topline >= topdiff->df_lnum[fromidx] && topline <=
+        (topdiff->df_lnum[fromidx] + topdiff->df_count[fromidx])) {
+
+      // this line is inside the current diff block, so we will save the
+      // top block of the set of blocks to refer to later
+      if ((*thistopdiff) == NULL) {
+        (*thistopdiff) = localtopdiff;
+      }
+    }
+
+    // check if the next set of overlapping diff blocks is next
+    if (!(topdiff->df_next && (topdiff->df_next->df_lnum[fromidx] ==
+            (topdiff->df_lnum[fromidx] + topdiff->df_count[fromidx])))) {
+
+      // mark that the next diff block is belongs to a different set of
+      // overlapping diff blocks
+      topdiffchange = 1;
+
+      // if we already have found that the line number is inside a diff block,
+      // set the marker of the next block and finish the iteration
+      if (*thistopdiff) {
+        (*nextblockblock) = topdiff->df_next;
+        break;
+      }
+    }
+
+  }
+}
+
 /// Check diff status for line "lnum" in buffer "buf":
 ///
 /// Returns 0 for nothing special
@@ -2329,7 +2374,6 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
     }
     // write the diffs to the current diff block
     diff_T *dp_s = dp;
-    // it
     for (i = 0; i < decisions_length; i++) {
       if (i && (decisions[i - 1] != decisions[i])) {
         dp_s = diff_alloc_new(curtab, dp_s, dp_s->df_next);
@@ -2643,50 +2687,11 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
     if (lnum >= dp->df_lnum[fromidx]) {
       if (linematch) {
 
-        // 1. find the position from the top of the diff block
-        diff_T *topdiff = NULL;
-        diff_T *localtopdiff = NULL;
+        // 1. find the position from the top of the diff block, and the start
+        // of the next diff block
         diff_T *thistopdiff = NULL;
         diff_T *nextblockblock = NULL;
-
-        int topdiffchange = 0;
-        for (topdiff = curtab->tp_first_diff; topdiff != NULL; topdiff = topdiff->df_next) {
-
-          // set the top of the current overlapping diff block set as we
-          // iterate through all of the sets of overlapping diff blocks
-          if (!localtopdiff || topdiffchange) {
-            localtopdiff = topdiff;
-            topdiffchange = 0;
-          }
-
-          // check if the fromwin topline is matched by the current diff. if so, set it to the top of the diff block
-          if (fromwin->w_topline >= topdiff->df_lnum[fromidx] && fromwin->w_topline <=
-              (topdiff->df_lnum[fromidx] + topdiff->df_count[fromidx])) {
-
-            // this line is inside the current diff block, so we will save the
-            // top block of the set of blocks to refer to later
-            if (thistopdiff == NULL) {
-              thistopdiff = localtopdiff;
-            }
-          }
-
-          // check if the next set of overlapping diff blocks is next
-          if (!(topdiff->df_next && (topdiff->df_next->df_lnum[fromidx] ==
-                  (topdiff->df_lnum[fromidx] + topdiff->df_count[fromidx])))) {
-
-            // mark that the next diff block is belongs to a different set of
-            // overlapping diff blocks
-            topdiffchange = 1;
-
-            // if we already have found that the line number is inside a diff block,
-            // set the marker of the next block and finish the iteration
-            if (thistopdiff) {
-              nextblockblock = topdiff->df_next;
-              break;
-            }
-          }
-
-        }
+        find_top_diff_block(&thistopdiff, &nextblockblock, fromidx, fromwin->w_topline);
 
         // count the virtual lines that have been passed
         int virtual_lines_passed = 0;
