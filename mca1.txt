@@ -1,0 +1,11 @@
+
+if __name__ == "__main__":
+<<<<<<< HEAD
+    print("test 1234")
+    print("test 1234")
+    print("test 1234")
+=======
+    print("test 234")
+    print("test 234")
+    print("test 234")
+>>>>>>> branch1
