@@ -2227,8 +2227,8 @@ void find_top_diff_block(diff_T **thistopdiff, diff_T **nextblockblock, int from
 {
   diff_T *topdiff = NULL;
   diff_T *localtopdiff = NULL;
-
   int topdiffchange = 0;
+
   for (topdiff = curtab->tp_first_diff; topdiff != NULL; topdiff = topdiff->df_next) {
 
     // set the top of the current overlapping diff block set as we
@@ -2265,6 +2265,42 @@ void find_top_diff_block(diff_T **thistopdiff, diff_T **nextblockblock, int from
       }
     }
 
+  }
+}
+
+void count_filler_lines_and_topline(int *curlinenum_to, int *linesfiller,
+    diff_T *thistopdiff, int toidx, int virtual_lines_passed)
+{
+  diff_T *curdif = thistopdiff;
+  int ch_virtual_lines = 0;
+  int isfiller = 0;
+  while (virtual_lines_passed) {
+
+    if (ch_virtual_lines) {
+      virtual_lines_passed--;
+      ch_virtual_lines--;
+      if (!isfiller) {
+        (*curlinenum_to)++;
+      } else {
+        (*linesfiller)++;
+      }
+
+    } else{
+      (*linesfiller) = 0;
+      ch_virtual_lines = get_max_diff_length2(curdif);
+      isfiller = (curdif->df_count[toidx] ? 0 : 1);
+      if (isfiller) {
+        while (curdif && curdif->df_next && curdif->df_lnum[toidx] ==
+            curdif->df_next->df_lnum[toidx] &&
+            curdif->df_next->df_count[toidx] == 0) {
+          curdif = curdif->df_next;
+          ch_virtual_lines += get_max_diff_length2(curdif);
+        }
+      }
+      if (curdif) {
+        curdif = curdif->df_next;
+      }
+    }
   }
 }
 
@@ -2691,10 +2727,11 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
         // of the next diff block
         diff_T *thistopdiff = NULL;
         diff_T *nextblockblock = NULL;
+        int virtual_lines_passed = 0;
+
         find_top_diff_block(&thistopdiff, &nextblockblock, fromidx, fromwin->w_topline);
 
         // count the virtual lines that have been passed
-        int virtual_lines_passed = 0;
 
         diff_T *curdif = thistopdiff;
         while (curdif && ( curdif->df_lnum[fromidx] + curdif->df_count[fromidx] ) <= fromwin->w_topline) {
@@ -2713,37 +2750,9 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
         // count the same amount of virtual lines in the toidx buffer
         curdif = thistopdiff;
         int curlinenum_to = thistopdiff->df_lnum[toidx];
-        int ch_virtual_lines = 0;
-        int isfiller = 0;
         int linesfiller = 0;
-        while (virtual_lines_passed) {
-
-          if (ch_virtual_lines) {
-            virtual_lines_passed--;
-            ch_virtual_lines--;
-            if (!isfiller) {
-              curlinenum_to++;
-            } else {
-              linesfiller++;
-            }
-
-          } else{
-            linesfiller = 0;
-            ch_virtual_lines = get_max_diff_length2(curdif);
-            isfiller = (curdif->df_count[toidx] ? 0 : 1);
-            if (isfiller) {
-              while (curdif && curdif->df_next && curdif->df_lnum[toidx] ==
-                  curdif->df_next->df_lnum[toidx] &&
-                  curdif->df_next->df_count[toidx] == 0) {
-                curdif = curdif->df_next;
-                ch_virtual_lines += get_max_diff_length2(curdif);
-              }
-            }
-            if (curdif) {
-              curdif = curdif->df_next;
-            }
-          }
-        }
+        count_filler_lines_and_topline(&curlinenum_to, &linesfiller,
+            thistopdiff, toidx, virtual_lines_passed);
 
         // count the number of filler lines that would normally be above this line
         int maxfiller = 0;
