@@ -2269,7 +2269,7 @@ void find_top_diff_block(diff_T **thistopdiff, diff_T **nextblockblock, int from
 }
 
 void count_filler_lines_and_topline(int *curlinenum_to, int *linesfiller,
-    diff_T *thistopdiff, int toidx, int virtual_lines_passed)
+    const diff_T *thistopdiff, const int toidx, int virtual_lines_passed)
 {
   diff_T *curdif = thistopdiff;
   int ch_virtual_lines = 0;
@@ -2302,6 +2302,57 @@ void count_filler_lines_and_topline(int *curlinenum_to, int *linesfiller,
       }
     }
   }
+}
+
+void calculate_topfill_and_topline(const int fromidx, const int toidx, const
+    int from_topline, const int from_topfill, int *topfill, linenr_T
+    *topline)
+{
+  // 1. find the position from the top of the diff block, and the start
+  // of the next diff block
+  diff_T *thistopdiff = NULL;
+  diff_T *nextblockblock = NULL;
+  int virtual_lines_passed = 0;
+
+  find_top_diff_block(&thistopdiff, &nextblockblock, fromidx, from_topline);
+
+  // count the virtual lines that have been passed
+
+  diff_T *curdif = thistopdiff;
+  while (curdif && ( curdif->df_lnum[fromidx] + curdif->df_count[fromidx] )
+      <= from_topline) {
+
+    virtual_lines_passed += get_max_diff_length2(curdif);
+
+    curdif = curdif->df_next;
+  }
+
+  if (curdif != nextblockblock) {
+    virtual_lines_passed += from_topline - curdif->df_lnum[fromidx];
+  }
+  virtual_lines_passed -= from_topfill;
+
+
+  // count the same amount of virtual lines in the toidx buffer
+  curdif = thistopdiff;
+  int curlinenum_to = thistopdiff->df_lnum[toidx];
+  int linesfiller = 0;
+  count_filler_lines_and_topline(&curlinenum_to, &linesfiller,
+      thistopdiff, toidx, virtual_lines_passed);
+
+  // count the number of filler lines that would normally be above this line
+  int maxfiller = 0;
+  for (diff_T *dpfillertest = thistopdiff; dpfillertest != NULL; dpfillertest = dpfillertest->df_next) {
+    if (dpfillertest->df_lnum[toidx] == curlinenum_to) {
+      while (dpfillertest && dpfillertest->df_lnum[toidx] == curlinenum_to) {
+        maxfiller += dpfillertest->df_count[toidx] ? 0 : get_max_diff_length2(dpfillertest);
+        dpfillertest = dpfillertest->df_next;
+      }
+      break;
+    }
+  }
+  (*topfill) = maxfiller - linesfiller;
+  (*topline) = curlinenum_to;
 }
 
 /// Check diff status for line "lnum" in buffer "buf":
@@ -2722,54 +2773,8 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
     int linematch = 1;
     if (lnum >= dp->df_lnum[fromidx]) {
       if (linematch) {
-
-        // 1. find the position from the top of the diff block, and the start
-        // of the next diff block
-        diff_T *thistopdiff = NULL;
-        diff_T *nextblockblock = NULL;
-        int virtual_lines_passed = 0;
-
-        find_top_diff_block(&thistopdiff, &nextblockblock, fromidx, fromwin->w_topline);
-
-        // count the virtual lines that have been passed
-
-        diff_T *curdif = thistopdiff;
-        while (curdif && ( curdif->df_lnum[fromidx] + curdif->df_count[fromidx] ) <= fromwin->w_topline) {
-
-          virtual_lines_passed += get_max_diff_length2(curdif);
-
-          curdif = curdif->df_next;
-        }
-
-        if (curdif != nextblockblock) {
-          virtual_lines_passed += fromwin->w_topline - curdif->df_lnum[fromidx];
-        }
-        virtual_lines_passed -= fromwin->w_topfill;
-
-
-        // count the same amount of virtual lines in the toidx buffer
-        curdif = thistopdiff;
-        int curlinenum_to = thistopdiff->df_lnum[toidx];
-        int linesfiller = 0;
-        count_filler_lines_and_topline(&curlinenum_to, &linesfiller,
-            thistopdiff, toidx, virtual_lines_passed);
-
-        // count the number of filler lines that would normally be above this line
-        int maxfiller = 0;
-        for (diff_T *dpfillertest = thistopdiff; dpfillertest != NULL; dpfillertest = dpfillertest->df_next) {
-          if (dpfillertest->df_lnum[toidx] == curlinenum_to) {
-            while (dpfillertest && dpfillertest->df_lnum[toidx] == curlinenum_to) {
-              maxfiller += dpfillertest->df_count[toidx] ? 0 : get_max_diff_length2(dpfillertest);
-              dpfillertest = dpfillertest->df_next;
-            }
-            break;
-          }
-        }
-
-        // count the amount of filler that would be on this line
-        towin->w_topfill = maxfiller - linesfiller;
-        towin->w_topline = curlinenum_to;
-
+        calculate_topfill_and_topline(fromidx, toidx, fromwin->w_topline,
+            towin->w_topfill, &towin->w_topfill, &towin->w_topline);
       } else {
         // Inside a change: compute filler lines. With three or more
         // buffers we need to know the largest count.
