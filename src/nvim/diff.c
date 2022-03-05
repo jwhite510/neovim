@@ -2753,26 +2753,6 @@ static int diff_cmp(char_u *s1, char_u *s2)
   return 0;
 }
 
-/// Return the number of filler lines above "lnum".
-///
-/// @param wp
-/// @param lnum
-///
-/// @return Number of filler lines above lnum
-int diff_check_fill(win_T *wp, linenr_T lnum)
-{
-  // be quick when there are no filler lines
-  if (!(diff_flags & DIFF_FILLER)) {
-    return 0;
-  }
-  int n = diff_check(wp, lnum, NULL);
-
-  if (n <= 0) {
-    return 0;
-  }
-  return n;
-}
-
 /// Set the topline of "towin" to match the position in "fromwin", so that they
 /// show the same diff'ed lines.
 ///
