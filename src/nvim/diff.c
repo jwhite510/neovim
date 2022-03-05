@@ -3297,7 +3297,7 @@ void ex_diffgetput(exarg_T *eap)
   int linematch = 1;
   // range is not currently compatible with linematch enabled
   if (linematch && eap->addr_count) {
-    EMSG(_("[range] argument is not compatible with linematch enabled "));
+    emsg(_("[range] argument is not compatible with linematch enabled "));
     goto theend;
   }
 

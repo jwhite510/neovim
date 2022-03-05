@@ -1865,7 +1865,7 @@ static void f_did_filetype(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_diff_filler(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  rettv->vval.v_number = MAX(0, diff_check(curwin, tv_get_lnum(argvars)));
+  rettv->vval.v_number = MAX(0, diff_check(curwin, tv_get_lnum(argvars), NULL));
 }
 
 /*
