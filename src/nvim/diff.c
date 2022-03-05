@@ -3015,12 +3015,12 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       break;
     }
   }
-  while (
-      (dp && dp->df_next) &&
-      (lnum == (dp->df_count[idx] + dp->df_lnum[idx])) &&
-      (dp->df_next->df_lnum[idx] == lnum)
-      ) {
-    dp = dp->df_next;
+  int linematch = 1;
+  if (linematch) {
+    while ( (dp && dp->df_next) && (lnum == (dp->df_count[idx] +
+            dp->df_lnum[idx])) && (dp->df_next->df_lnum[idx] == lnum)) {
+      dp = dp->df_next;
+    }
   }
 
 
@@ -3366,11 +3366,13 @@ void ex_diffgetput(exarg_T *eap)
     }
     dfree = NULL;
 
-    // handle the case with overlapping diff blocks
-    while (dp->df_next && (dp->df_next->df_lnum[idx_cur] ==
-          dp->df_lnum[idx_cur] + dp->df_count[idx_cur]) &&
-        dp->df_next->df_lnum[idx_cur] == (eap->line1 + off + 1)) {
-      dp = dp->df_next;
+    if (linematch) {
+      // handle the case with overlapping diff blocks
+      while (dp->df_next && (dp->df_next->df_lnum[idx_cur] ==
+            dp->df_lnum[idx_cur] + dp->df_count[idx_cur]) &&
+          dp->df_next->df_lnum[idx_cur] == (eap->line1 + off + 1)) {
+        dp = dp->df_next;
+      }
     }
 
     lnum = dp->df_lnum[idx_to];
