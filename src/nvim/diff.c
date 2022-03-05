@@ -2825,7 +2825,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
     if (lnum >= dp->df_lnum[fromidx]) {
       if (linematch) {
         calculate_topfill_and_topline(fromidx, toidx, fromwin->w_topline,
-            towin->w_topfill, &towin->w_topfill, &towin->w_topline);
+            fromwin->w_topfill, &towin->w_topfill, &towin->w_topline);
       } else {
         // Inside a change: compute filler lines. With three or more
         // buffers we need to know the largest count.
