@@ -1232,6 +1232,7 @@ function! RemoveFromLocationList()
 endfun
 
 function! TabUp(dir)
+  set nowinfixheight
   " get the height of the current window
   let s:chheight = winheight(0)
   let s:startwinnr = winnr()
@@ -1242,10 +1243,21 @@ function! TabUp(dir)
 
   if and(s:otherwinnr != s:startwinnr, s:otherheight == 1)
     if a:dir == "up"
+      set nowinfixheight
       execute "wincmd k"
       execute "resize ".s:chheight
+      execute "wincmd p"
+      set wfh
+      execute "wincmd p"
+
     elseif a:dir == "down"
+
+      execute "wincmd j"
+      set nowinfixheight
+      execute "wincmd k"
+
       execute "resize 1"
+      set wfh
       execute "wincmd j"
     endif
 
@@ -1253,19 +1265,20 @@ function! TabUp(dir)
     if a:dir == "up"
       execute "sp"
       execute "resize ".(s:chheight - 2)
+      execute "wincmd p"
+      set wfh
+      execute "wincmd p"
+
+
     elseif a:dir == "down"
       execute "sp"
       execute "resize 1"
+      set wfh
       execute "wincmd j"
     endif
 
   endif
-
   set nowinfixheight
-  execute "wincmd p"
-  set wfh
-  execute "wincmd p"
-
 endfunction
 
 command! -bar DuplicateTabpane
