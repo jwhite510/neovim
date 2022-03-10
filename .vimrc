@@ -1260,6 +1260,12 @@ function! TabUp(dir)
     endif
 
   endif
+
+  set nowinfixheight
+  execute "wincmd p"
+  set wfh
+  execute "wincmd p"
+
 endfunction
 
 command! -bar DuplicateTabpane
