@@ -46,7 +46,7 @@ Plug 'tpope/vim-dispatch'
 "
 Plug 'preservim/nerdtree'
 
-Plug 'jwhite510/nvim_win_tabs'
+" Plug 'jwhite510/nvim_win_tabs'
 
 Plug 'tpope/vim-eunuch'
 Plug 'tpope/vim-sleuth'
@@ -1231,6 +1231,36 @@ function! RemoveFromLocationList()
 	" echo curllist
 endfun
 
+function! TabUp(dir)
+  " get the height of the current window
+  let s:chheight = winheight(0)
+  let s:startwinnr = winnr()
+
+  " is the window other open?
+  let s:otherwinnr = winnr((a:dir == "up" ? "1k" : "1j"))
+  let s:otherheight = winheight(s:otherwinnr)
+
+  if and(s:otherwinnr != s:startwinnr, s:otherheight == 1)
+    if a:dir == "up"
+      execute "wincmd k"
+      execute "resize ".s:chheight
+    elseif a:dir == "down"
+      execute "resize 1"
+      execute "wincmd j"
+    endif
+
+  else
+    if a:dir == "up"
+      execute "sp"
+      execute "resize ".(s:chheight - 2)
+    elseif a:dir == "down"
+      execute "sp"
+      execute "resize 1"
+      execute "wincmd j"
+    endif
+
+  endif
+endfunction
 
 command! -bar DuplicateTabpane
       \ let s:sessionoptions = &sessionoptions |
@@ -1573,10 +1603,13 @@ nnoremap <A-C-p> :call BracketUpPreview('up')<cr>
 nnoremap <A-C-n> :call BracketUpPreview('down')<cr>
 nnoremap <A-C-u> :call UpdateBracketUpPreview()<cr>
 
-nnoremap <A-C-k> :NvimTabsTabup<cr>
-nnoremap <A-C-j> :NvimTabsTabdown<cr>
-nnoremap <A-C-q> :NvimTabsClosetab<cr>
-nnoremap <A-C-t> :NvimTabsNewtab<cr>
+" nnoremap <A-C-k> :NvimTabsTabup<cr>
+" nnoremap <A-C-j> :NvimTabsTabdown<cr>
+" nnoremap <A-C-q> :NvimTabsClosetab<cr>
+" nnoremap <A-C-t> :NvimTabsNewtab<cr>
+
+nnoremap <A-C-k> :call TabUp("up")<cr>
+nnoremap <A-C-j> :call TabUp("down")<cr>
 
 " checktime shortcut
 nnoremap <leader>ch :checktime<CR>
