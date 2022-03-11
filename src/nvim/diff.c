@@ -2559,12 +2559,11 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
     return 0;
   }
 
-  int linematch = 1;
-  if (dp->df_redraw && linematch) {
+  if (dp->df_redraw && diff_linematch(dp)) {
     run_linematch_algorithm(dp);
   }
 
-  if (linematch) {
+  if (diff_flags & DIFF_LINEMATCH) {
     int filler_lines_d1 = 0;
     while (
         (dp && dp->df_next) &&
@@ -2823,9 +2822,8 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
     }
     towin->w_topline = lnum + (dp->df_lnum[toidx] - dp->df_lnum[fromidx]);
 
-    int linematch = 1;
     if (lnum >= dp->df_lnum[fromidx]) {
-      if (linematch) {
+      if (diff_flags & DIFF_LINEMATCH) {
         calculate_topfill_and_topline(fromidx, toidx, fromwin->w_topline,
             fromwin->w_topfill, &towin->w_topfill, &towin->w_topline);
       } else {
@@ -3081,8 +3079,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       break;
     }
   }
-  int linematch = 1;
-  if (linematch) {
+  if (diff_flags & DIFF_LINEMATCH) {
     while ( (dp && dp->df_next) && (lnum == (dp->df_count[idx] +
             dp->df_lnum[idx])) && (dp->df_next->df_lnum[idx] == lnum)) {
       dp = dp->df_next;
@@ -3302,9 +3299,8 @@ void ex_diffgetput(exarg_T *eap)
     return;
   }
 
-  int linematch = 1;
   // range is not currently compatible with linematch enabled
-  if (linematch && eap->addr_count) {
+  if ((diff_flags && DIFF_LINEMATCH) && eap->addr_count) {
     emsg(_("[range] argument is not compatible with linematch enabled "));
     goto theend;
   }
@@ -3427,7 +3423,7 @@ void ex_diffgetput(exarg_T *eap)
 
   for (dp = curtab->tp_first_diff; dp != NULL;) {
 
-    if (linematch) {
+    if (diff_flags & DIFF_LINEMATCH) {
       // handle the case with overlapping diff blocks
       while (dp->df_next && (dp->df_next->df_lnum[idx_cur] ==
             dp->df_lnum[idx_cur] + dp->df_count[idx_cur]) &&
@@ -3576,7 +3572,7 @@ void ex_diffgetput(exarg_T *eap)
       if (idx_cur == idx_to) {
         off += added;
       }
-      if (linematch) {
+      if (diff_flags & DIFF_LINEMATCH) {
         break;
       }
     }
