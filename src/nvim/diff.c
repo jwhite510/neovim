@@ -59,6 +59,7 @@ static bool diff_need_update = false;  // ex_diffupdate needs to be called
 #define DIFF_INTERNAL   0x200   // use internal xdiff algorithm
 #define DIFF_CLOSE_OFF  0x400   // diffoff when closing window
 #define DIFF_FOLLOWWRAP 0x800   // follow the wrap option
+#define DIFF_LINEMATCH  0x1000   // match most similar lines within diff
 #define ALL_WHITE_DIFF (DIFF_IWHITE | DIFF_IWHITEALL | DIFF_IWHITEEOL)
 static int diff_flags = DIFF_INTERNAL | DIFF_FILLER | DIFF_CLOSE_OFF;
 
@@ -1786,6 +1787,27 @@ void diff_clear(tabpage_T *tp)
 }
 
 
+///
+/// return true if the options are set to use diff linematch
+///
+bool diff_linematch(diff_T *dp)
+{
+  if (!(diff_flags & DIFF_LINEMATCH)) {
+    return 0;
+  }
+  // are there more than three diff buffers?
+  int tsize = 0;
+  for (int i = 0; i < DB_COUNT; i++) {
+    if ( curtab->tp_diffbuf[i] != NULL ) {
+      tsize += dp->df_count[i];
+    }
+  }
+  // avoid allocating a huge array because it will lag
+  if (tsize > linematch_lines) {
+    return 0;
+  }
+  return 1;
+}
 
 /// free the memory for comparisons run with the diff linematch algorithm.
 /// this memory is used to prevent counting the matching characters on the same
@@ -2257,7 +2279,7 @@ void linematch_nbuffers(const char **diff_block, const int *diff_length,
   xfree(diffcomparisonpath_flat);
 }
 
-int get_max_diff_length2(diff_T* dp) {
+int get_max_diff_length2(const diff_T* dp) {
   int maxlength = 0;
   for (int k = 0; k < DB_COUNT; k++) {
     if (curtab->tp_diffbuf[k] != NULL) {
@@ -2882,6 +2904,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
 int diffopt_changed(void)
 {
   int diff_context_new = 6;
+  int linematch_lines_new = 0;
   int diff_flags_new = 0;
   int diff_foldcolumn_new = 2;
   long diff_algorithm_new = 0;
@@ -2951,6 +2974,10 @@ int diffopt_changed(void)
       } else {
         return FAIL;
       }
+    } else if ((STRNCMP(p, "linematch:", 10) == 0) && ascii_isdigit(p[11])) {
+      p+=10;
+      linematch_lines_new = getdigits_int(&p, false, linematch_lines_new);
+      diff_flags_new |= DIFF_LINEMATCH;
     }
 
     if ((*p != ',') && (*p != NUL)) {
@@ -2979,6 +3006,7 @@ int diffopt_changed(void)
 
   diff_flags = diff_flags_new;
   diff_context = diff_context_new == 0 ? 1 : diff_context_new;
+  linematch_lines = linematch_lines_new;
   diff_foldcolumn = diff_foldcolumn_new;
   diff_algorithm = diff_algorithm_new;
 
