@@ -1,7 +1,0 @@
-linediff1
-line
-linediff2
-line
-line
-line
-line

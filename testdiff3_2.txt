@@ -1,4 +1,0 @@
-somelines
-
-goodbye
-a common line

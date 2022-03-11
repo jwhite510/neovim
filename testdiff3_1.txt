@@ -1,4 +1,0 @@
-somelines
-
-hello?
-a common line
