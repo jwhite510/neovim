@@ -428,7 +428,8 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
             }
           }
         } else {
-          if (dp->df_lnum[idx] <= line1) {
+          int notAdjacent = 1;
+          if (dp->df_lnum[idx] <= line1 && notAdjacent) {
             // inserted lines somewhere in this diff
             dp->df_count[idx] += inserted;
             check_unchanged = true;
@@ -3276,10 +3277,10 @@ void ex_diffgetput(exarg_T *eap)
 
   int linematch = 1;
   // range is not currently compatible with linematch enabled
-  if (linematch && eap->addr_count) {
-    emsg(_("[range] argument is not compatible with linematch enabled "));
-    goto theend;
-  }
+  // if (linematch && eap->addr_count) {
+  //   emsg(_("[range] argument is not compatible with linematch enabled "));
+  //   goto theend;
+  // }
 
   if (*eap->arg == NUL) {
     // No argument: Find the other buffer in the list of diff buffers.
@@ -3399,14 +3400,14 @@ void ex_diffgetput(exarg_T *eap)
 
   for (dp = curtab->tp_first_diff; dp != NULL;) {
 
-    if (linematch) {
-      // handle the case with overlapping diff blocks
-      while (dp->df_next && (dp->df_next->df_lnum[idx_cur] ==
-            dp->df_lnum[idx_cur] + dp->df_count[idx_cur]) &&
-          dp->df_next->df_lnum[idx_cur] == (eap->line1 + off + 1)) {
-        dp = dp->df_next;
-      }
-    }
+    // if (linematch) {
+    //   // handle the case with overlapping diff blocks
+    //   while (dp->df_next && (dp->df_next->df_lnum[idx_cur] ==
+    //         dp->df_lnum[idx_cur] + dp->df_count[idx_cur]) &&
+    //       dp->df_next->df_lnum[idx_cur] == (eap->line1 + off + 1)) {
+    //     dp = dp->df_next;
+    //   }
+    // }
 
     if (dp->df_lnum[idx_cur] > eap->line2 + off) {
       // past the range that was specified
@@ -3521,6 +3522,8 @@ void ex_diffgetput(exarg_T *eap)
 
       // Adjust marks.  This will change the following entries!
       if (added != 0) {
+        // after mark_adjust, lnum is very large...
+        // see what it looks like after using do and it works correctly
         mark_adjust(lnum, lnum + count - 1, (long)MAXLNUM, (long)added,
                     kExtmarkUndo);
         if (curwin->w_cursor.lnum >= lnum) {
@@ -3548,9 +3551,9 @@ void ex_diffgetput(exarg_T *eap)
       if (idx_cur == idx_to) {
         off += added;
       }
-      if (linematch) {
-        break;
-      }
+      // if (linematch) {
+      //   break;
+      // }
     }
 
     // If before the range or not deleted, go to next diff.
