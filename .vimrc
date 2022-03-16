@@ -66,16 +66,16 @@ Plug 'rickhowe/spotdiff.vim'
 " Plug 'OmniSharp/omnisharp-vim'
 " let g:OmniSharp_server_use_mono = 1
 " let g:OmniSharp_server_use_mono = 1
-" Plug 'zonzon510/context.vim'
-" let g:context_enabled=0
-" let g:context_nvim_no_redraw=1
-" let g:context_add_mappings = 0
-" nnoremap <silent> <expr> <C-Y> context#util#map('<C-Y>')
-" nnoremap <silent> <expr> <C-E> context#util#map('<C-E>')
-" nnoremap <silent> <expr> zz    context#util#map('zz')
-" nnoremap <silent> <expr> zb    context#util#map('zb')
-" nnoremap <silent> <expr> zt    context#util#map_zt()
-" " nnoremap <silent> <expr> H     context#util#map_H()
+Plug 'zonzon510/context.vim'
+let g:context_enabled=0
+let g:context_nvim_no_redraw=1
+let g:context_add_mappings = 0
+nnoremap <silent> <expr> <C-Y> w:context.enabled ? context#util#map('<C-Y>') : "\<C-Y>"
+nnoremap <silent> <expr> <C-E> w:context.enabled ? context#util#map('<C-E>') : "\<C-E>"
+nnoremap <silent> <expr> zz    w:context.enabled ? context#util#map('zz') : "zz"
+nnoremap <silent> <expr> zb    w:context.enabled ? context#util#map('zb') : "zb"
+nnoremap <silent> <expr> zt    w:context.enabled ? context#util#map_zt() : "zt"
+nnoremap <silent> <expr> H     w:context.enabled ? context#util#map_H() : "H"
 
 " fzf
 set rtp+=~/.fzf
@@ -176,7 +176,7 @@ nmap <silent> [g <Plug>(coc-diagnostic-prev)
 nmap <silent> ]g <Plug>(coc-diagnostic-next)
 
 " GoTo code navigation.
-nmap <silent> <leader>gd <Plug>(coc-definition)
+nmap <silent> gD <Plug>(coc-definition)
 nmap <silent> <leader>gy <Plug>(coc-type-definition)
 nmap <silent> <leader>gi <Plug>(coc-implementation)
 nmap <silent> <leader>gr <Plug>(coc-references)
@@ -1246,9 +1246,9 @@ function! TabUp(dir)
       set nowinfixheight
       execute "wincmd k"
       execute "resize ".s:chheight
-      execute "wincmd p"
+      execute "wincmd j"
       set wfh
-      execute "wincmd p"
+      execute "wincmd k"
 
     elseif a:dir == "down"
 
@@ -1265,9 +1265,9 @@ function! TabUp(dir)
     if a:dir == "up"
       execute "sp"
       execute "resize ".(s:chheight - 2)
-      execute "wincmd p"
+      execute "wincmd j"
       set wfh
-      execute "wincmd p"
+      execute "wincmd k"
 
 
     elseif a:dir == "down"
@@ -1313,6 +1313,7 @@ set ignorecase
 
 command! Diffthis call DiffThisF()
 command! MakeTags !ctags -R .
+" ctags -R --languages=C,C++ .
 command! -bang TabCloseRight call TabCloseRight('<bang>')
 " command! MakeTags !ctags -R --sort=yes --c++-kinds=+p --fields=+iaS --extra=+q .
 " set leader key to space
@@ -1618,7 +1619,6 @@ nnoremap <leader>mo :call SplitViewMethodOpen()<cr>
 nnoremap <leader>mc :call SplitViewMethodClose()<cr>
 
 nnoremap <A-C-p> :call BracketUpPreview('up')<cr>
-" nnoremap <A-C-k> :ContextToggleWindow<CR>
 nnoremap <A-C-n> :call BracketUpPreview('down')<cr>
 nnoremap <A-C-u> :call UpdateBracketUpPreview()<cr>
 
@@ -1645,14 +1645,16 @@ nnoremap <leader>tC :call TabCloseRight()<CR>
 " open undo tree
 " added this
 nnoremap <leader>tu :UndotreeToggle<CR>
+nnoremap <leader>to :ContextToggleWindow<CR>
 nnoremap <leader>ga :call OpenMagit()<CR>
 
 " save session
-nnoremap <leader>mk :ContextDisable<CR> :mksession! .save.vim<CR>
+nnoremap <leader>mk :tabdo ContextDisable<CR> :mksession! .save.vim<CR>
 " run Make silent
 nnoremap <leader>ms :w<CR>:Make!<CR>
 " run Make
-nnoremap <leader>ma :w<CR>:silent! AbortDispatch<CR>:Make<CR>
+nnoremap <leader>ma :wa<CR>:silent! AbortDispatch<CR>:Make<CR>
+" nnoremap <leader>ma :wa<CR>:make<CR>
 " run get quickfix results from Copen
 nnoremap <leader>mC :Copen<CR><C-w>p:cclo<CR>
 " do math (math do)
