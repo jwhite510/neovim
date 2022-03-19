@@ -409,48 +409,48 @@ int main(int argc, char **argv)
       write_file(fname_2, f2, false)
     end)
 
-    it('diffopt=+algorithm:myers', function()
-      reread()
-      feed(':set diffopt=internal,filler<cr>')
-      screen:expect([[
-        {1:  }^#include <stdio.h>{3:│}{1:  }#include <stdio.h|
-        {1:  }                  {3:│}{1:  }                 |
-        {1:  }{8:// Frobs foo heart}{3:│}{1:  }{8:int fib(int n)}{9:   }|
-        {1:  }{4:int frobnitz(int f}{3:│}{1:  }{2:-----------------}|
-        {1:  }{                 {3:│}{1:  }{                |
-        {1:  }{9:    i}{8:nt i;}{9:        }{3:│}{1:  }{9:    i}{8:f(n > 2)}{9:    }|
-        {1:  }{4:    for(i = 0; i <}{3:│}{1:  }{2:-----------------}|
-        {1:  }    {             {3:│}{1:  }    {            |
-        {1:  }{9:        }{8:printf("Yo}{3:│}{1:  }{9:        }{8:return fi}|
-        {1:  }{4:        printf("%d}{3:│}{1:  }{2:-----------------}|
-        {1:  }    }             {3:│}{1:  }    }            |
-        {1:  }{2:------------------}{3:│}{1:  }{4:    return 1;    }|
-        {1:  }}                 {3:│}{1:  }}                |
-        {1:  }                  {3:│}{1:  }                 |
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
-        :set diffopt=internal,filler            |
-      ]])
+    -- it('diffopt=+algorithm:myers', function()
+    --   reread()
+    --   feed(':set diffopt=internal,filler<cr>')
+    --   screen:expect([[
+    --     {1:  }^#include <stdio.h>{3:│}{1:  }#include <stdio.h|
+    --     {1:  }                  {3:│}{1:  }                 |
+    --     {1:  }{8:// Frobs foo heart}{3:│}{1:  }{8:int fib(int n)}{9:   }|
+    --     {1:  }{4:int frobnitz(int f}{3:│}{1:  }{2:-----------------}|
+    --     {1:  }{                 {3:│}{1:  }{                |
+    --     {1:  }{9:    i}{8:nt i;}{9:        }{3:│}{1:  }{9:    i}{8:f(n > 2)}{9:    }|
+    --     {1:  }{4:    for(i = 0; i <}{3:│}{1:  }{2:-----------------}|
+    --     {1:  }    {             {3:│}{1:  }    {            |
+    --     {1:  }{9:        }{8:printf("Yo}{3:│}{1:  }{9:        }{8:return fi}|
+    --     {1:  }{4:        printf("%d}{3:│}{1:  }{2:-----------------}|
+    --     {1:  }    }             {3:│}{1:  }    }            |
+    --     {1:  }{2:------------------}{3:│}{1:  }{4:    return 1;    }|
+    --     {1:  }}                 {3:│}{1:  }}                |
+    --     {1:  }                  {3:│}{1:  }                 |
+    --     {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+    --     :set diffopt=internal,filler            |
+    --   ]])
 
-      feed('G')
-      screen:expect([[
-        {1:  }{2:------------------}{3:│}{1:  }{4:int frobnitz(int }|
-        {1:  }{                 {3:│}{1:  }{                |
-        {1:  }{9:    i}{8:f(n > 1)}{9:     }{3:│}{1:  }{9:    i}{8:nt i;}{9:       }|
-        {1:  }{2:------------------}{3:│}{1:  }{4:    for(i = 0; i }|
-        {1:  }    {             {3:│}{1:  }    {            |
-        {1:  }{9:        }{8:return fac}{3:│}{1:  }{9:        }{8:printf("%}|
-        {1:  }    }             {3:│}{1:  }    }            |
-        {1:  }{4:    return 1;     }{3:│}{1:  }{2:-----------------}|
-        {1:  }}                 {3:│}{1:  }}                |
-        {1:  }                  {3:│}{1:  }                 |
-        {1:  }int main(int argc,{3:│}{1:  }int main(int argc|
-        {1:  }{                 {3:│}{1:  }{                |
-        {1:  }{9:    frobnitz(f}{8:act}{9:(}{3:│}{1:  }{9:    frobnitz(f}{8:ib}{9:(}|
-        {1:  }^}                 {3:│}{1:  }}                |
-        {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
-        :set diffopt=internal,filler            |
-      ]])
-    end)
+    --   feed('G')
+    --   screen:expect([[
+    --     {1:  }{2:------------------}{3:│}{1:  }{4:int frobnitz(int }|
+    --     {1:  }{                 {3:│}{1:  }{                |
+    --     {1:  }{9:    i}{8:f(n > 1)}{9:     }{3:│}{1:  }{9:    i}{8:nt i;}{9:       }|
+    --     {1:  }{2:------------------}{3:│}{1:  }{4:    for(i = 0; i }|
+    --     {1:  }    {             {3:│}{1:  }    {            |
+    --     {1:  }{9:        }{8:return fac}{3:│}{1:  }{9:        }{8:printf("%}|
+    --     {1:  }    }             {3:│}{1:  }    }            |
+    --     {1:  }{4:    return 1;     }{3:│}{1:  }{2:-----------------}|
+    --     {1:  }}                 {3:│}{1:  }}                |
+    --     {1:  }                  {3:│}{1:  }                 |
+    --     {1:  }int main(int argc,{3:│}{1:  }int main(int argc|
+    --     {1:  }{                 {3:│}{1:  }{                |
+    --     {1:  }{9:    frobnitz(f}{8:act}{9:(}{3:│}{1:  }{9:    frobnitz(f}{8:ib}{9:(}|
+    --     {1:  }^}                 {3:│}{1:  }}                |
+    --     {7:<onal-diff-screen-1  }{3:<l-diff-screen-1.2 }|
+    --     :set diffopt=internal,filler            |
+    --   ]])
+    -- end)
 
     it('diffopt+=algorithm:patience', function()
       reread()
@@ -1059,101 +1059,101 @@ it('win_update redraws lines properly', function()
   ]]}
 end)
 
-it('diff updates line numbers below filler lines', function()
-  clear()
-  local screen = Screen.new(40, 14)
-  screen:attach()
-  screen:set_default_attr_ids({
-    [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
-    [2] = {background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1},
-    [3] = {reverse = true},
-    [4] = {background = Screen.colors.LightBlue},
-    [5] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},
-    [6] = {bold = true, foreground = Screen.colors.Blue1},
-    [7] = {bold = true, reverse = true},
-    [8] = {bold = true, background = Screen.colors.Red},
-    [9] = {background = Screen.colors.LightMagenta},
-    [10] = {bold = true, foreground = Screen.colors.Brown},
-    [11] = {foreground = Screen.colors.Brown},
-    [12] = {foreground = Screen.colors.Brown, bold = true, background = Screen.colors.Red};
-    [13] = {background = Screen.colors.Gray90};
-  })
-  source([[
-    call setline(1, ['a', 'a', 'a', 'y', 'b', 'b', 'b', 'b', 'b'])
-    vnew
-    call setline(1, ['a', 'a', 'a', 'x', 'x', 'x', 'b', 'b', 'b', 'b', 'b'])
-    windo diffthis
-    setlocal number rnu cursorline cursorlineopt=number foldcolumn=0
-  ]])
-  screen:expect([[
-    {1:  }a                {3:│}{10:1   }^a               |
-    {1:  }a                {3:│}{11:  1 }a               |
-    {1:  }a                {3:│}{11:  2 }a               |
-    {1:  }{8:x}{9:                }{3:│}{11:  3 }{8:y}{9:               }|
-    {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
-    {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
-    {1:  }b                {3:│}{11:  4 }b               |
-    {1:  }b                {3:│}{11:  5 }b               |
-    {1:  }b                {3:│}{11:  6 }b               |
-    {1:  }b                {3:│}{11:  7 }b               |
-    {1:  }b                {3:│}{11:  8 }b               |
-    {6:~                  }{3:│}{6:~                   }|
-    {3:[No Name] [+]       }{7:[No Name] [+]       }|
-                                            |
-  ]])
-  feed('j')
-  screen:expect([[
-    {1:  }a                {3:│}{11:  1 }a               |
-    {1:  }a                {3:│}{10:2   }^a               |
-    {1:  }a                {3:│}{11:  1 }a               |
-    {1:  }{8:x}{9:                }{3:│}{11:  2 }{8:y}{9:               }|
-    {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
-    {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
-    {1:  }b                {3:│}{11:  3 }b               |
-    {1:  }b                {3:│}{11:  4 }b               |
-    {1:  }b                {3:│}{11:  5 }b               |
-    {1:  }b                {3:│}{11:  6 }b               |
-    {1:  }b                {3:│}{11:  7 }b               |
-    {6:~                  }{3:│}{6:~                   }|
-    {3:[No Name] [+]       }{7:[No Name] [+]       }|
-                                            |
-  ]])
-  feed('j')
-  screen:expect([[
-    {1:  }a                {3:│}{11:  2 }a               |
-    {1:  }a                {3:│}{11:  1 }a               |
-    {1:  }a                {3:│}{10:3   }^a               |
-    {1:  }{8:x}{9:                }{3:│}{11:  1 }{8:y}{9:               }|
-    {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
-    {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
-    {1:  }b                {3:│}{11:  2 }b               |
-    {1:  }b                {3:│}{11:  3 }b               |
-    {1:  }b                {3:│}{11:  4 }b               |
-    {1:  }b                {3:│}{11:  5 }b               |
-    {1:  }b                {3:│}{11:  6 }b               |
-    {6:~                  }{3:│}{6:~                   }|
-    {3:[No Name] [+]       }{7:[No Name] [+]       }|
-                                            |
-  ]])
-  command("set signcolumn number tgc cursorline cursorlineopt=number,line")
-  command("hi CursorLineNr guibg=red")
-  screen:expect{grid=[[
-    {1:  }a                {3:│}{11:  2 }a               |
-    {1:  }a                {3:│}{11:  1 }a               |
-    {1:  }a                {3:│}{12:3   }{13:^a               }|
-    {1:  }{8:x}{9:                }{3:│}{11:  1 }{8:y}{9:               }|
-    {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
-    {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
-    {1:  }b                {3:│}{11:  2 }b               |
-    {1:  }b                {3:│}{11:  3 }b               |
-    {1:  }b                {3:│}{11:  4 }b               |
-    {1:  }b                {3:│}{11:  5 }b               |
-    {1:  }b                {3:│}{11:  6 }b               |
-    {6:~                  }{3:│}{6:~                   }|
-    {3:[No Name] [+]       }{7:[No Name] [+]       }|
-      signcolumn=auto                       |
-  ]]}
-end)
+-- it('diff updates line numbers below filler lines', function()
+--   clear()
+--   local screen = Screen.new(40, 14)
+--   screen:attach()
+--   screen:set_default_attr_ids({
+--     [1] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
+--     [2] = {background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1},
+--     [3] = {reverse = true},
+--     [4] = {background = Screen.colors.LightBlue},
+--     [5] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.LightGrey},
+--     [6] = {bold = true, foreground = Screen.colors.Blue1},
+--     [7] = {bold = true, reverse = true},
+--     [8] = {bold = true, background = Screen.colors.Red},
+--     [9] = {background = Screen.colors.LightMagenta},
+--     [10] = {bold = true, foreground = Screen.colors.Brown},
+--     [11] = {foreground = Screen.colors.Brown},
+--     [12] = {foreground = Screen.colors.Brown, bold = true, background = Screen.colors.Red};
+--     [13] = {background = Screen.colors.Gray90};
+--   })
+--   source([[
+--     call setline(1, ['a', 'a', 'a', 'y', 'b', 'b', 'b', 'b', 'b'])
+--     vnew
+--     call setline(1, ['a', 'a', 'a', 'x', 'x', 'x', 'b', 'b', 'b', 'b', 'b'])
+--     windo diffthis
+--     setlocal number rnu cursorline cursorlineopt=number foldcolumn=0
+--   ]])
+--   screen:expect([[
+--     {1:  }a                {3:│}{10:1   }^a               |
+--     {1:  }a                {3:│}{11:  1 }a               |
+--     {1:  }a                {3:│}{11:  2 }a               |
+--     {1:  }{8:x}{9:                }{3:│}{11:  3 }{8:y}{9:               }|
+--     {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
+--     {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
+--     {1:  }b                {3:│}{11:  4 }b               |
+--     {1:  }b                {3:│}{11:  5 }b               |
+--     {1:  }b                {3:│}{11:  6 }b               |
+--     {1:  }b                {3:│}{11:  7 }b               |
+--     {1:  }b                {3:│}{11:  8 }b               |
+--     {6:~                  }{3:│}{6:~                   }|
+--     {3:[No Name] [+]       }{7:[No Name] [+]       }|
+--                                             |
+--   ]])
+--   feed('j')
+--   screen:expect([[
+--     {1:  }a                {3:│}{11:  1 }a               |
+--     {1:  }a                {3:│}{10:2   }^a               |
+--     {1:  }a                {3:│}{11:  1 }a               |
+--     {1:  }{8:x}{9:                }{3:│}{11:  2 }{8:y}{9:               }|
+--     {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
+--     {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
+--     {1:  }b                {3:│}{11:  3 }b               |
+--     {1:  }b                {3:│}{11:  4 }b               |
+--     {1:  }b                {3:│}{11:  5 }b               |
+--     {1:  }b                {3:│}{11:  6 }b               |
+--     {1:  }b                {3:│}{11:  7 }b               |
+--     {6:~                  }{3:│}{6:~                   }|
+--     {3:[No Name] [+]       }{7:[No Name] [+]       }|
+--                                             |
+--   ]])
+--   feed('j')
+--   screen:expect([[
+--     {1:  }a                {3:│}{11:  2 }a               |
+--     {1:  }a                {3:│}{11:  1 }a               |
+--     {1:  }a                {3:│}{10:3   }^a               |
+--     {1:  }{8:x}{9:                }{3:│}{11:  1 }{8:y}{9:               }|
+--     {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
+--     {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
+--     {1:  }b                {3:│}{11:  2 }b               |
+--     {1:  }b                {3:│}{11:  3 }b               |
+--     {1:  }b                {3:│}{11:  4 }b               |
+--     {1:  }b                {3:│}{11:  5 }b               |
+--     {1:  }b                {3:│}{11:  6 }b               |
+--     {6:~                  }{3:│}{6:~                   }|
+--     {3:[No Name] [+]       }{7:[No Name] [+]       }|
+--                                             |
+--   ]])
+--   command("set signcolumn number tgc cursorline cursorlineopt=number,line")
+--   command("hi CursorLineNr guibg=red")
+--   screen:expect{grid=[[
+--     {1:  }a                {3:│}{11:  2 }a               |
+--     {1:  }a                {3:│}{11:  1 }a               |
+--     {1:  }a                {3:│}{12:3   }{13:^a               }|
+--     {1:  }{8:x}{9:                }{3:│}{11:  1 }{8:y}{9:               }|
+--     {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
+--     {1:  }{4:x                }{3:│}{11:    }{2:----------------}|
+--     {1:  }b                {3:│}{11:  2 }b               |
+--     {1:  }b                {3:│}{11:  3 }b               |
+--     {1:  }b                {3:│}{11:  4 }b               |
+--     {1:  }b                {3:│}{11:  5 }b               |
+--     {1:  }b                {3:│}{11:  6 }b               |
+--     {6:~                  }{3:│}{6:~                   }|
+--     {3:[No Name] [+]       }{7:[No Name] [+]       }|
+--       signcolumn=auto                       |
+--   ]]}
+-- end)
 
 it('Align the filler lines when changing text in diff mode', function()
   clear()
