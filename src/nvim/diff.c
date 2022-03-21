@@ -360,7 +360,9 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
     if (last >= line1 - 1) {
       // 6. change below line2: only adjust for amount_after; also when
       // "deleted" became zero when deleted all lines between two diffs.
-      if (dp->df_lnum[idx] - (deleted + inserted != 0) > line2 - (1)) {
+
+      int notAdjacent = 1;
+      if (dp->df_lnum[idx] - (deleted + inserted != 0) > line2 - (notAdjacent == 1)) { // change
         if (amount_after == 0) {
           // nothing left to change
           break;
@@ -420,21 +422,16 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
             }
           }
 
-          int dothings = 1;
-          if (dothings) {
-            int i;
-            for (i = 0; i < DB_COUNT; ++i) {
-              if ((tp->tp_diffbuf[i] != NULL) && (i != idx)) {
-                dp->df_lnum[i] -= off;
-                dp->df_count[i] += n;
-              }
+          int i;
+          for (i = 0; i < DB_COUNT; ++i) {
+            if ((tp->tp_diffbuf[i] != NULL) && (i != idx)) {
+              dp->df_lnum[i] -= off;
+              dp->df_count[i] += n;
             }
           }
-
         } else {
-          int notAdjacent = 1;
-          // TODO make this a stricter condition
-          if (notAdjacent ? (dp->df_lnum[idx] < line1) : (dp->df_lnum[idx] <= line1)) {
+          int notAdjacent2 = 0;
+          if (dp->df_lnum[idx] <= line1 - (notAdjacent2 == 1)) {
             // inserted lines somewhere in this diff
             dp->df_count[idx] += inserted;
             check_unchanged = true;
