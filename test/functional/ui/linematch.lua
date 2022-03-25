@@ -301,7 +301,7 @@ something
       reread()
     end)
 
-    it('get from window 1', function()
+    it('get from window 1 from line 5 to 9', function()
       feed('1<c-w>w')
       feed(':5,9diffget<cr>')
       -- screen:snapshot_util()
@@ -328,7 +328,7 @@ something
       :5,9diffget                                                                                         |
       ]])
     end)
-    it('get from window 2', function()
+    it('get from window 2 from line 5 to 10', function()
       feed('2<c-w>w')
       feed(':5,10diffget<cr>')
       screen:expect([[
