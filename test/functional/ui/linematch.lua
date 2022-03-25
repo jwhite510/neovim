@@ -36,10 +36,7 @@ describe('Diff mode screen with 3 diffs open', function()
     feed(':e ' .. fname .. '<cr>')
     feed(':vnew ' .. fname_2 .. '<cr>')
     feed(':vnew ' .. fname_3 .. '<cr>')
-    -- feed(':set equalalwayss<cr>')
-    -- feed('<c-w>=')
     feed(':windo diffthis<cr>')
-    -- feed('<c-w>w:diffthis<cr><c-w>w')
 
     screen = Screen.new(100, 16)
     screen:attach()
@@ -304,7 +301,6 @@ something
     it('get from window 1 from line 5 to 9', function()
       feed('1<c-w>w')
       feed(':5,9diffget<cr>')
-      -- screen:snapshot_util()
       screen:expect([[
       {1:+ }{10:  1 }{5:^+--  7 lines: common line··················}{3:│}{1:+ }{10:  1 }{5:+--  7 lines: common line···················}|
       {1:  }{10:  8 }xyz                                        {3:│}{1:  }{10:  8 }xyz                                         |
@@ -357,7 +353,6 @@ something
     it('get all from window 2', function()
       feed('2<c-w>w')
       feed(':4,17diffget<cr>')
-      -- screen:snapshot_util()
       screen:expect([[
       {1:  }{10:  1 }                                           {3:│}{1:  }{10:  1 }^                                            |
       {1:  }{10:  2 }common line                                {3:│}{1:  }{10:  2 }common line                                 |
