@@ -3403,14 +3403,15 @@ void ex_diffgetput(exarg_T *eap)
 
   for (dp = curtab->tp_first_diff; dp != NULL;) {
 
-    // if (linematch) {
-    //   // handle the case with overlapping diff blocks
-    //   while (dp->df_next && (dp->df_next->df_lnum[idx_cur] ==
-    //         dp->df_lnum[idx_cur] + dp->df_count[idx_cur]) &&
-    //       dp->df_next->df_lnum[idx_cur] == (eap->line1 + off + 1)) {
-    //     dp = dp->df_next;
-    //   }
-    // }
+    // if a range was not given, limit the put / obtain operation to one hunk
+    if (linematch && !eap->addr_count) {
+      // handle the case with overlapping diff blocks
+      while (dp->df_next && (dp->df_next->df_lnum[idx_cur] ==
+            dp->df_lnum[idx_cur] + dp->df_count[idx_cur]) &&
+          dp->df_next->df_lnum[idx_cur] == (eap->line1 + off + 1)) {
+        dp = dp->df_next;
+      }
+    }
 
     if (dp->df_lnum[idx_cur] > eap->line2 + off) {
       // past the range that was specified
@@ -3554,10 +3555,11 @@ void ex_diffgetput(exarg_T *eap)
       if (idx_cur == idx_to) {
         off += added;
       }
-      // if (linematch) {
-      //   break;
-      // }
+      if (linematch && !eap->addr_count) {
+        break;
+      }
     }
+
 
     // If before the range or not deleted, go to next diff.
     if (dfree == NULL) {
