@@ -86,6 +86,7 @@ noremap <buffer> <leader>k :YcmCompleter GetType<CR>
 
 " move up by bracket
 nmap <buffer> <c-p> [{
+nnoremap <buffer> <leader>br A // GDBBREAKPOINT<ESC>
 
 
 " nnoremap <F10> <Esc>:w<CR>:!clear;g++ % -o output.out; ./output.out<CR>
