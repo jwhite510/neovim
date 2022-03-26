@@ -2566,7 +2566,7 @@ int diff_check(win_T *wp, linenr_T lnum, int *linestatus)
     run_linematch_algorithm(dp);
   }
 
-  if (diff_flags & DIFF_LINEMATCH) {
+  if (dp->is_linematched) {
     int filler_lines_d1 = 0;
     while (
         (dp && dp->df_next) &&
