@@ -361,7 +361,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
     if (last >= line1 - 1) {
       // 6. change below line2: only adjust for amount_after; also when
       // "deleted" became zero when deleted all lines between two diffs.
-      if (dp->df_lnum[idx] - (deleted + inserted != 0) > line2) {
+      if (dp->df_lnum[idx] - (deleted + inserted != 0) > line2 - (dp->is_linematched == 1)) {
         if (amount_after == 0) {
           // nothing left to change
           break;
@@ -451,7 +451,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1, linenr_T
     }
 
     // check if this block touches the previous one, may merge them.
-    if ((dprev != NULL)
+    if ((dprev != NULL) && !(dp->is_linematched == 1)
         && (dprev->df_lnum[idx] + dprev->df_count[idx] == dp->df_lnum[idx])) {
       int i;
       for (i = 0; i < DB_COUNT; ++i) {
@@ -521,6 +521,7 @@ static diff_T *diff_alloc_new(tabpage_T *tp, diff_T *dprev, diff_T *dp)
   diff_T *dnew = xmalloc(sizeof(*dnew));
 
   dnew->df_redraw = 1;
+  dnew->is_linematched = 0;
   dnew->df_next = dp;
   if (dprev == NULL) {
     tp->tp_first_diff = dnew;
@@ -2473,6 +2474,7 @@ void run_linematch_algorithm(diff_T * dp)
     if (i && (decisions[i - 1] != decisions[i])) {
       dp_s = diff_alloc_new(curtab, dp_s, dp_s->df_next);
       dp_s->df_redraw = 0;
+      dp_s->is_linematched = 1;
       for (j = 0; j < DB_COUNT; j++) {
         if (curtab->tp_diffbuf[j] != NULL) {
           dp_s->df_lnum[j] = line_numbers[j];
@@ -2497,6 +2499,7 @@ void run_linematch_algorithm(diff_T * dp)
   xfree(outputmap);
   xfree(decisions);
   dp->df_redraw = 0;
+  dp->is_linematched = 1;
 }
 
 /// Check diff status for line "lnum" in buffer "buf":
@@ -3079,7 +3082,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       break;
     }
   }
-  if (diff_flags & DIFF_LINEMATCH) {
+  if (dp->is_linematched) {
     while ( (dp && dp->df_next) && (lnum == (dp->df_count[idx] +
             dp->df_lnum[idx])) && (dp->df_next->df_lnum[idx] == lnum)) {
       dp = dp->df_next;
@@ -3291,6 +3294,7 @@ void ex_diffgetput(exarg_T *eap)
   int idx_other;
   int idx_from;
   int idx_to;
+  int breakafteronehunk = 0;
 
   // Find the current buffer in the list of diff buffers.
   int idx_cur = diff_buf_idx(curbuf);
@@ -3299,11 +3303,6 @@ void ex_diffgetput(exarg_T *eap)
     return;
   }
 
-  // range is not currently compatible with linematch enabled
-  if ((diff_flags && DIFF_LINEMATCH) && eap->addr_count) {
-    emsg(_("[range] argument is not compatible with linematch enabled "));
-    goto theend;
-  }
 
   if (*eap->arg == NUL) {
     // No argument: Find the other buffer in the list of diff buffers.
@@ -3423,11 +3422,12 @@ void ex_diffgetput(exarg_T *eap)
 
   for (dp = curtab->tp_first_diff; dp != NULL;) {
 
-    if (diff_flags & DIFF_LINEMATCH) {
+    if (dp->is_linematched && !eap->addr_count) {
       // handle the case with overlapping diff blocks
-      while (dp->df_next && (dp->df_next->df_lnum[idx_cur] ==
-            dp->df_lnum[idx_cur] + dp->df_count[idx_cur]) &&
-          dp->df_next->df_lnum[idx_cur] == (eap->line1 + off + 1)) {
+      while (dp->is_linematched && dp->df_next && (dp->df_next->df_lnum[idx_cur] ==
+            dp->df_lnum[idx_cur] + dp->df_count[idx_cur]) && dp->df_next->df_lnum[idx_cur] ==
+          (eap->line1 + off + 1)) 
+      {
         dp = dp->df_next;
       }
     }
@@ -3443,6 +3443,9 @@ void ex_diffgetput(exarg_T *eap)
 
     if ((dp->df_lnum[idx_cur] + dp->df_count[idx_cur] > eap->line1 + off)
         && (u_save(lnum - 1, lnum + count) != FAIL)) {
+      if (dp->is_linematched && !eap->addr_count) {
+        breakafteronehunk = 1;
+      }
       // Inside the specified range and saving for undo worked.
       start_skip = 0;
       end_skip = 0;
@@ -3572,7 +3575,7 @@ void ex_diffgetput(exarg_T *eap)
       if (idx_cur == idx_to) {
         off += added;
       }
-      if (diff_flags & DIFF_LINEMATCH) {
+      if (breakafteronehunk) {
         break;
       }
     }

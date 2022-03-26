@@ -933,6 +933,7 @@ struct diffblock_S {
   linenr_T df_lnum[DB_COUNT];           // line number in buffer
   linenr_T df_count[DB_COUNT];          // nr of inserted/changed lines
   int df_redraw;
+  int is_linematched;
 };
 
 #define SNAP_HELP_IDX   0
