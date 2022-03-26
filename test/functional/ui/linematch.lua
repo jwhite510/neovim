@@ -235,7 +235,6 @@ describe('Diff mode screen with 2 diffs open', function()
 
   before_each(function()
     clear()
-    feed(':set diffopt+=linematch:30<cr>')
     feed(':e ' .. fname .. '<cr>')
     feed(':vnew ' .. fname_2 .. '<cr>')
     feed(':windo diffthis<cr>')
@@ -259,9 +258,9 @@ describe('Diff mode screen with 2 diffs open', function()
 
 
   end)
-  describe('setup a diff with 2 files', function()
+  describe('setup a diff with 2 files and set linematch:30', function()
     before_each(function()
-
+      feed(':set diffopt+=linematch:30<cr>')
       local f1 = [[
 
 common line
@@ -783,6 +782,203 @@ something
       :e                                                                                                  |
       ]])
 
+    end)
+  end)
+  describe('setup a diff with 2 files and set linematch:10', function()
+    before_each(function()
+      feed(':set diffopt+=linematch:10<cr>')
+      local f1 = [[
+common line
+HIL
+
+aABCabc
+aABCabc
+aABCabc
+aABCabc
+common line
+HIL
+common line
+something
+      ]]
+      local f2 = [[
+common line
+DEF
+GHI
+something
+
+aDEFabc
+xyz
+xyz
+xyz
+aDEFabc
+aDEFabc
+aDEFabc
+common line
+DEF
+GHI
+something else
+common line
+something
+      ]]
+      write_file(fname, f1, false)
+      write_file(fname_2, f2, false)
+      reread()
+    end)
+
+    it('enable linematch for the longest diff block by increasing the number argument passed to linematch', function()
+      feed('1<c-w>w')
+      -- linematch is disabled for the longest diff because it's combined line length is over 10
+      screen:expect([[
+      {1:  }{10:  1 }^common line                                {3:│}{1:  }{10:  1 }common line                                 |
+      {1:  }{10:  2 }{4:DEF                                        }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10:  3 }{8:GHI}{9:                                        }{3:│}{1:  }{10:  2 }{8:HIL}{9:                                         }|
+      {1:  }{10:  4 }{4:something                                  }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10:  5 }                                           {3:│}{1:  }{10:  3 }                                            |
+      {1:  }{10:  6 }{9:a}{8:DEF}{9:abc                                    }{3:│}{1:  }{10:  4 }{9:a}{8:ABC}{9:abc                                     }|
+      {1:  }{10:  7 }{8:xyz}{9:                                        }{3:│}{1:  }{10:  5 }{8:aABCabc}{9:                                     }|
+      {1:  }{10:  8 }{8:xyz}{9:                                        }{3:│}{1:  }{10:  6 }{8:aABCabc}{9:                                     }|
+      {1:  }{10:  9 }{8:xyz}{9:                                        }{3:│}{1:  }{10:  7 }{8:aABCabc}{9:                                     }|
+      {1:  }{10: 10 }{4:aDEFabc                                    }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10: 11 }{4:aDEFabc                                    }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10: 12 }{4:aDEFabc                                    }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10: 13 }common line                                {3:│}{1:  }{10:  8 }common line                                 |
+      {1:  }{10: 14 }{4:DEF                                        }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10: 15 }{8:GHI}{9:                                        }{3:│}{1:  }{10:  9 }{8:HIL}{9:                                         }|
+      {1:  }{10: 16 }{4:something else                             }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10: 17 }common line                                {3:│}{1:  }{10: 10 }common line                                 |
+      {1:  }{10: 18 }something                                  {3:│}{1:  }{10: 11 }something                                   |
+      {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1                    }|
+      :e                                                                                                  |
+      ]])
+      -- enable it by increasing the number
+      feed(":set diffopt-=linematch:10<cr>")
+      feed(":set diffopt+=linematch:30<cr>")
+      screen:expect([[
+      {1:  }{10:  1 }^common line                                {3:│}{1:  }{10:  1 }common line                                 |
+      {1:  }{10:  2 }{4:DEF                                        }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10:  3 }{8:GHI}{9:                                        }{3:│}{1:  }{10:  2 }{8:HIL}{9:                                         }|
+      {1:  }{10:  4 }{4:something                                  }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10:  5 }                                           {3:│}{1:  }{10:  3 }                                            |
+      {1:  }{10:  6 }{9:a}{8:DEF}{9:abc                                    }{3:│}{1:  }{10:  4 }{9:a}{8:ABC}{9:abc                                     }|
+      {1:  }{10:  7 }{4:xyz                                        }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10:  8 }{4:xyz                                        }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10:  9 }{4:xyz                                        }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10: 10 }{9:a}{8:DEF}{9:abc                                    }{3:│}{1:  }{10:  5 }{9:a}{8:ABC}{9:abc                                     }|
+      {1:  }{10: 11 }{9:a}{8:DEF}{9:abc                                    }{3:│}{1:  }{10:  6 }{9:a}{8:ABC}{9:abc                                     }|
+      {1:  }{10: 12 }{9:a}{8:DEF}{9:abc                                    }{3:│}{1:  }{10:  7 }{9:a}{8:ABC}{9:abc                                     }|
+      {1:  }{10: 13 }common line                                {3:│}{1:  }{10:  8 }common line                                 |
+      {1:  }{10: 14 }{4:DEF                                        }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10: 15 }{8:GHI}{9:                                        }{3:│}{1:  }{10:  9 }{8:HIL}{9:                                         }|
+      {1:  }{10: 16 }{4:something else                             }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10: 17 }common line                                {3:│}{1:  }{10: 10 }common line                                 |
+      {1:  }{10: 18 }something                                  {3:│}{1:  }{10: 11 }something                                   |
+      {7:Xtest-functional-diff-screen-1.2                  }{3:Xtest-functional-diff-screen-1                    }|
+      :set diffopt+=linematch:30                                                                          |
+      ]])
+    end)
+    it('get all from second window', function()
+      feed('2<c-w>w')
+      feed(':1,12diffget<cr>')
+      screen:expect([[
+      {1:  }{10:  1 }common line                                {3:│}{1:  }{10:  1 }^common line                                 |
+      {1:  }{10:  2 }DEF                                        {3:│}{1:  }{10:  2 }DEF                                         |
+      {1:  }{10:  3 }GHI                                        {3:│}{1:  }{10:  3 }GHI                                         |
+      {1:  }{10:  4 }something                                  {3:│}{1:  }{10:  4 }something                                   |
+      {1:  }{10:  5 }                                           {3:│}{1:  }{10:  5 }                                            |
+      {1:  }{10:  6 }aDEFabc                                    {3:│}{1:  }{10:  6 }aDEFabc                                     |
+      {1:  }{10:  7 }xyz                                        {3:│}{1:  }{10:  7 }xyz                                         |
+      {1:  }{10:  8 }xyz                                        {3:│}{1:  }{10:  8 }xyz                                         |
+      {1:  }{10:  9 }xyz                                        {3:│}{1:  }{10:  9 }xyz                                         |
+      {1:  }{10: 10 }aDEFabc                                    {3:│}{1:  }{10: 10 }aDEFabc                                     |
+      {1:  }{10: 11 }aDEFabc                                    {3:│}{1:  }{10: 11 }aDEFabc                                     |
+      {1:  }{10: 12 }aDEFabc                                    {3:│}{1:  }{10: 12 }aDEFabc                                     |
+      {1:  }{10: 13 }common line                                {3:│}{1:  }{10: 13 }common line                                 |
+      {1:  }{10: 14 }DEF                                        {3:│}{1:  }{10: 14 }DEF                                         |
+      {1:  }{10: 15 }GHI                                        {3:│}{1:  }{10: 15 }GHI                                         |
+      {1:  }{10: 16 }something else                             {3:│}{1:  }{10: 16 }something else                              |
+      {1:  }{10: 17 }common line                                {3:│}{1:  }{10: 17 }common line                                 |
+      {1:  }{10: 18 }something                                  {3:│}{1:  }{10: 18 }something                                   |
+      {3:Xtest-functional-diff-screen-1.2                  }{7:Xtest-functional-diff-screen-1 [+]                }|
+      :1,12diffget                                                                                        |
+      ]])
+    end)
+    it('get all from first window', function()
+      feed('1<c-w>w')
+      feed(':1,19diffget<cr>')
+      screen:expect([[
+      {1:  }{10:  1 }^common line                                {3:│}{1:  }{10:  1 }common line                                 |
+      {1:  }{10:  2 }HIL                                        {3:│}{1:  }{10:  2 }HIL                                         |
+      {1:  }{10:  3 }                                           {3:│}{1:  }{10:  3 }                                            |
+      {1:  }{10:  4 }aABCabc                                    {3:│}{1:  }{10:  4 }aABCabc                                     |
+      {1:  }{10:  5 }aABCabc                                    {3:│}{1:  }{10:  5 }aABCabc                                     |
+      {1:  }{10:  6 }aABCabc                                    {3:│}{1:  }{10:  6 }aABCabc                                     |
+      {1:  }{10:  7 }aABCabc                                    {3:│}{1:  }{10:  7 }aABCabc                                     |
+      {1:  }{10:  8 }common line                                {3:│}{1:  }{10:  8 }common line                                 |
+      {1:  }{10:  9 }HIL                                        {3:│}{1:  }{10:  9 }HIL                                         |
+      {1:  }{10: 10 }common line                                {3:│}{1:  }{10: 10 }common line                                 |
+      {1:  }{10: 11 }something                                  {3:│}{1:  }{10: 11 }something                                   |
+      {1:  }{10: 12 }                                           {3:│}{1:  }{10: 12 }                                            |
+      {6:~                                                }{3:│}{6:~                                                 }|
+      {6:~                                                }{3:│}{6:~                                                 }|
+      {6:~                                                }{3:│}{6:~                                                 }|
+      {6:~                                                }{3:│}{6:~                                                 }|
+      {6:~                                                }{3:│}{6:~                                                 }|
+      {6:~                                                }{3:│}{6:~                                                 }|
+      {7:Xtest-functional-diff-screen-1.2 [+]              }{3:Xtest-functional-diff-screen-1                    }|
+      :1,19diffget                                                                                        |
+      ]])
+    end)
+    it('get part of the non linematched diff block in window 2 line 7 - 8 (non line matched block)', function()
+      feed('2<c-w>w')
+      feed(':7,8diffget<cr>')
+      screen:expect([[
+      {1:  }{10:  1 }common line                                {3:│}{1:  }{10:  1 }^common line                                 |
+      {1:  }{10:  2 }{4:DEF                                        }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10:  3 }{8:GHI}{9:                                        }{3:│}{1:  }{10:  2 }{8:HIL}{9:                                         }|
+      {1:  }{10:  4 }{4:something                                  }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10:  5 }                                           {3:│}{1:  }{10:  3 }                                            |
+      {1:  }{10:  6 }{9:a}{8:DEF}{9:abc                                    }{3:│}{1:  }{10:  4 }{9:a}{8:ABC}{9:abc                                     }|
+      {1:  }{10:  7 }{8:xyz}{9:                                        }{3:│}{1:  }{10:  5 }{8:aABCabc}{9:                                     }|
+      {1:  }{10:  8 }{8:xyz}{9:                                        }{3:│}{1:  }{10:  6 }{8:aABCabc}{9:                                     }|
+      {1:  }{10:  9 }xyz                                        {3:│}{1:  }{10:  7 }xyz                                         |
+      {1:  }{10: 10 }aDEFabc                                    {3:│}{1:  }{10:  8 }aDEFabc                                     |
+      {1:  }{10: 11 }aDEFabc                                    {3:│}{1:  }{10:  9 }aDEFabc                                     |
+      {1:  }{10: 12 }aDEFabc                                    {3:│}{1:  }{10: 10 }aDEFabc                                     |
+      {1:  }{10: 13 }common line                                {3:│}{1:  }{10: 11 }common line                                 |
+      {1:  }{10: 14 }{4:DEF                                        }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10: 15 }{8:GHI}{9:                                        }{3:│}{1:  }{10: 12 }{8:HIL}{9:                                         }|
+      {1:  }{10: 16 }{4:something else                             }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10: 17 }common line                                {3:│}{1:  }{10: 13 }common line                                 |
+      {1:  }{10: 18 }something                                  {3:│}{1:  }{10: 14 }something                                   |
+      {3:Xtest-functional-diff-screen-1.2                  }{7:Xtest-functional-diff-screen-1 [+]                }|
+      :7,8diffget                                                                                         |
+      ]])
+    end)
+    it('get part of the non linematched diff block in window 2 line 8 - 10 (line matched block)', function()
+      feed('2<c-w>w')
+      feed(':8,10diffget<cr>')
+      screen:expect([[
+      {1:  }{10:  1 }common line                                {3:│}{1:  }{10:  1 }^common line                                 |
+      {1:  }{10:  2 }{4:DEF                                        }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10:  3 }{8:GHI}{9:                                        }{3:│}{1:  }{10:  2 }{8:HIL}{9:                                         }|
+      {1:  }{10:  4 }{4:something                                  }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10:  5 }                                           {3:│}{1:  }{10:  3 }                                            |
+      {1:  }{10:  6 }{9:a}{8:DEF}{9:abc                                    }{3:│}{1:  }{10:  4 }{9:a}{8:ABC}{9:abc                                     }|
+      {1:  }{10:  7 }{8:xyz}{9:                                        }{3:│}{1:  }{10:  5 }{8:aABCabc}{9:                                     }|
+      {1:  }{10:  8 }{8:xyz}{9:                                        }{3:│}{1:  }{10:  6 }{8:aABCabc}{9:                                     }|
+      {1:  }{10:  9 }{8:xyz}{9:                                        }{3:│}{1:  }{10:  7 }{8:aABCabc}{9:                                     }|
+      {1:  }{10: 10 }{4:aDEFabc                                    }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10: 11 }{4:aDEFabc                                    }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10: 12 }{4:aDEFabc                                    }{3:│}{1:  }{10:    }{2:--------------------------------------------}|
+      {1:  }{10: 13 }common line                                {3:│}{1:  }{10:  8 }common line                                 |
+      {1:  }{10: 14 }DEF                                        {3:│}{1:  }{10:  9 }DEF                                         |
+      {1:  }{10: 15 }GHI                                        {3:│}{1:  }{10: 10 }GHI                                         |
+      {1:  }{10: 16 }something else                             {3:│}{1:  }{10: 11 }something else                              |
+      {1:  }{10: 17 }common line                                {3:│}{1:  }{10: 12 }common line                                 |
+      {1:  }{10: 18 }something                                  {3:│}{1:  }{10: 13 }something                                   |
+      {3:Xtest-functional-diff-screen-1.2                  }{7:Xtest-functional-diff-screen-1 [+]                }|
+      :8,10diffget                                                                                        |
+      ]])
     end)
   end)
 end)
