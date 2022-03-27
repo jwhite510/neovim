@@ -1793,7 +1793,7 @@ bool diff_linematch(diff_T *dp)
 }
 
 
-int get_max_diff_length2(const diff_T* dp) {
+int get_max_diff_length(const diff_T* dp) {
   int maxlength = 0;
   for (int k = 0; k < DB_COUNT; k++) {
     if (curtab->tp_diffbuf[k] != NULL) {
@@ -1869,14 +1869,14 @@ void count_filler_lines_and_topline(int *curlinenum_to, int *linesfiller,
 
     } else{
       (*linesfiller) = 0;
-      ch_virtual_lines = get_max_diff_length2(curdif);
+      ch_virtual_lines = get_max_diff_length(curdif);
       isfiller = (curdif->df_count[toidx] ? 0 : 1);
       if (isfiller) {
         while (curdif && curdif->df_next && curdif->df_lnum[toidx] ==
             curdif->df_next->df_lnum[toidx] &&
             curdif->df_next->df_count[toidx] == 0) {
           curdif = curdif->df_next;
-          ch_virtual_lines += get_max_diff_length2(curdif);
+          ch_virtual_lines += get_max_diff_length(curdif);
         }
       }
       if (curdif) {
@@ -1904,7 +1904,7 @@ void calculate_topfill_and_topline(const int fromidx, const int toidx, const
   while (curdif && ( curdif->df_lnum[fromidx] + curdif->df_count[fromidx] )
       <= from_topline) {
 
-    virtual_lines_passed += get_max_diff_length2(curdif);
+    virtual_lines_passed += get_max_diff_length(curdif);
 
     curdif = curdif->df_next;
   }
@@ -1927,7 +1927,7 @@ void calculate_topfill_and_topline(const int fromidx, const int toidx, const
   for (diff_T *dpfillertest = thistopdiff; dpfillertest != NULL; dpfillertest = dpfillertest->df_next) {
     if (dpfillertest->df_lnum[toidx] == curlinenum_to) {
       while (dpfillertest && dpfillertest->df_lnum[toidx] == curlinenum_to) {
-        maxfiller += dpfillertest->df_count[toidx] ? 0 : get_max_diff_length2(dpfillertest);
+        maxfiller += dpfillertest->df_count[toidx] ? 0 : get_max_diff_length(dpfillertest);
         dpfillertest = dpfillertest->df_next;
       }
       break;
@@ -2071,13 +2071,13 @@ int diff_check_with_linestatus(win_T *wp, linenr_T lnum, int *linestatus)
         ) {
 
       if (dp->df_count[idx] == 0) {
-        filler_lines_d1 += get_max_diff_length2(dp);
+        filler_lines_d1 += get_max_diff_length(dp);
       }
       dp = dp->df_next;
     }
 
     if (dp->df_count[idx] == 0) {
-      filler_lines_d1 += get_max_diff_length2(dp);
+      filler_lines_d1 += get_max_diff_length(dp);
     }
 
     if (lnum < dp->df_lnum[idx]+ dp->df_count[idx]) {
