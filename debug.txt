@@ -1,0 +1,1 @@
+gdb --args ./build/bin/nvim -d f1.txt f2.txt f3.txt
