@@ -1782,6 +1782,9 @@ bool diff_linematch(diff_T *dp)
   int tsize = 0;
   for (int i = 0; i < DB_COUNT; i++) {
     if ( curtab->tp_diffbuf[i] != NULL ) {
+      if (dp->df_count[i] < 0) {
+        return 0;
+      }
       tsize += dp->df_count[i];
     }
   }
