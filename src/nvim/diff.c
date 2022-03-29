@@ -1830,6 +1830,18 @@ int diff_check(win_T *wp, linenr_T lnum)
     return 0;
   }
 
+  for (int i = 0; i < DB_COUNT; i++) {
+    if (curtab->tp_diffbuf[i] != NULL) {
+      if (dp->df_count[i] < 0) {
+        // this will write to the file only if there is a negative number in dp->df_count[i]
+        // and why is there ever a negative number?
+        FILE *fp = fopen("dp_df_count.txt", "a");
+        fprintf(fp, "%i\n", dp->df_count[i]);
+        fclose(fp);
+      }
+    }
+  }
+
   if (lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
     int zero = false;
 
