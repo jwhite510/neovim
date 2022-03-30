@@ -1,3 +1,10 @@
+
+find which package a file belongs to
+install apt-file
+sudo apt-file update
+apt-file search filename
+apt-file search /usr/bin/svn
+
 --- find ----
 find . -name "thing.py"
 
@@ -22,6 +29,12 @@ svn revert --depth=infinity .
 
 # revert to specific revision
 svn up -rxxxxxx
+
+# svn show log of last 100 changes
+svn log -l 600 | less
+
+# svn show changes from revision
+svn diff -c 17i3012 | delta
 
 # get newest version from repository
 
