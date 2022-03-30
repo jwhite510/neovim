@@ -2593,7 +2593,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
     }
   }
   if (dp->is_linematched) {
-    while (dp && dp->df_next 
+    while (dp && dp->df_next
            && lnum == dp->df_count[idx] + dp->df_lnum[idx]
            && dp->df_next->df_lnum[idx] == lnum) {
       dp = dp->df_next;
