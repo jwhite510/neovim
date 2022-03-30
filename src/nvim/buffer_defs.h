@@ -908,7 +908,6 @@ struct file_buffer {
  */
 #define DB_COUNT 8     // up to four buffers can be diff'ed
 
-
 /*
  * Each diffblock defines where a block of lines starts in each of the buffers
  * and how many lines it occupies in that buffer.  When the lines are missing
