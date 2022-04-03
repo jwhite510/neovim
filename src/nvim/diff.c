@@ -505,7 +505,6 @@ static diff_T *diff_alloc_new(tabpage_T *tp, diff_T *dprev, diff_T *dp)
 {
   diff_T *dnew = xmalloc(sizeof(*dnew));
 
-  dnew->df_redraw = true;
   dnew->is_linematched = false;
   dnew->df_next = dp;
   if (dprev == NULL) {
@@ -1989,8 +1988,7 @@ void run_linematch_algorithm(diff_T * dp)
   for (i = 0; i < decisions_length; i++) {
     if (i && (decisions[i - 1] != decisions[i])) {
       dp_s = diff_alloc_new(curtab, dp_s, dp_s->df_next);
-      dp_s->df_redraw = 0;
-      dp_s->is_linematched = 1;
+      dp_s->is_linematched = true;
       for (j = 0; j < DB_COUNT; j++) {
         if (curtab->tp_diffbuf[j] != NULL) {
           dp_s->df_lnum[j] = line_numbers[j];
@@ -2014,8 +2012,7 @@ void run_linematch_algorithm(diff_T * dp)
   xfree(diff_length);
   xfree(outputmap);
   xfree(decisions);
-  dp->df_redraw = 0;
-  dp->is_linematched = 1;
+  dp->is_linematched = true;
 }
 
 int diff_check_with_linestatus(win_T *wp, linenr_T lnum, int *linestatus)
@@ -2061,7 +2058,7 @@ int diff_check_with_linestatus(win_T *wp, linenr_T lnum, int *linestatus)
     return 0;
   }
 
-  if (dp->df_redraw && diff_linematch(dp)) {
+  if (!dp->is_linematched && diff_linematch(dp)) {
     run_linematch_algorithm(dp);
   }
 
