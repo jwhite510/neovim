@@ -2068,7 +2068,7 @@ int diff_check_with_linestatus(win_T *wp, linenr_T lnum, int *linestatus)
   if (dp->is_linematched) {
     int filler_lines_d1 = 0;
     while (dp && dp->df_next &&
-           lnum == (dp->df_count[idx] + dp->df_lnum[idx]))&&
+           lnum == (dp->df_count[idx] + dp->df_lnum[idx])&&
            dp->df_next->df_lnum[idx] == lnum) {
 
       if (dp->df_count[idx] == 0) {
