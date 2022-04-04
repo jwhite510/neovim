@@ -1951,25 +1951,63 @@ void run_linematch_algorithm(diff_T * dp)
   int *outputmap = xmalloc(sizeof(int) * DB_COUNT);
   int diffbuffers_count = 0;
   for (i = 0; i < DB_COUNT; i++) {
+
+    // get a char* to the beginning of the diff hunk in each diff buffer we will
+    // set diff_begin to be an array of pointers to the start of the diff hunk
+    // in each buffer
     if (curtab->tp_diffbuf[i] != NULL) {
+
+      // initialize the memory of diffin_T before writing to it with diff_write
       memset(&diffbuffers[diffbuffers_count], 0, sizeof(diffbuffers[diffbuffers_count]));
+
+      // write the contents of the entire buffer to
+      // diffbuffers[diffbuffers_count]
       diff_write(curtab->tp_diffbuf[i], &diffbuffers[diffbuffers_count]);
+
+      // we want to get the char* to the diff buffer that was just written
+      // we add it to the array of char*, diff_begin
       diff_begin[diffbuffers_count] = diffbuffers[diffbuffers_count].din_mmfile.ptr;
 
+      // increment the pointer stored in diff_begin dp->df_lnum[i] times to get
+      // to get a char* at the buffer at the start of the diff block
       for (j = 0; j < dp->df_lnum[i] - 1; j++) {
+
+        // get a char* to the beginning of the diff block by incrementing past a
+        // newline character dp->df_lnum[i] times
         while (*diff_begin[diffbuffers_count] != '\n') {
           diff_begin[diffbuffers_count]++;
         }
         diff_begin[diffbuffers_count]++;
       }
+
+      // keep track of the length of this diff block to pass it to the linematch
+      // algorithm
       diff_length[diffbuffers_count] = dp->df_count[i];
+
+      // keep track of the index of the diff buffer we are using here
+      // ( 0 >= i < DB_COUNT )
+      // we need to track it because the order of the indexes used to store the
+      // diff hunk information may not be all in a row e.g.
+
+      // dp->df_count[0] = 5, dp->df_lnum[0] = 10
+      //
+      // dp->df_count[1] = 4, dp->df_lnum[1] = 9  <- if 3 diff buffers were open
+      // and in the middle one, diff mode was disabled with ":diffoff", we are
+      // now no longer interested in using dp->df_lnum/count[1], only
+      // dp->df_lnum/count[0] and [2]. and curtab->tp_diffbuf[1] will be NULL
+      // So we keep track of this with outputmap
+      //
+      // dp->df_count[2] = 6, dp->df_lnum[2] = 11
 
       outputmap[diffbuffers_count] = i;
 
+      // increment the amount of diff buffers we are passing to the algorithm
       diffbuffers_count++;
     }
   }
 
+  // we will get the output of the linematch algorithm in the format of an array
+  // of integers (*decisions) and the length of that array (decisions_length)
   int decisions_length = 0;
   int *decisions = NULL;
   linematch_nbuffers(diff_begin, diff_length, diffbuffers_count,
@@ -1987,6 +2025,8 @@ void run_linematch_algorithm(diff_T * dp)
   diff_T *dp_s = dp;
   for (i = 0; i < decisions_length; i++) {
     if (i && (decisions[i - 1] != decisions[i])) {
+      // create new sub diff blocks to segment the original diff block which we
+      // further divided by running the linematch algorithm
       dp_s = diff_alloc_new(curtab, dp_s, dp_s->df_next);
       dp_s->is_linematched = true;
       for (j = 0; j < DB_COUNT; j++) {
