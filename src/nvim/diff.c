@@ -1942,6 +1942,40 @@ void calculate_topfill_and_topline(const int fromidx, const int toidx, const
   (*topline) = curlinenum_to;
 }
 
+int linematched_filler_lines(diff_T *dp, int idx, linenr_T lnum, int *linestatus)
+{
+  int filler_lines_d1 = 0;
+  while (dp && dp->df_next &&
+         lnum == (dp->df_count[idx] + dp->df_lnum[idx])&&
+         dp->df_next->df_lnum[idx] == lnum) {
+
+    if (dp->df_count[idx] == 0) {
+      filler_lines_d1 += get_max_diff_length(dp);
+    }
+    dp = dp->df_next;
+  }
+
+  if (dp->df_count[idx] == 0) {
+    filler_lines_d1 += get_max_diff_length(dp);
+  }
+
+  if (lnum < dp->df_lnum[idx]+ dp->df_count[idx]) {
+    int j = 0;
+    for (int i = 0; i < DB_COUNT; i++) {
+      if (curtab->tp_diffbuf[i] != NULL) {
+        if (dp->df_count[i]) {
+          j++;
+        }
+      }
+      // is this an added line or a changed line?
+      if (linestatus) {
+        (*linestatus) = (j == 1) ? -2 : -1;
+      }
+    }
+  }
+  return filler_lines_d1;
+}
+
 void run_linematch_algorithm(diff_T * dp)
 {
   // define buffers for diff algorithm
@@ -2103,36 +2137,7 @@ int diff_check_with_linestatus(win_T *wp, linenr_T lnum, int *linestatus)
   }
 
   if (dp->is_linematched) {
-    int filler_lines_d1 = 0;
-    while (dp && dp->df_next &&
-           lnum == (dp->df_count[idx] + dp->df_lnum[idx])&&
-           dp->df_next->df_lnum[idx] == lnum) {
-
-      if (dp->df_count[idx] == 0) {
-        filler_lines_d1 += get_max_diff_length(dp);
-      }
-      dp = dp->df_next;
-    }
-
-    if (dp->df_count[idx] == 0) {
-      filler_lines_d1 += get_max_diff_length(dp);
-    }
-
-    if (lnum < dp->df_lnum[idx]+ dp->df_count[idx]) {
-      int j = 0;
-      for (int i = 0; i < DB_COUNT; i++) {
-        if (curtab->tp_diffbuf[i] != NULL) {
-          if (dp->df_count[i]) {
-            j++;
-          }
-        }
-        // is this an added line or a changed line?
-        if (linestatus) {
-          (*linestatus) = (j == 1) ? -2 : -1;
-        }
-      }
-    }
-    return filler_lines_d1;
+    return linematched_filler_lines(dp, idx, lnum, linestatus);
   }
 
   if (lnum < dp->df_lnum[idx] + dp->df_count[idx]) {
