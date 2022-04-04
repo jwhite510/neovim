@@ -1776,6 +1776,9 @@ bool diff_linematch(diff_T *dp)
   int tsize = 0;
   for (int i = 0; i < DB_COUNT; i++) {
     if ( curtab->tp_diffbuf[i] != NULL ) {
+      // for the rare case (bug?) that the count of a diff block is negative, do
+      // not run the algorithm because this will try to allocate a negative
+      // amount of space and crash
       if (dp->df_count[i] < 0) {
         return 0;
       }
