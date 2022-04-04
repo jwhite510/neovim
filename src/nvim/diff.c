@@ -1941,16 +1941,13 @@ void calculate_topfill_and_topline(const int fromidx, const int toidx, const
 
 void run_linematch_algorithm(diff_T * dp)
 {
-  int i, j;
-  // include the algorithm and run it here
-
   // define buffers for diff algorithm
   diffin_T *diffbuffers = xmalloc(sizeof(diffin_T) * DB_COUNT);
   const char **diff_begin = xmalloc(sizeof(char *) * DB_COUNT);
   int *diff_length = xmalloc(sizeof(int) * DB_COUNT);
   int *outputmap = xmalloc(sizeof(int) * DB_COUNT);
   int diffbuffers_count = 0;
-  for (i = 0; i < DB_COUNT; i++) {
+  for (int i = 0; i < DB_COUNT; i++) {
 
     // get a char* to the beginning of the diff hunk in each diff buffer we will
     // set diff_begin to be an array of pointers to the start of the diff hunk
@@ -1970,7 +1967,7 @@ void run_linematch_algorithm(diff_T * dp)
 
       // increment the pointer stored in diff_begin dp->df_lnum[i] times to get
       // to get a char* at the buffer at the start of the diff block
-      for (j = 0; j < dp->df_lnum[i] - 1; j++) {
+      for (int j = 0; j < dp->df_lnum[i] - 1; j++) {
 
         // get a char* to the beginning of the diff block by incrementing past a
         // newline character dp->df_lnum[i] times
@@ -2015,7 +2012,7 @@ void run_linematch_algorithm(diff_T * dp)
 
   // get the start line number here in each diff buffer, and then increment
   int line_numbers[DB_COUNT];
-  for (i = 0; i < DB_COUNT; i++) {
+  for (int i = 0; i < DB_COUNT; i++) {
     if (curtab->tp_diffbuf[i] != NULL) {
       line_numbers[i] = dp->df_lnum[i];
       dp->df_count[i] = 0;
@@ -2023,20 +2020,20 @@ void run_linematch_algorithm(diff_T * dp)
   }
   // write the diffs to the current diff block
   diff_T *dp_s = dp;
-  for (i = 0; i < decisions_length; i++) {
+  for (int i = 0; i < decisions_length; i++) {
     if (i && (decisions[i - 1] != decisions[i])) {
       // create new sub diff blocks to segment the original diff block which we
       // further divided by running the linematch algorithm
       dp_s = diff_alloc_new(curtab, dp_s, dp_s->df_next);
       dp_s->is_linematched = true;
-      for (j = 0; j < DB_COUNT; j++) {
+      for (int j = 0; j < DB_COUNT; j++) {
         if (curtab->tp_diffbuf[j] != NULL) {
           dp_s->df_lnum[j] = line_numbers[j];
           dp_s->df_count[j] = 0;
         }
       }
     }
-    for (j = 0; j < diffbuffers_count; j++) {
+    for (int j = 0; j < diffbuffers_count; j++) {
       if (decisions[i] & (1 << j)) {
         // will need to use the map here
         dp_s->df_count[outputmap[j]]++;
@@ -2044,7 +2041,7 @@ void run_linematch_algorithm(diff_T * dp)
       }
     }
   }
-  for (i = 0; i < diffbuffers_count; i++) {
+  for (int i = 0; i < diffbuffers_count; i++) {
     clear_diffin(&diffbuffers[i]);
   }
   xfree(diffbuffers);
