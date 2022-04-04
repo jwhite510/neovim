@@ -69,22 +69,22 @@ void free_comparison_mem(int ***comparison_mem, const int *diff_length, const in
 
 
 /// update the path of a point in the diff linematch algorithm
-/// @param  diffcomparisonpath_flat
+/// @param  diffcomparisonpath
 /// @param score
 /// @param to
 /// @param from
 /// @param choice
-void update_path_flat(diffcomparisonpath_flat_T *diffcomparisonpath_flat,
+void update_path_flat(diffcomparisonpath_T *diffcomparisonpath,
                       int score, int to, int from, const int choice)
 {
-  for (int k = 0; k < diffcomparisonpath_flat[from].df_path_index; k++) {
-    diffcomparisonpath_flat[to].df_decision[k] = diffcomparisonpath_flat[from].df_decision[k];
+  for (int k = 0; k < diffcomparisonpath[from].df_path_index; k++) {
+    diffcomparisonpath[to].df_decision[k] = diffcomparisonpath[from].df_decision[k];
   }
-  diffcomparisonpath_flat[to].df_path_index = diffcomparisonpath_flat[from].df_path_index;
+  diffcomparisonpath[to].df_path_index = diffcomparisonpath[from].df_path_index;
 
-  diffcomparisonpath_flat[to].df_lev_score = score;
-  diffcomparisonpath_flat[to].df_decision[diffcomparisonpath_flat[to].df_path_index] = choice;
-  diffcomparisonpath_flat[to].df_path_index++;
+  diffcomparisonpath[to].df_lev_score = score;
+  diffcomparisonpath[to].df_decision[diffcomparisonpath[to].df_path_index] = choice;
+  diffcomparisonpath[to].df_path_index++;
 }
 
 
@@ -214,14 +214,14 @@ int ***allocate_comparison_mem(const int *diff_length, const int nDiffs)
 /// @param nPaths
 /// @param pathIndex
 /// @param choice
-/// @param diffcomparisonpath_flat
+/// @param diffcomparisonpath
 /// @param comparison_mem
 /// @param diff_length
 /// @param nDiffs
 /// @param diff_block
 void try_possible_paths(const int *df_iterators, const int *paths,
                         const int nPaths, const int pathIndex, int *choice,
-                        diffcomparisonpath_flat_T *diffcomparisonpath_flat,
+                        diffcomparisonpath_T *diffcomparisonpath,
                         int ***comparison_mem, const int *diff_length,
                         const int nDiffs, const char **diff_block)
 {
@@ -265,11 +265,11 @@ void try_possible_paths(const int *df_iterators, const int *paths,
       int unwrapped_index_to = unwrap_indexes(toValues, diff_length, nDiffs);
       int matched_chars = count_n_matched_chars(
           stringps, fromValues, nDiffs, comparison_mem);
-      int score = diffcomparisonpath_flat[unwrapped_index_from].df_lev_score +
+      int score = diffcomparisonpath[unwrapped_index_from].df_lev_score +
         matched_chars;
-      if (score > diffcomparisonpath_flat[unwrapped_index_to].df_lev_score) {
+      if (score > diffcomparisonpath[unwrapped_index_to].df_lev_score) {
         update_path_flat(
-            diffcomparisonpath_flat,
+            diffcomparisonpath,
             score,
             unwrapped_index_to,
             unwrapped_index_from,
@@ -289,8 +289,8 @@ void try_possible_paths(const int *df_iterators, const int *paths,
       while (i < nDiffs && df_iterators[i] == 0) {
         i++;
         if (i == nDiffs) {
-          diffcomparisonpath_flat[0].df_lev_score = 0;
-          diffcomparisonpath_flat[0].df_path_index = 0;
+          diffcomparisonpath[0].df_lev_score = 0;
+          diffcomparisonpath[0].df_path_index = 0;
         }
       }
     }
@@ -299,10 +299,10 @@ void try_possible_paths(const int *df_iterators, const int *paths,
   int bit_place = paths[pathIndex];
   *(choice) |= (1 << bit_place);  // set it to 1
   try_possible_paths(df_iterators, paths, nPaths, pathIndex + 1, choice,
-                     diffcomparisonpath_flat, comparison_mem, diff_length, nDiffs, diff_block);
+                     diffcomparisonpath, comparison_mem, diff_length, nDiffs, diff_block);
   *(choice) &= ~(1 << bit_place);  // set it to 0
   try_possible_paths(df_iterators, paths, nPaths, pathIndex + 1, choice,
-                     diffcomparisonpath_flat, comparison_mem, diff_length, nDiffs, diff_block);
+                     diffcomparisonpath, comparison_mem, diff_length, nDiffs, diff_block);
 }
 
 /// unwrap indexes to access n dimmensional tensor
@@ -334,13 +334,13 @@ int unwrap_indexes(const int *values, const int *diff_length, const int nDiffs)
 /// each point in the tensor
 /// @param df_iterators
 /// @param ch_dim
-/// @param diffcomparisonpath_flat
+/// @param diffcomparisonpath
 /// @param comparison_mem
 /// @param diff_length
 /// @param nDiffs
 /// @param diff_block
 void populate_tensor(int *df_iterators, const int ch_dim,
-                     diffcomparisonpath_flat_T *diffcomparisonpath_flat, int ***comparison_mem,
+                     diffcomparisonpath_T *diffcomparisonpath, int ***comparison_mem,
                      const int *diff_length, const int nDiffs, const char **diff_block)
 {
   if (ch_dim == nDiffs) {
@@ -355,8 +355,8 @@ void populate_tensor(int *df_iterators, const int ch_dim,
     }
     int choice = 0;
     int unwrapper_index_to = unwrap_indexes(df_iterators, diff_length, nDiffs);
-    diffcomparisonpath_flat[unwrapper_index_to].df_lev_score = -1;
-    try_possible_paths(df_iterators, paths, nPaths, 0, &choice, diffcomparisonpath_flat,
+    diffcomparisonpath[unwrapper_index_to].df_lev_score = -1;
+    try_possible_paths(df_iterators, paths, nPaths, 0, &choice, diffcomparisonpath,
                        comparison_mem, diff_length, nDiffs, diff_block);
 
     xfree(paths);
@@ -364,7 +364,7 @@ void populate_tensor(int *df_iterators, const int ch_dim,
   }
   for (int i = 0; i <= diff_length[ch_dim]; i++) {
     df_iterators[ch_dim] = i;
-    populate_tensor(df_iterators, ch_dim + 1, diffcomparisonpath_flat,
+    populate_tensor(df_iterators, ch_dim + 1, diffcomparisonpath,
                     comparison_mem, diff_length, nDiffs, diff_block);
   }
 }
@@ -434,11 +434,11 @@ void linematch_nbuffers(const char **diff_block, const int *diff_length,
   }
 
   // create the flattened path matrix
-  diffcomparisonpath_flat_T *diffcomparisonpath_flat = xmalloc(sizeof(diffcomparisonpath_flat_T) *
+  diffcomparisonpath_T *diffcomparisonpath = xmalloc(sizeof(diffcomparisonpath_T) *
                                                                (size_t)memsize);
   // allocate memory here
   for (int i = 0; i < memsize; i++) {
-    diffcomparisonpath_flat[i].df_decision = xmalloc(
+    diffcomparisonpath[i].df_decision = xmalloc(
         ((size_t)memsize_decisions) * sizeof(int));
   }
 
@@ -448,7 +448,7 @@ void linematch_nbuffers(const char **diff_block, const int *diff_length,
 
   int ***comparison_mem = allocate_comparison_mem(diff_length, nDiffs);
 
-  populate_tensor(df_iterators, 0, diffcomparisonpath_flat, comparison_mem,
+  populate_tensor(df_iterators, 0, diffcomparisonpath, comparison_mem,
                   diff_length, nDiffs, diff_block);
 
   int maxlines = 0;
@@ -464,8 +464,8 @@ void linematch_nbuffers(const char **diff_block, const int *diff_length,
     values_final[i] = diff_length[i];
   }
   const int u = unwrap_indexes(values_final, diff_length, nDiffs);
-  const int best_path_index = diffcomparisonpath_flat[u].df_path_index;
-  const int *best_path_decisions = diffcomparisonpath_flat[u].df_decision;
+  const int best_path_index = diffcomparisonpath[u].df_path_index;
+  const int *best_path_decisions = diffcomparisonpath[u].df_decision;
 
   *decisions_length = best_path_index;
   *decisions = xmalloc(sizeof(int) * (size_t)best_path_index);
@@ -478,7 +478,7 @@ void linematch_nbuffers(const char **diff_block, const int *diff_length,
   xfree(values_final);
   xfree(df_iterators);
   for (int i = 0; i < memsize; i++) {
-    xfree(diffcomparisonpath_flat[i].df_decision);
+    xfree(diffcomparisonpath[i].df_decision);
   }
-  xfree(diffcomparisonpath_flat);
+  xfree(diffcomparisonpath);
 }
