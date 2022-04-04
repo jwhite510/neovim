@@ -2965,9 +2965,9 @@ void ex_diffgetput(exarg_T *eap)
   for (dp = curtab->tp_first_diff; dp != NULL;) {
 
     if (dp->is_linematched && !eap->addr_count) {
-      // handle the case with overlapping diff blocks
-      while (dp->is_linematched 
-             && dp->df_next 
+      // handle the case with adjacent diff blocks
+      while (dp->is_linematched
+             && dp->df_next
              && dp->df_next->df_lnum[idx_cur] == dp->df_lnum[idx_cur] + dp->df_count[idx_cur]
              && dp->df_next->df_lnum[idx_cur] == eap->line1 + off + 1)
       {
