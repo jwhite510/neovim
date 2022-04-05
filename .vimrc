@@ -1281,6 +1281,32 @@ function! TabUp(dir)
   set nowinfixheight
 endfunction
 
+function! IgnoreDiff(pattern)
+    let opt = ""
+    if &diffopt =~ "icase"
+      let opt = opt . "-i "
+    endif
+    if &diffopt =~ "iwhite"
+      let opt = opt . "-b "
+    endif
+    let cmd = "!diff -a --binary " . opt .
+      \ " <(perl -pe 's/" . a:pattern .  "/\".\" x length($0)/gei' " .
+      \ v:fname_in .
+      \ ") <(perl -pe 's/" . a:pattern .  "/\".\" x length($0)/gei' " .
+      \ v:fname_new .
+      \ ") > " . v:fname_out
+    " echo cmd
+    silent execute cmd
+    redraw!
+    return cmd
+endfunction
+
+command! IgnoreHexDiff set diffexpr=IgnoreDiff('0x[0-9a-fA-F]+') | diffupdate
+command! IgnoreBracketDiff set diffexpr=IgnoreDiff('[{}]') | diffupdate
+command! IgnoreDecimalDiff set diffexpr=IgnoreDiff('\\.\\d+') | diffupdate
+command! NormalDiff set diffexpr= | diffupdate
+
+
 command! -bar DuplicateTabpane
       \ let s:sessionoptions = &sessionoptions |
       \ try |
