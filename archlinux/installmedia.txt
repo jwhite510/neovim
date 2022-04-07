@@ -19,3 +19,7 @@ umount /dev/sdc1
 
 // copy to the installation media
 sudo dd bs=4M if=/home/jonathon/Downloads/archlinux-2022.03.01-x86_64.iso of=/dev/sdc conv=fdatasync  status=progress
+
+// check the content on a usb to see if it matches a file
+testcopy is the file to compare in current directory
+cmp -n `stat -c '%s' testcopy` testcopy /dev/sdd
