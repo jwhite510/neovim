@@ -1,0 +1,748 @@
+profile = {
+    current = 1,
+    profiles = {
+        {
+            LastColorFAF = 1,
+            LobbyOpt_UnitCap = '1000',
+            console_fade_delay = 3,
+            LobbyOpt_Share = 'ShareUntilDeath',
+            Last_Op_Selected = {
+                id = 'X1CA_001'
+            },
+            LobbyOpt_AutoTeams = 'none',
+            console_font = 'Zeroes Three',
+            layout = 'bottom',
+            console_font_size = 12,
+            LobbyChangelog = 3731,
+            LobbyOpt_NavalExpansionsAllowed = '4',
+            Notify_Messages = {
+                other = {
+                    arty = 'Tech 3 Artillery construction',
+                    nuke = 'Nuke Silo construction'
+                },
+                uef = {
+                    HeavyAntiMatterCannon = 'Gun (Damage&Range)',
+                    Shield = 'Shield',
+                    AdvancedEngineering = 'T2',
+                    LeftPod = 'Left Drone',
+                    RightPod = 'Right Drone',
+                    ShieldGeneratorField = 'Shield Field',
+                    TacticalMissile = 'Tactical Missile',
+                    ResourceAllocation = 'RAS',
+                    TacticalNukeMissile = 'Tactical Nuke',
+                    DamageStabilization = 'Nano-Repair',
+                    T3Engineering = 'T3',
+                    Teleporter = 'Teleporter'
+                },
+                tech = {
+                    researchnavaltech3 = 'Tech 3 Naval HQ upgrade',
+                    researchlandtech2 = 'Tech 2 Land HQ upgrade',
+                    researchairtech2 = 'Tech 2 Air HQ upgrade',
+                    researchlandtech3 = 'Tech 3 Land HQ upgrade',
+                    researchairtech3 = 'Tech 3 Air HQ upgrade',
+                    researchnavaltech2 = 'Tech 2 Naval HQ upgrade'
+                },
+                nomads = {
+                    Capacitor = 'Capacitor',
+                    IntelProbeAdv = 'Advanced Intel Probe',
+                    RapidRepair = 'Rapid Repair',
+                    MovementSpeedIncrease = 'Locomotor',
+                    AdvancedEngineering = 'T2',
+                    OrbitalBombardment = 'Orbital Bombardment',
+                    Teleporter = 'Teleporter',
+                    ResourceAllocationAdvanced = 'ARAS',
+                    DoubleGuns = 'Second Gun',
+                    ResourceAllocation = 'RAS',
+                    IntelProbe = 'Intel Probe',
+                    GunUpgrade = 'Gun (Speed&Range)',
+                    T3Engineering = 'T3',
+                    PowerArmor = 'Power Armor'
+                },
+                experimentals = {
+                    xeb2402 = 'Novax Satellite Station',
+                    ues0401 = 'Atlantis',
+                    ual0401 = 'Galactic Colossus',
+                    url0402 = 'Monkeylord',
+                    ueb2401 = 'Mavor',
+                    uel0401 = 'Fatboy',
+                    url0401 = 'Scathis',
+                    xsb2401 = 'Yolona Oss',
+                    xsl0401 = 'Ythotha',
+                    xrl0403 = 'Megalith',
+                    xsa0402 = 'Ahwassa',
+                    ura0401 = 'Soulripper',
+                    xab1401 = 'Paragon',
+                    uas0401 = 'Tempest',
+                    uaa0310 = 'Czar'
+                },
+                seraphim = {
+                    RegenAura = 'Regen Aura',
+                    RateOfFire = 'Gun (Speed&Range)',
+                    AdvancedEngineering = 'T2',
+                    AdvancedRegenAura = 'Advanced Regen Aura',
+                    Missile = 'Tactical Missile',
+                    DamageStabilizationAdvanced = 'Advanced Nano-Repair',
+                    ResourceAllocation = 'RAS',
+                    ResourceAllocationAdvanced = 'ARAS',
+                    BlastAttack = 'Gun (Splash)',
+                    DamageStabilization = 'Nano-Repair',
+                    T3Engineering = 'T3',
+                    Teleporter = 'Teleporter'
+                },
+                cybran = {
+                    CoolingUpgrade = 'Gun (Speed&Range)',
+                    AdvancedEngineering = 'T2',
+                    CloakingGenerator = 'Cloaking',
+                    StealthGenerator = 'Stealth',
+                    ResourceAllocation = 'RAS',
+                    NaniteTorpedoTube = 'Torpedo',
+                    Teleporter = 'Teleporter',
+                    T3Engineering = 'T3',
+                    MicrowaveLaserGenerator = 'Laser'
+                },
+                aeon = {
+                    ShieldHeavy = 'Shield Heavy',
+                    Shield = 'Shield',
+                    AdvancedEngineering = 'T2',
+                    ChronoDampener = 'Chrono Dampener',
+                    ResourceAllocation = 'RAS',
+                    HeatSink = 'Gun (Speed)',
+                    ResourceAllocationAdvanced = 'ARAS',
+                    EnhancedSensors = 'Sensors',
+                    Teleporter = 'Teleporter',
+                    T3Engineering = 'T3',
+                    CrysalisBeam = 'Gun (Range)'
+                }
+            },
+            Notify_experimentals_disabled = true,
+            Notify_all_disabled = false,
+            LastFaction = 1,
+            LobbyOpt_RestrictedCategories = { },
+            chat_window = {
+                top = 687,
+                bottom = 842,
+                right = 430,
+                left = 8
+            },
+            UserKeyMap = {
+                Tab = 'next_cam_position',
+                ['Ctrl-Shift-4'] = 'fac_group4',
+                ['Ctrl-Alt-E'] = 'debug_show_emmitter_window',
+                ['Ctrl-0'] = 'set_group0',
+                ['Shift-8'] = 'append_group8',
+                End = 'split_screen_disable',
+                ['Alt-UpArrow'] = 'switch_layout_up',
+                ['Ctrl-2'] = 'set_group2',
+                F2 = 'toggle_score_screen',
+                ['Ctrl-9'] = 'set_group9',
+                ['Alt-F9'] = 'debug_open_lua_debugger',
+                ['Shift-M'] = 'shift_move',
+                ['Ctrl-Alt-T'] = 'track_unit_second_mon',
+                ['Alt-D'] = 'debug_dump_ui_controls',
+                PageUp = 'chat_page_up',
+                ['Shift-3'] = 'append_group3',
+                ['Ctrl-Shift-X'] = 'debug_redo_console_command',
+                ['Ctrl-N'] = 'rename',
+                LeftBracket = 'mode',
+                ['Ctrl-5'] = 'set_group5',
+                F5 = 'ping_alert',
+                ['Ctrl-Z'] = 'select_all_units_of_same_type',
+                ['Shift-5'] = 'append_group5',
+                ['Ctrl-Shift-F1'] = 'debug_toggle_pannels',
+                ['Ctrl-Shift-7'] = 'fac_group7',
+                ['Ctrl-8'] = 'set_group8',
+                ['Alt-LeftArrow'] = 'switch_skin_down',
+                ['Shift-4'] = 'append_group4',
+                ['Ctrl-C'] = 'select_all_onscreen',
+                ['Alt-DownArrow'] = 'switch_layout_down',
+                ['Ctrl-W'] = 'tog_military',
+                ['Shift-W'] = 'zoom_out_fast',
+                ['Ctrl-Shift-L'] = 'select_nearest_land_factory',
+                ['0'] = 'group0',
+                ['3'] = 'group3',
+                ['Shift-F'] = 'shift_ferry',
+                ['Ctrl-Period'] = 'select_all_eng_onscreen',
+                F4 = 'toggle_diplomacy_screen',
+                ['7'] = 'group7',
+                ['6'] = 'group6',
+                ['9'] = 'group9',
+                ['Ctrl-H'] = 'select_all_factory_onscreen',
+                Pause = 'pause',
+                A = 'attack',
+                C = 'capture',
+                B = 'toggle_build_mode',
+                ['Ctrl-3'] = 'set_group3',
+                D = 'dive',
+                G = 'spreadattack',
+                ['Ctrl-Shift-9'] = 'fac_group9',
+                I = 'guard',
+                H = 'select_nearest_factory',
+                Home = 'split_screen_enable',
+                M = 'move',
+                ['Shift-T'] = 'create_build_template',
+                O = 'overcharge',
+                N = 'nuke',
+                Q = 'zoom_in',
+                P = 'patrol',
+                S = 'stop',
+                R = 'repair',
+                U = 'transport',
+                ['Ctrl-4'] = 'set_group4',
+                F7 = 'ping_attack',
+                V = 'reset_camera',
+                ['Ctrl-S'] = 'select_naval',
+                ['Ctrl-1'] = 'set_group1',
+                ['Shift-G'] = 'shift_spreadattack',
+                Z = 'pause_unit',
+                ['Ctrl-Shift-2'] = 'fac_group2',
+                ['Shift-U'] = 'shift_transport',
+                ['Ctrl-B'] = 'select_engineers',
+                ['Ctrl-Alt-B'] = 'debug_blingbling',
+                ['Shift-Period'] = 'goto_engineer',
+                ['Shift-F5'] = 'debug_scenario_method_shift_f5',
+                ['Alt-T'] = 'debug_teleport',
+                ['Shift-R'] = 'shift_repair',
+                ['Shift-PageDown'] = 'chat_line_down',
+                ['Ctrl-Alt-Z'] = 'debug_sally_shears',
+                ['Ctrl-Shift-0'] = 'fac_group0',
+                ['Ctrl-F4'] = 'debug_scenario_method_ctrl_f4',
+                ['Shift-I'] = 'shift_guard',
+                ['Shift-L'] = 'shift_launch_tactical',
+                F12 = 'show_objective_screen',
+                ['Ctrl-Shift-V'] = 'debug_paste_units',
+                ['Ctrl-F10'] = 'debug_restart_session',
+                ['Ctrl-Shift-C'] = 'debug_copy_units',
+                ['Ctrl-Alt-F1'] = 'toggle_notify_customiser',
+                ['Ctrl-K'] = 'suicide',
+                ['Ctrl-X'] = 'select_all',
+                ['Ctrl-Shift-S'] = 'select_nearest_naval_factory',
+                ['Alt-Q'] = 'debug_show_focus_ui_control',
+                ['Ctrl-A'] = 'select_air',
+                ['Alt-F2'] = 'debug_create_unit',
+                ['Alt-V'] = 'debug_skeletons',
+                ['5'] = 'group5',
+                ['Ctrl-F3'] = 'debug_scenario_method_ctrl_f3',
+                F10 = 'toggle_main_menu',
+                NumMinus = 'decrease_game_speed',
+                ['Alt-R'] = 'toggle_reclaim_labels',
+                ['Shift-Tab'] = 'add_cam_position',
+                ['Ctrl-Shift-A'] = 'select_nearest_air_factory',
+                ['Shift-A'] = 'shift_attack',
+                ['Shift-F6'] = 'debug_create_entity',
+                ['Alt-RightArrow'] = 'switch_skin_up',
+                F1 = 'toggle_key_bindings',
+                NumStar = 'reset_game_speed',
+                ['Alt-N'] = 'debug_nodamage',
+                ['Shift-2'] = 'append_group2',
+                ['Ctrl-Shift-1'] = 'fac_group1',
+                ['Shift-7'] = 'append_group7',
+                ['Ctrl-Alt-O'] = 'debug_grid',
+                ['Shift-F3'] = 'debug_scenario_method_shift_f3',
+                ['Shift-6'] = 'append_group6',
+                ['4'] = 'group4',
+                ['Ctrl-7'] = 'set_group7',
+                PageDown = 'chat_page_down',
+                ['Shift-F7'] = 'debug_show_stats',
+                ['Ctrl-Alt-P'] = 'debug_navpath',
+                F9 = 'debug_toggle_log_window',
+                ['Alt-Comma'] = 'select_commander',
+                ['Shift-O'] = 'shift_overcharge',
+                ['Shift-E'] = 'shift_reclaim',
+                ['Ctrl-E'] = 'add_nearest_idle_engineers_seq',
+                Comma = 'goto_commander',
+                ['Shift-F4'] = 'debug_scenario_method_shift_f4',
+                ['Shift-F8'] = 'debug_show_army_stats',
+                Period = 'cycle_engineers',
+                ['Ctrl-Shift-F5'] = 'debug_scenario_method_f5',
+                ['Alt-Period'] = 'select_idle_engineer',
+                NumPlus = 'increase_game_speed',
+                Esc = 'escape',
+                F3 = 'quick_save',
+                ['Shift-S'] = 'shift_stop',
+                ['Shift-Q'] = 'zoom_in_fast',
+                ['Ctrl-Slash'] = 'debug_pause_single_step',
+                ['Shift-0'] = 'append_group0',
+                ['Ctrl-6'] = 'set_group6',
+                ['Alt-L'] = 'toggle_lifebars',
+                ['Ctrl-Alt-Shift-F8'] = 'debug_campaign_instawin',
+                E = 'reclaim',
+                ['Ctrl-Shift-3'] = 'fac_group3',
+                ['Shift-N'] = 'shift_nuke',
+                ['Ctrl-Shift-T'] = 'track_unit_minimap',
+                ['Ctrl-Shift-Alt-C'] = 'debug_collision',
+                T = 'track_unit',
+                ['Ctrl-R'] = 'tog_econ',
+                ['Alt-W'] = 'debug_dump_focus_ui_control',
+                W = 'zoom_out',
+                ['Ctrl-F'] = 'cap_frame',
+                F8 = 'ping_marker',
+                ['Shift-D'] = 'shift_dive',
+                ['Ctrl-Alt-F5'] = 'debug_scenario_method_ctrl_alt_f5',
+                ['Ctrl-Tab'] = 'rem_cam_position',
+                ['Shift-C'] = 'shift_capture',
+                L = 'launch_tactical',
+                ['Alt-Delete'] = 'debug_destroy_units',
+                ['Ctrl-Alt-Period'] = 'debug_graphics_fidelity_2',
+                ['Ctrl-Shift-8'] = 'fac_group8',
+                ['1'] = 'group1',
+                ['Ctrl-Alt-W'] = 'debug_render_wireframe',
+                F6 = 'ping_move',
+                F = 'ferry',
+                ['Ctrl-Shift-5'] = 'fac_group5',
+                NumSlash = 'show_fps',
+                ['Alt-B'] = 'debug_bones',
+                ['Ctrl-Alt-F4'] = 'debug_scenario_method_ctrl_alt_f3',
+                ['Ctrl-Alt-Comma'] = 'debug_graphics_fidelity_0',
+                ['Ctrl-Shift-W'] = 'debug_weapons',
+                F11 = 'toggle_disconnect_screen',
+                ['Shift-9'] = 'append_group9',
+                ['Ctrl-V'] = 'cam_free',
+                ['Shift-1'] = 'append_group1',
+                ['Ctrl-Shift-6'] = 'fac_group6',
+                ['8'] = 'group8',
+                ['Ctrl-F5'] = 'debug_scenario_method_ctrl_f5',
+                ['Alt-F11'] = 'debug_show_frame_stats',
+                ['Shift-PageUp'] = 'chat_line_up',
+                ['Alt-F3'] = 'debug_scenario_method_f3',
+                ['Ctrl-Shift-F4'] = 'debug_scenario_method_f4',
+                ['2'] = 'group2',
+                ['Shift-P'] = 'shift_patrol',
+                ['Alt-A'] = 'debug_run_opponent_AI',
+                ['Ctrl-L'] = 'select_land'
+                ['Select nearest idle t1/t3 scout'] = {action = 'UI_SelectByCategory +nearest +idle AIR INTELLIGENCE', category = 'Custom Keys', order = 1,}
+            },
+            LobbyOpt_TeamLock = 'locked',
+            LobbyPresets = {
+                {
+                    GameMods = { },
+                    Name = 'lastGame',
+                    MapPath = '/maps/scmp_013/scmp_013_scenario.lua',
+                    PlayerOptions = {
+                        {
+                            MEAN = 963.58502197266,
+                            StartSpot = 1,
+                            ArmyColor = 1,
+                            PlayerClan = '',
+                            NG = 30,
+                            Team = 1,
+                            Ready = true,
+                            BadMap = false,
+                            Civilian = false,
+                            PlayerName = 'zom510',
+                            AIPersonality = '',
+                            ObserverListIndex = -1,
+                            OwnerID = '254909',
+                            Country = 'us',
+                            Faction = 1,
+                            PL = 500,
+                            Human = true,
+                            PlayerColor = 1,
+                            DEV = 164.81199645996
+                        },
+                        {
+                            MEAN = 0,
+                            StartSpot = 2,
+                            ArmyColor = 2,
+                            PlayerClan = '',
+                            DEV = 0,
+                            Team = 1,
+                            Ready = true,
+                            PlayerColor = 2,
+                            Country = false,
+                            PlayerName = 'Seth-Ushavoh (Unfather (AI: Normal))',
+                            AIPersonality = 'medium',
+                            ObserverListIndex = -1,
+                            OwnerID = '254909',
+                            BadMap = false,
+                            Faction = 4,
+                            PL = 0,
+                            Human = false,
+                            NG = 0,
+                            Civilian = false
+                        }
+                    },
+                    MapName = 'Winter Duel',
+                    GameOptions = {
+                        DisconnectionDelay02 = '90',
+                        CheatsEnabled = 'false',
+                        Score = 'no',
+                        RevealCivilians = 'Yes',
+                        RestrictedCategories = { },
+                        AllowObservers = false,
+                        LandExpansionsAllowed = '5',
+                        ShareUnitCap = 'none',
+                        Timeouts = '3',
+                        Unranked = 'No',
+                        TeamSpawn = 'fixed',
+                        NavalExpansionsAllowed = '4',
+                        GameSpeed = 'normal',
+                        FogOfWar = 'explored',
+                        OmniCheat = 'on',
+                        Victory = 'demoralization',
+                        BuildMult = '2.0',
+                        UnitCap = '1000',
+                        TMLRandom = '0',
+                        RandomMap = 'Off',
+                        CheatMult = '2.0',
+                        AutoTeams = 'none',
+                        TeamLock = 'locked',
+                        NoRushOption = 'Off',
+                        AIReplacement = 'Off',
+                        ScenarioFile = '/maps/scmp_013/scmp_013_scenario.lua',
+                        PrebuiltUnits = 'Off',
+                        Share = 'ShareUntilDeath',
+                        CivilianAlliance = 'enemy'
+                    }
+                }
+            },
+            Name = 'jonathon',
+            LobbyOpt_RandomMap = 'Off',
+            LobbyOpt_ShareUnitCap = 'none',
+            LobbyOpt_CheatsEnabled = 'false',
+            LobbyOpt_AllowObservers = false,
+            LastColor = 3,
+            LobbyOpt_CivilianAlliance = 'enemy',
+            LobbyOpt_Score = 'no',
+            Notify_other_disabled = true,
+            Notify_acus_disabled = false,
+            options = {
+                skin_change_on_start = 'yes',
+                tooltip_delay = 0,
+                keyboard_rotate_accelerate_multiplier = 2,
+                gui_detailed_unitview = 0,
+                show_hotkeylabels = true,
+                gui_improved_unit_deselection = 0,
+                spawn_menu_filter_menu_sort = 1,
+                minimum_reclaim_amount = 10,
+                lock_fullscreen_cursor_to_window = 0,
+                music_volume = 0,
+                gui_all_race_templates = 0,
+                gui_zoom_pop_distance = 80,
+                keyboard_pan_speed = 90,
+                quick_exit = 'false',
+                maximum_reclaim_count = 1000,
+                texture_level = 0,
+                spawn_menu_team_columns = 4,
+                uvd_format = 'full',
+                strat_icons_always_on = 1,
+                shadow_quality = 2,
+                arrow_keys_pan_main_view = 1,
+                gui_draggable_queue = 0,
+                fx_volume = 100,
+                bloom_render = 1,
+                keyboard_rotate_speed = 10,
+                gui_render_custom_names = 0,
+                spawn_menu_notech_filter = 1,
+                master_volume = 100,
+                loading_tips = true,
+                gui_bigger_strat_build_icons = 0,
+                gui_template_rotator = 0,
+                econ_warnings = true,
+                gui_render_armament_detail = 1,
+                mainmenu_bgmovie = true,
+                gui_enhanced_unitview = 0,
+                keyboard_pan_accelerate_multiplier = 4,
+                gui_visible_template_names = 0,
+                fidelity_presets = 2,
+                show_attached_unit_lifebars = true,
+                automex = 'onlyT1',
+                render_skydome = 1,
+                hotbuild_cycle_reset_time = 1100,
+                spawn_menu_split_sources = 0,
+                gui_template_name_cutoff = 0,
+                gui_render_enemy_lifebars = 0,
+                display_eta = true,
+                selectedlanguage = 'us',
+                faction_font_color = false,
+                gui_queue_on_hover_02 = 'only-obs',
+                spawn_menu_filter_columns = 6,
+                world_border = true,
+                secondary_adapter = 'disabled',
+                spawn_menu_type_filter_mode = 0,
+                antialiasing = 64,
+                screen_edge_pans_main_view = 1,
+                ui_scale = 1,
+                accept_build_templates = 'yes',
+                structure_capping_feature_01 = 'full-suite',
+                spawn_menu_paragon_filter = 0,
+                hotbuild_cycle_preview = 1,
+                tooltips = true,
+                vo_volume = 100,
+                vsync = 1,
+                mp_taunt_head_enabled = 'true',
+                gui_idle_engineer_avatars = 0,
+                primary_adapter = '1920,1080,60',
+                level_of_detail = 2,
+                subtitles = false,
+                gui_templates_factory = 0,
+                gui_seperate_idle_builders = 0,
+                wheel_sensitivity = 40,
+                fidelity = 2
+            },
+            console_font_color = 'FFbadbdb',
+            scoreoverlay = true,
+            UserDebugKeyMap = {
+                ['Ctrl-Alt-F5'] = 'debug_scenario_method_ctrl_alt_f5',
+                ['Ctrl-Alt-B'] = 'debug_blingbling',
+                ['Shift-F4'] = 'debug_scenario_method_shift_f4',
+                ['Shift-F5'] = 'debug_scenario_method_shift_f5',
+                ['Ctrl-Shift-F5'] = 'debug_scenario_method_f5',
+                ['Ctrl-Slash'] = 'debug_pause_single_step',
+                ['Alt-T'] = 'debug_teleport',
+                ['Ctrl-Alt-Shift-F8'] = 'debug_campaign_instawin',
+                ['Alt-F9'] = 'debug_open_lua_debugger',
+                ['Ctrl-Shift-Alt-C'] = 'debug_collision',
+                ['Alt-W'] = 'debug_dump_focus_ui_control',
+                ['Ctrl-Shift-C'] = 'debug_copy_units',
+                ['Ctrl-Alt-Z'] = 'debug_sally_shears',
+                ['Ctrl-F3'] = 'debug_scenario_method_ctrl_f3',
+                ['Ctrl-Alt-W'] = 'debug_render_wireframe',
+                ['Alt-D'] = 'debug_dump_ui_controls',
+                ['Ctrl-Alt-P'] = 'debug_navpath',
+                ['Ctrl-Alt-Period'] = 'debug_graphics_fidelity_2',
+                ['Shift-F6'] = 'debug_create_entity',
+                ['Ctrl-Alt-Comma'] = 'debug_graphics_fidelity_0',
+                ['Ctrl-Shift-X'] = 'debug_redo_console_command',
+                ['Alt-Delete'] = 'debug_destroy_units',
+                ['Shift-F7'] = 'debug_show_stats',
+                ['Ctrl-Alt-O'] = 'debug_grid',
+                ['Alt-B'] = 'debug_bones',
+                ['Alt-F11'] = 'debug_show_frame_stats',
+                ['Ctrl-Alt-F4'] = 'debug_scenario_method_ctrl_alt_f3',
+                ['Alt-Q'] = 'debug_show_focus_ui_control',
+                ['Ctrl-Shift-W'] = 'debug_weapons',
+                ['Ctrl-Alt-E'] = 'debug_show_emmitter_window',
+                ['Alt-V'] = 'debug_skeletons',
+                ['Alt-N'] = 'debug_nodamage',
+                ['Alt-F2'] = 'debug_create_unit',
+                ['Shift-F8'] = 'debug_show_army_stats',
+                ['Ctrl-F10'] = 'debug_restart_session',
+                ['Ctrl-F5'] = 'debug_scenario_method_ctrl_f5',
+                ['Shift-F3'] = 'debug_scenario_method_shift_f3',
+                ['Ctrl-Shift-V'] = 'debug_paste_units',
+                ['Alt-F3'] = 'debug_scenario_method_f3',
+                ['Ctrl-Shift-F4'] = 'debug_scenario_method_f4',
+                ['Ctrl-Shift-F1'] = 'debug_toggle_pannels',
+                ['Ctrl-F4'] = 'debug_scenario_method_ctrl_f4',
+                ['Alt-A'] = 'debug_run_opponent_AI',
+                F9 = 'debug_toggle_log_window'
+            },
+            LobbyOpt_Timeouts = '3',
+            stratview = true,
+            LobbyHideDefaultOptions = 'false',
+            MenuTutorialPrompt = true,
+            LobbyOpt_ScenarioFile = '/maps/scmp_013/scmp_013_scenario.lua',
+            LobbyOpt_GameSpeed = 'normal',
+            LobbyOpt_CheatMult = '2.0',
+            Notify_custom_disabled = false,
+            activeFilters = {
+                selection = true,
+                rollover = true,
+                buildpreview = true
+            },
+            LobbyOpt_PrebuiltUnits = 'Off',
+            LobbyOpt_LandExpansionsAllowed = '5',
+            LobbyOpt_TeamSpawn = 'fixed',
+            LobbyOpt_NoRushOption = 'Off',
+            Notify_overlay_disabled = false,
+            console_size = 5,
+            LobbyOpt_Victory = 'demoralization',
+            LobbyOpt_BuildMult = '2.0',
+            LobbyOpt_OmniCheat = 'on',
+            Notify_tech_disabled = true,
+            mini_ui_minimap = {
+                top = 157,
+                bottom = 457,
+                right = 271,
+                left = 0
+            },
+            LobbyOpt_DisconnectionDelay02 = '90',
+            LastScenario = '/maps/scmp_013/scmp_013_scenario.lua',
+            LobbyOpt_Unranked = 'No',
+            ViewedTimeline = true,
+            Notify_nomads_disabled = true,
+            skin = 'uef',
+            CampaignSave = 'game2',
+            briefing_log = true,
+            LobbyOpt_AIReplacement = 'Off',
+            LoadingFaction = 1,
+            LobbyOpt_FogOfWar = 'explored',
+            LobbyOpt_RevealCivilians = 'Yes',
+            Lobby_Gen_Victory = 2,
+            LobbyOpt_TMLRandom = '0'
+        }
+    }
+}
+Options = {
+    Log = {
+        Debug = false,
+        Warn = false,
+        Info = false,
+        Custom = false,
+        Error = false,
+        Filter = '*debug:'
+    }
+}
+PreGameData = {
+    CurrentMapDir = '/maps/scmp_013',
+    IconReplacements = { }
+}
+Windows = {
+    Main = {
+        y = 0,
+        x = 0
+    }
+}
+CPUBenchmark = 180
+options_overrides = {
+    shadow_quality = {
+        default = 1,
+        custom = {
+            states = {
+                {
+                    text = '<LOC _Off>',
+                    key = 0
+                },
+                {
+                    text = '<LOC _Low>',
+                    key = 1
+                },
+                {
+                    text = '<LOC _Medium>',
+                    key = 2
+                },
+                {
+                    text = '<LOC _High>',
+                    key = 3
+                }
+            }
+        }
+    },
+    fidelity = {
+        default = 1,
+        custom = {
+            states = {
+                {
+                    text = '<LOC _Low>',
+                    key = 0
+                },
+                {
+                    text = '<LOC _Medium>',
+                    key = 1
+                },
+                {
+                    text = '<LOC _High>',
+                    key = 2
+                }
+            }
+        }
+    },
+    secondary_adapter = {
+        default = 'disabled',
+        custom = {
+            states = {
+                {
+                    text = '<LOC _Disabled>',
+                    key = 'disabled'
+                }
+            }
+        }
+    },
+    fidelity_presets = {
+        default = 1,
+        custom = {
+            states = {
+                {
+                    text = '<LOC _Low>',
+                    key = 0
+                },
+                {
+                    text = '<LOC _Medium>',
+                    key = 1
+                },
+                {
+                    text = '<LOC _High>',
+                    key = 2
+                },
+                {
+                    text = '<LOC _Custom>',
+                    key = 4
+                }
+            }
+        }
+    },
+    antialiasing = {
+        default = 0,
+        custom = {
+            states = {
+                {
+                    text = '<LOC OPTIONS_0029>Off',
+                    key = 0
+                },
+                {
+                    text = '2',
+                    key = 64
+                },
+                {
+                    text = '4',
+                    key = 128
+                },
+                {
+                    text = '8Q',
+                    key = 256
+                }
+            }
+        }
+    },
+    language = 'us',
+    primary_adapter = {
+        default = '1024,768,60',
+        custom = {
+            states = {
+                {
+                    text = '<LOC OPTIONS_0070>Windowed',
+                    key = 'windowed'
+                },
+                {
+                    text = '1024x768(60)',
+                    key = '1024,768,60'
+                },
+                {
+                    text = '1280x800(60)',
+                    key = '1280,800,60'
+                },
+                {
+                    text = '1280x1024(60)',
+                    key = '1280,1024,60'
+                },
+                {
+                    text = '1440x900(60)',
+                    key = '1440,900,60'
+                },
+                {
+                    text = '1440x960(60)',
+                    key = '1440,960,60'
+                },
+                {
+                    text = '1600x900(60)',
+                    key = '1600,900,60'
+                },
+                {
+                    text = '1680x1050(60)',
+                    key = '1680,1050,60'
+                },
+                {
+                    text = '1920x800(60)',
+                    key = '1920,800,60'
+                },
+                {
+                    text = '1920x1080(60)',
+                    key = '1920,1080,60'
+                }
+            }
+        }
+    }
+}
+version = {
+    major = 1
+}
