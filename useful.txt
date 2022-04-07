@@ -51,3 +51,12 @@ sudo apt purge xserver-xorg-video-intel
 # see what files are installed by a package
 dpkg-query -L <package_name>
 dpkg-deb -c <package_name.deb> # see what files a .deb file will install
+
+pacman - list installed packages
+pacman -Qe packagename
+
+pacman list files installed by a package
+pacman -Ql packagename
+
+
+
