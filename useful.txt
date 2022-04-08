@@ -58,5 +58,8 @@ pacman -Qe packagename
 pacman list files installed by a package
 pacman -Ql packagename
 
+upgrade packages
+pacman -Syu
+
 
 
