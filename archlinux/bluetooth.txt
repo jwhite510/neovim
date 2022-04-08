@@ -1,0 +1,11 @@
+installed pulseaudio-bluetooth
+
+restart
+
+run 
+bluetoothctl
+
+power on
+scan on
+connect "device UUID"
+
