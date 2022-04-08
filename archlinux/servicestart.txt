@@ -1,0 +1,20 @@
+# start the iwd service
+systemctl start iwd
+
+# connect to wifi network
+# then once the internet is working:
+
+find the name of network devices
+
+```
+ip link
+```
+
+```
+systemctl status dhcpcd@wlan0
+```
+
+should show that it is inactive
+
+# add user
+useradd -m jonathon
