@@ -1336,6 +1336,7 @@ set hlsearch
 set cursorline
 set wrap
 set ignorecase
+set wildignorecase
 
 command! Diffthis call DiffThisF()
 command! MakeTags !ctags -R .

@@ -4,3 +4,4 @@ set editing-mode vi
 ";[":"]\ei["
 ";t":" | tail -n5"
 ";h":" | head -n5"
+set completion-ignore-case On
