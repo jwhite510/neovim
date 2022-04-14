@@ -8,3 +8,21 @@ pacman -Ql packagename
 
 upgrade packages
 pacman -Syu
+
+-- make a list of all installed packages to install on another machine
+pacman -Qqen
+
+install from arch user repository
+
+pacman -Qd - output all of the packages that are installed as
+dependencies
+
+pacman remove a package and all of it's dependencies
+pacman -Rcns packagename
+
+downgrade a package from the archive
+with dependency
+sudo pacman -U https://archive.archlinux.org/packages/n/nvidia/nvidia-510.54-9-x86_64.pkg.tar.zst https://archive.archlinux.org/packages/n/nvidia-utils/nvidia-utils-510.54-1-x86_64.pkg.tar.zst
+
+pacman force remove a package
+pacman -Rdd packagename
