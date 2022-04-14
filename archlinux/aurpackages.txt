@@ -1,0 +1,6 @@
+all-repository-fonts
+beyondallreason-appimage
+downgrade
+downlords-faf-client
+mekhq
+yay
