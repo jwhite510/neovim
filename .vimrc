@@ -1795,6 +1795,8 @@ nnoremap ]w :lnext <CR>zv
 nnoremap [w :lprevious <CR>zv
 nnoremap <leader>ww :ll <CR>zv
 
+nnoremap <leader>pf :echo expand("%")<cr>
+
 " s{char}{char} to move to {char}{char}
 " nmap s <Plug>(easymotion-overwin-f2)
 
