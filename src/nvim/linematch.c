@@ -478,7 +478,7 @@ void linematch_nbuffers(const char **diff_block, const int *diff_length,
   populate_tensor(df_iterators, 0, diffcomparisonpath, comparison_mem,
                   diff_length, nDiffs, diff_block);
 
-  // dont' need this any more?
+  // TODO dont' need this any more?
   int maxlines = 0;
   for (int i = 0; i < nDiffs; i++) {
     if (diff_length[i] > maxlines) {
@@ -496,9 +496,32 @@ void linematch_nbuffers(const char **diff_block, const int *diff_length,
   const int *best_path_decisions = diffcomparisonpath[u].df_decision;
 
   *decisions_length = best_path_index;
-  *decisions = xmalloc(sizeof(int) * (size_t)best_path_index);
+  *decisions = xmalloc(sizeof(int) * (size_t)memsize_decisions);
+  for (int i = 0; i < nDiffs; i++) {
+    // keep track of the index in the current line
+    df_iterators[i] = 0;
+  }
   for (int i = 0; i < best_path_index; i++) {
-    (*decisions)[i] = best_path_decisions[i];
+    // set the 0 or 1 for each character of each line
+    // best_path_decisions[i];
+    int compared = 1;
+    for (int j = 0; j < nDiffs; j++) {
+      if (!(best_path_decisions[i] & (1 << j))) {
+        // if there's not a 1, then we are not comparing this character
+        compared = 0;
+      }
+    }
+    for (int j = 0, offset = 0; j < nDiffs; j++) {
+      if (best_path_decisions[i] & (1 << j)) {
+
+        // TODO
+        (*decisions)[df_iterators[j] + offset] = compared;
+        offset += diff_length[j];
+        df_iterators[j]++;
+      }
+    }
+    // write to decisions
+
   }
 
   // map these decisions to boolean values representing what's happening with
