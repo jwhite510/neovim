@@ -2749,7 +2749,43 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
   // run the linematch algorithm on lines here
   int decisions_length = 0;
   int *decisions = NULL;
-  linematch_nbuffers((const char**)lines, lines_length, lines_count, &decisions_length, &decisions);
+  linematch_nbuffers((const char**)lines, lines_length, lines_count, &decisions_length,
+      &decisions);
+
+  // iterate over the decisions
+  int *df_iterators = xmalloc(sizeof(int) * (size_t)lines_count);
+  int total_lines = 0;
+  for (int k = 0; k < lines_count; k++) {
+    total_lines += lines_length[k];
+  }
+  char *chars_compared = xmalloc(sizeof(char) * (size_t)total_lines);
+  for (int k = 0; k < lines_count; k++) {
+    // keep track of the index in the current line
+    df_iterators[k] = 0;
+  }
+  for (int k = 0; k < decisions_length; k++) { // GDBBREAKPOINT
+    // set the 0 or 1 for each character of each line
+    int compared = 1;
+    for (int j = 0; j < lines_count; j++) {
+      if (!(decisions[k] & (1 << j))) {
+        // if there's not a 1, then we are not comparing this character
+        compared = 0;
+      }
+    }
+    for (int j = 0, offset = 0; j < lines_count; j++) {
+      if (decisions[k] & (1 << j)) {
+        chars_compared[df_iterators[j] + offset] = compared;
+        df_iterators[j]++;
+      }
+      offset += lines_length[j];
+
+    }
+    // write to decisions
+  }
+  // map these decisions to boolean values representing what's happening with
+  // the comparison
+
+
 
   xfree(line_org);
   return added;
