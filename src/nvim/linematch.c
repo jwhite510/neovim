@@ -270,7 +270,7 @@ void try_possible_paths(const int *df_iterators, const int *paths,
 
       const char *testcompare = NULL;
       int matched_chars = 0;
-      for (int k = 0; k < nDiffs; k++) { // GDBBREAKPOINT
+      for (int k = 0; k < nDiffs; k++) {
         if (*choice & (1 << k)) {
           // make sure all the letters are matching
           if (testcompare && *testcompare != *stringps[k]) {
@@ -497,11 +497,18 @@ void linematch_nbuffers(const char **diff_block, const int *diff_length,
 
   *decisions_length = best_path_index;
   *decisions = xmalloc(sizeof(int) * (size_t)memsize_decisions);
+
+  // for testing
+  for (int i = 0; i < memsize_decisions; i++) {
+    (*decisions)[i] = -1;
+  }
+
+
   for (int i = 0; i < nDiffs; i++) {
     // keep track of the index in the current line
     df_iterators[i] = 0;
   }
-  for (int i = 0; i < best_path_index; i++) {
+  for (int i = 0; i < best_path_index; i++) { // GDBBREAKPOINT
     // set the 0 or 1 for each character of each line
     // best_path_decisions[i];
     int compared = 1;
@@ -513,17 +520,14 @@ void linematch_nbuffers(const char **diff_block, const int *diff_length,
     }
     for (int j = 0, offset = 0; j < nDiffs; j++) {
       if (best_path_decisions[i] & (1 << j)) {
-
-        // TODO
         (*decisions)[df_iterators[j] + offset] = compared;
-        offset += diff_length[j];
         df_iterators[j]++;
       }
+      offset += diff_length[j];
+
     }
     // write to decisions
-
   }
-
   // map these decisions to boolean values representing what's happening with
   // the comparison
 
