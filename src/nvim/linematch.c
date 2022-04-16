@@ -150,6 +150,7 @@ int count_n_matched_chars(const char **stringps, const int *fromValues,
       if ( stringps[i] != NULL && stringps[j] != NULL ) {
         int i1 = fromValues[i];  // index of where to get the buffer
         int j1 = fromValues[j];
+        // will need to remove the use of comparison_mem for the line highlighting
         if (comparison_mem[pointerindex][i1][j1] == -1) {
           comparison_mem[pointerindex][i1][j1] =
             count_matched_chars(stringps[i], stringps[j]);
@@ -240,16 +241,16 @@ void try_possible_paths(const int *df_iterators, const int *paths,
           const char *p = diff_block[k];
           for (int j = 0; j < df_iterators[k] - 1; j++) {
             // advance the pointer until it hits a newline
-            while (*p != '\n') {
-              p++;
-            }
+            // while (*p != '\n') {
+            //   p++;
+            // }
             p++;
           }
           // copy the line
-          int line_length = 0;
-          while (p[line_length] != '\n') {
-            line_length++;
-          }
+          int line_length = 1;
+          // while (p[line_length] && p[line_length] != '\n') {
+          //   line_length++;
+          // }
           current_lines[k] = xmalloc((size_t)(line_length + 1) * sizeof(char));
           for (int l = 0; l < line_length; l++) {
             current_lines[k][l] = p[l];
@@ -263,18 +264,43 @@ void try_possible_paths(const int *df_iterators, const int *paths,
       }
       int unwrapped_index_from = unwrap_indexes(fromValues, diff_length, nDiffs);
       int unwrapped_index_to = unwrap_indexes(toValues, diff_length, nDiffs);
-      int matched_chars = count_n_matched_chars(
-          stringps, fromValues, nDiffs, comparison_mem);
-      int score = diffcomparisonpath[unwrapped_index_from].df_lev_score +
-        matched_chars;
-      if (score > diffcomparisonpath[unwrapped_index_to].df_lev_score) {
-        update_path_flat(
-            diffcomparisonpath,
-            score,
-            unwrapped_index_to,
-            unwrapped_index_from,
-            *choice);
+
+      // int matched_chars = count_n_matched_chars(
+      //     stringps, fromValues, nDiffs, comparison_mem);
+
+      const char *testcompare = NULL;
+      int matched_chars = 0;
+      for (int k = 0; k < nDiffs; k++) { // GDBBREAKPOINT
+        if (*choice & (1 << k)) {
+          // make sure all the letters are matching
+          if (testcompare && *testcompare != *stringps[k]) {
+            matched_chars = INT_MIN;
+            break;
+            // don't do the comparison
+          } else if (testcompare) {
+            matched_chars ++;
+          } else {
+            testcompare = stringps[k];
+          }
+        }
       }
+
+      if (matched_chars != INT_MIN) {
+        int score = diffcomparisonpath[unwrapped_index_from].df_lev_score +
+          matched_chars;
+
+        // only update the path if everything is matching
+
+        if (score > diffcomparisonpath[unwrapped_index_to].df_lev_score) {
+          update_path_flat(
+              diffcomparisonpath,
+              score,
+              unwrapped_index_to,
+              unwrapped_index_from,
+              *choice);
+        }
+      }
+
       for (int i = 0; i < nDiffs; i++) {
         xfree(current_lines[i]);
       }
@@ -446,11 +472,13 @@ void linematch_nbuffers(const char **diff_block, const int *diff_length,
   int *df_iterators;
   df_iterators = xmalloc(sizeof(int) * (size_t)nDiffs);
 
+  // don't need to allocate comparison mem
   int ***comparison_mem = allocate_comparison_mem(diff_length, nDiffs);
 
   populate_tensor(df_iterators, 0, diffcomparisonpath, comparison_mem,
                   diff_length, nDiffs, diff_block);
 
+  // dont' need this any more?
   int maxlines = 0;
   for (int i = 0; i < nDiffs; i++) {
     if (diff_length[i] > maxlines) {
@@ -472,6 +500,9 @@ void linematch_nbuffers(const char **diff_block, const int *diff_length,
   for (int i = 0; i < best_path_index; i++) {
     (*decisions)[i] = best_path_decisions[i];
   }
+
+  // map these decisions to boolean values representing what's happening with
+  // the comparison
 
   free_comparison_mem(comparison_mem, diff_length, nDiffs);
 

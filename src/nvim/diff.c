@@ -2648,6 +2648,16 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
 
   int off = lnum - dp->df_lnum[idx];
   int i;
+  char *lines[DB_COUNT];
+  int lines_count = 0;
+  int lines_length[DB_COUNT];
+
+  // allocate the original line in memory for linematch algorithm
+  lines_length[lines_count] = (int)strlen((char*)line_org);
+  lines[lines_count] = xmalloc((lines_length[lines_count] + 1) * sizeof(char));
+  strcpy(lines[lines_count], (char*)line_org);
+  lines_count++;
+
   for (i = 0; i < DB_COUNT; i++) {
     if ((curtab->tp_diffbuf[i] != NULL) && (i != idx)) {
       // Skip lines that are not in the other change (filler lines).
@@ -2657,6 +2667,11 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       added = false;
       line_new = ml_get_buf(curtab->tp_diffbuf[i],
                             dp->df_lnum[i] + off, false);
+
+      lines_length[lines_count] = strlen((char*)line_new);
+      lines[lines_count] = xmalloc((lines_length[lines_count] + 1) * sizeof(char));
+      strcpy(lines[lines_count], (char*)line_new);
+      lines_count++;
 
       // Search for start of difference
       si_org = si_new = 0;
@@ -2731,6 +2746,10 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       }
     }
   }
+  // run the linematch algorithm on lines here
+  int decisions_length = 0;
+  int *decisions = NULL;
+  linematch_nbuffers((const char**)lines, lines_length, lines_count, &decisions_length, &decisions);
 
   xfree(line_org);
   return added;
