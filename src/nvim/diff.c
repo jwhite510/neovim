@@ -2039,7 +2039,7 @@ void run_linematch_algorithm(diff_T * dp)
   // of integers (*decisions) and the length of that array (decisions_length)
   int decisions_length = 0;
   int *decisions = NULL;
-  linematch_nbuffers(diff_begin, diff_length, diffbuffers_count,
+  linematch_nbuffers(0, diff_begin, diff_length, diffbuffers_count,
       &decisions_length, &decisions);
 
   // get the start line number here in each diff buffer, and then increment
@@ -2749,7 +2749,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
   // run the linematch algorithm on lines here
   int decisions_length = 0;
   int *decisions = NULL;
-  linematch_nbuffers((const char**)lines, lines_length, lines_count, &decisions_length,
+  linematch_nbuffers(1, (const char**)lines, lines_length, lines_count, &decisions_length,
       &decisions);
 
   // iterate over the decisions

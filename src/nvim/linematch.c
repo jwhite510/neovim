@@ -220,7 +220,7 @@ int ***allocate_comparison_mem(const int *diff_length, const int nDiffs)
 /// @param diff_length
 /// @param nDiffs
 /// @param diff_block
-void try_possible_paths(const int *df_iterators, const int *paths,
+void try_possible_paths(int char_compare, const int *df_iterators, const int *paths,
                         const int nPaths, const int pathIndex, int *choice,
                         diffcomparisonpath_T *diffcomparisonpath,
                         int ***comparison_mem, const int *diff_length,
@@ -241,16 +241,20 @@ void try_possible_paths(const int *df_iterators, const int *paths,
           const char *p = diff_block[k];
           for (int j = 0; j < df_iterators[k] - 1; j++) {
             // advance the pointer until it hits a newline
-            // while (*p != '\n') {
-            //   p++;
-            // }
+            if (!char_compare) {
+              while (*p != '\n') {
+                p++;
+              }
+            }
             p++;
           }
           // copy the line
           int line_length = 1;
-          // while (p[line_length] && p[line_length] != '\n') {
-          //   line_length++;
-          // }
+          if (!char_compare) {
+            while (p[line_length] && p[line_length] != '\n') {
+              line_length++;
+            }
+          }
           current_lines[k] = xmalloc((size_t)(line_length + 1) * sizeof(char));
           for (int l = 0; l < line_length; l++) {
             current_lines[k][l] = p[l];
@@ -265,30 +269,32 @@ void try_possible_paths(const int *df_iterators, const int *paths,
       int unwrapped_index_from = unwrap_indexes(fromValues, diff_length, nDiffs);
       int unwrapped_index_to = unwrap_indexes(toValues, diff_length, nDiffs);
 
-      // int matched_chars = count_n_matched_chars(
-      //     stringps, fromValues, nDiffs, comparison_mem);
-
-      // TODO trigger this with an if statement
-      const char *testcompare = NULL;
       int matched_chars = 0;
-      for (int k = 0; k < nDiffs; k++) {
-        if (*choice & (1 << k)) {
+      if (char_compare) {
+        // TODO trigger this with an if statement
+        const char *testcompare = NULL;
+        for (int k = 0; k < nDiffs; k++) {
+          if (*choice & (1 << k)) {
 
-          // TODO may be able to use count_n_matched_chars with a small
-          // modifications instead of this
-          // check if null instead of bitshift compare with *choice
+            // TODO may be able to use count_n_matched_chars with a small
+            // modifications instead of this
+            // check if null instead of bitshift compare with *choice
 
-          // make sure all the letters are matching
-          if (testcompare && *testcompare != *stringps[k]) {
-            matched_chars = INT_MIN;
-            break;
-            // don't do the comparison
-          } else if (testcompare) {
-            matched_chars ++;
-          } else {
-            testcompare = stringps[k];
+            // make sure all the letters are matching
+            if (testcompare && *testcompare != *stringps[k]) {
+              matched_chars = INT_MIN;
+              break;
+              // don't do the comparison
+            } else if (testcompare) {
+              matched_chars ++;
+            } else {
+              testcompare = stringps[k];
+            }
           }
         }
+      } else {
+        matched_chars = count_n_matched_chars(
+            stringps, fromValues, nDiffs, comparison_mem);
       }
 
       if (matched_chars != INT_MIN) {
@@ -330,10 +336,10 @@ void try_possible_paths(const int *df_iterators, const int *paths,
   }
   int bit_place = paths[pathIndex];
   *(choice) |= (1 << bit_place);  // set it to 1
-  try_possible_paths(df_iterators, paths, nPaths, pathIndex + 1, choice,
+  try_possible_paths(char_compare, df_iterators, paths, nPaths, pathIndex + 1, choice,
                      diffcomparisonpath, comparison_mem, diff_length, nDiffs, diff_block);
   *(choice) &= ~(1 << bit_place);  // set it to 0
-  try_possible_paths(df_iterators, paths, nPaths, pathIndex + 1, choice,
+  try_possible_paths(char_compare, df_iterators, paths, nPaths, pathIndex + 1, choice,
                      diffcomparisonpath, comparison_mem, diff_length, nDiffs, diff_block);
 }
 
@@ -371,7 +377,7 @@ int unwrap_indexes(const int *values, const int *diff_length, const int nDiffs)
 /// @param diff_length
 /// @param nDiffs
 /// @param diff_block
-void populate_tensor(int *df_iterators, const int ch_dim,
+void populate_tensor(int char_compare, int *df_iterators, const int ch_dim,
                      diffcomparisonpath_T *diffcomparisonpath, int ***comparison_mem,
                      const int *diff_length, const int nDiffs, const char **diff_block)
 {
@@ -388,7 +394,7 @@ void populate_tensor(int *df_iterators, const int ch_dim,
     int choice = 0;
     int unwrapper_index_to = unwrap_indexes(df_iterators, diff_length, nDiffs);
     diffcomparisonpath[unwrapper_index_to].df_lev_score = -1;
-    try_possible_paths(df_iterators, paths, nPaths, 0, &choice, diffcomparisonpath,
+    try_possible_paths(char_compare, df_iterators, paths, nPaths, 0, &choice, diffcomparisonpath,
                        comparison_mem, diff_length, nDiffs, diff_block);
 
     xfree(paths);
@@ -396,7 +402,7 @@ void populate_tensor(int *df_iterators, const int ch_dim,
   }
   for (int i = 0; i <= diff_length[ch_dim]; i++) {
     df_iterators[ch_dim] = i;
-    populate_tensor(df_iterators, ch_dim + 1, diffcomparisonpath,
+    populate_tensor(char_compare, df_iterators, ch_dim + 1, diffcomparisonpath,
                     comparison_mem, diff_length, nDiffs, diff_block);
   }
 }
@@ -456,7 +462,7 @@ void populate_tensor(int *df_iterators, const int ch_dim,
 /// @param nDiffs
 /// @param df_comparisonlines
 /// @param df_arr_col_size
-void linematch_nbuffers(const char **diff_block, const int *diff_length,
+void linematch_nbuffers(int char_compare, const char **diff_block, const int *diff_length,
                         const int nDiffs, int *decisions_length, int **decisions)
 {
   int memsize = 1, memsize_decisions = 0;
@@ -481,7 +487,7 @@ void linematch_nbuffers(const char **diff_block, const int *diff_length,
   // don't need to allocate comparison mem
   int ***comparison_mem = allocate_comparison_mem(diff_length, nDiffs);
 
-  populate_tensor(df_iterators, 0, diffcomparisonpath, comparison_mem,
+  populate_tensor(char_compare, df_iterators, 0, diffcomparisonpath, comparison_mem,
                   diff_length, nDiffs, diff_block);
 
   // TODO dont' need this any more?
