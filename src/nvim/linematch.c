@@ -249,11 +249,13 @@ void try_possible_paths(int char_compare, const int *df_iterators, const int *pa
             p++;
           }
           // copy the line
-          int line_length = 1;
+          int line_length = 0;
           if (!char_compare) {
-            while (p[line_length] && p[line_length] != '\n') {
+            while (p[line_length] != '\n') {
               line_length++;
             }
+          } else {
+            line_length = 1;
           }
           current_lines[k] = xmalloc((size_t)(line_length + 1) * sizeof(char));
           for (int l = 0; l < line_length; l++) {
