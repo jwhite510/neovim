@@ -2758,12 +2758,15 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
   for (int k = 0; k < lines_count; k++) {
     total_lines += lines_length[k];
   }
-  char *chars_compared = xmalloc(sizeof(char) * (size_t)total_lines);
+  int *chars_compared = xmalloc(sizeof(int) * (size_t)total_lines);
+  for (int k = 0; k < total_lines; k++) {
+    chars_compared[k] = -1337;
+  }
   for (int k = 0; k < lines_count; k++) {
     // keep track of the index in the current line
     df_iterators[k] = 0;
   }
-  for (int k = 0; k < decisions_length; k++) { // GDBBREAKPOINT
+  for (int k = 0; k < decisions_length; k++) {
     // set the 0 or 1 for each character of each line
     int compared = 1;
     for (int j = 0; j < lines_count; j++) {
