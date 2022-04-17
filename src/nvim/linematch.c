@@ -268,10 +268,16 @@ void try_possible_paths(const int *df_iterators, const int *paths,
       // int matched_chars = count_n_matched_chars(
       //     stringps, fromValues, nDiffs, comparison_mem);
 
+      // TODO trigger this with an if statement
       const char *testcompare = NULL;
       int matched_chars = 0;
       for (int k = 0; k < nDiffs; k++) {
         if (*choice & (1 << k)) {
+
+          // TODO may be able to use count_n_matched_chars with a small
+          // modifications instead of this
+          // check if null instead of bitshift compare with *choice
+
           // make sure all the letters are matching
           if (testcompare && *testcompare != *stringps[k]) {
             matched_chars = INT_MIN;
