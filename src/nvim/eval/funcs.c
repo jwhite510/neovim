@@ -1807,6 +1807,7 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   static int fnum = 0;
   static int change_start = 0;
   static int change_end = 0;
+  static int *diffchars = NULL;
   static hlf_T hlID = (hlf_T)0;
   int filler_lines;
   int col;
@@ -1824,7 +1825,7 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (filler_lines == -1 || linestatus == -1) {
         change_start = MAXCOL;
         change_end = -1;
-        if (diff_find_change(curwin, lnum, &change_start, &change_end)) {
+        if (diff_find_change(curwin, lnum, &change_start, &change_end, &diffchars)) {
           hlID = HLF_ADD;               // added line
         } else {
           hlID = HLF_CHD;               // changed line
@@ -1843,7 +1844,13 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (hlID == HLF_CHD || hlID == HLF_TXD) {
     col = tv_get_number(&argvars[1]) - 1;  // Ignore type error in {col}.
     if (col >= change_start && col <= change_end) {
-      hlID = HLF_TXD;  // Changed text.
+      if (diffchars && !diffchars[col]) {
+        hlID = HLF_TXD;  // Changed text.
+      } else {
+        hlID = HLF_CHD;
+      }
+
+                       //
     } else {
       hlID = HLF_CHD;  // Changed line.
     }

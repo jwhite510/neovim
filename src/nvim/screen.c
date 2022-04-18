@@ -2089,6 +2089,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
   hlf_T diff_hlf = (hlf_T)0;            // type of diff highlighting
   int change_start = MAXCOL;            // first col of changed area
   int change_end = -1;                  // last col of changed area
+  int *diffchars = NULL;
   colnr_T trailcol = MAXCOL;            // start of trailing spaces
   colnr_T leadcol = 0;                  // start of leading spaces
   bool in_multispace = false;           // in multiple consecutive spaces
@@ -2335,7 +2336,7 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
   filler_lines = diff_check_with_linestatus(wp, lnum, &linestatus);
   if (filler_lines < 0 || linestatus < 0) {
     if (filler_lines == -1 || linestatus == -1) {
-      if (diff_find_change(wp, lnum, &change_start, &change_end)) {
+      if (diff_find_change(wp, lnum, &change_start, &change_end, &diffchars)) {
         diff_hlf = HLF_ADD;             // added line
       } else if (change_start == 0) {
         diff_hlf = HLF_TXD;             // changed text
@@ -2975,9 +2976,14 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       }
 
       if (diff_hlf != (hlf_T)0) {
+        if ( diff_hlf == HLF_TXD ) { diff_hlf = HLF_CHD; }
         if (diff_hlf == HLF_CHD && ptr - line >= change_start
             && n_extra == 0) {
-          diff_hlf = HLF_TXD;                   // changed text
+          if (diffchars && (ptr - line) < STRLEN(line) && !diffchars[ptr - line]) {
+            diff_hlf = HLF_TXD;                   // changed text
+          } else {
+            diff_hlf = HLF_CHD;
+          }
         }
         if (diff_hlf == HLF_TXD && ptr - line > change_end
             && n_extra == 0) {

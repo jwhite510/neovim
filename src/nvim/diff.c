@@ -2604,7 +2604,7 @@ bool diffopt_filler(void)
 /// @param  endp    last char of the change
 ///
 /// @return true if the line was added, no other buffer has it.
-bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
+bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int **diffchars)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   char_u *line_new;
@@ -2758,9 +2758,10 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
   for (int k = 0; k < lines_count; k++) {
     total_lines += lines_length[k];
   }
-  int *chars_compared = xmalloc(sizeof(int) * (size_t)total_lines);
+  xfree(*diffchars);
+  (*diffchars) = xmalloc(sizeof(int) * (size_t)total_lines);
   for (int k = 0; k < total_lines; k++) {
-    chars_compared[k] = -1337;
+    (*diffchars)[k] = -1337;
   }
   for (int k = 0; k < lines_count; k++) {
     // keep track of the index in the current line
@@ -2777,7 +2778,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
     }
     for (int j = 0, offset = 0; j < lines_count; j++) {
       if (decisions[k] & (1 << j)) {
-        chars_compared[df_iterators[j] + offset] = compared;
+        (*diffchars)[df_iterators[j] + offset] = compared;
         df_iterators[j]++;
       }
       offset += lines_length[j];
