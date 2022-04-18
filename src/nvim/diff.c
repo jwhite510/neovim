@@ -2788,6 +2788,10 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int **di
   }
   // map these decisions to boolean values representing what's happening with
   // the comparison
+  for (int k = 0; k < lines_count; k++) {
+    xfree(lines[k]);
+  }
+  xfree(df_iterators);
 
 
 
