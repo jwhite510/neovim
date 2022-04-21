@@ -1699,10 +1699,10 @@ nnoremap <leader>le :call DiffFileWhereThisLineWasLastEdited()<CR>
 nnoremap <leader>nu :set invnumber<CR>
 nnoremap <leader>nr :set relativenumber!<CR>
 " toggle line wrapping
-nnoremap <leader>W :set wrap! wrap?<CR>
+" nnoremap <leader>W :set wrap! wrap?<CR>
 nnoremap <leader><c-w> :call WrapCmd()<CR>
 " toggle line wrapping
-nnoremap <leader>w :w<CR>
+nnoremap <leader>w :wa<CR>
 " toggle semantic highlighting
 nnoremap <leader>jc :SemanticHighlightToggle<cr>
 " fuzzy finding things
@@ -1793,7 +1793,7 @@ nnoremap <leader>lc :call setloclist(0,[])<cr>:call LLSigns()<cr>
 nnoremap <leader>lr :call RemoveFromLocationList()<cr>:call LLSigns()<cr>
 nnoremap ]w :lnext <CR>zv
 nnoremap [w :lprevious <CR>zv
-nnoremap <leader>ww :ll <CR>zv
+" nnoremap <leader>ww :ll <CR>zv
 
 nnoremap <leader>pf :echo expand("%")<cr>
 
@@ -1835,7 +1835,7 @@ vnoremap <leader>qq :cgetbuffer<CR> :call ProcessQF()<CR>
 " get the stack trace, only filter QuickFixBufferListedOnly
 vnoremap <leader>qv :cgetbuffer<CR> :call QuickFixBufferListedOnly()<CR>
 " remove whitespace in visual selection
-vnoremap <leader>wr :s/\s\+$//e<CR>
+vnoremap <leader>rw :s/\s\+$//e<CR>
 " '<,'>s/\s\+$//e
 vnoremap <leader>/ /\%V
 
