@@ -6,7 +6,9 @@ base
 bison
 bluez
 bluez-utils
+chromium
 cmake
+cpio
 ctags
 dhcp
 dhcpcd

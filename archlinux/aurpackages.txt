@@ -2,5 +2,7 @@ all-repository-fonts
 beyondallreason-appimage
 downgrade
 downlords-faf-client
+gconf
 mekhq
+unityhub
 yay
