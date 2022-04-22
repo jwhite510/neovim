@@ -4,6 +4,7 @@ automake
 baobab
 base
 bison
+blueman
 bluez
 bluez-utils
 chromium
@@ -30,6 +31,7 @@ htop
 i3-wm
 iwd
 jdk11-openjdk
+jdk8-openjdk
 jre-openjdk
 lib32-nvidia-utils
 linux
