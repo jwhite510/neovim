@@ -2976,18 +2976,22 @@ static int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool noc
       }
 
       if (diff_hlf != (hlf_T)0) {
-        if ( diff_hlf == HLF_TXD ) { diff_hlf = HLF_CHD; }
-        if (diff_hlf == HLF_CHD && ptr - line >= change_start
-            && n_extra == 0) {
-          if (diffchars && (ptr - line) < STRLEN(line) && !diffchars[ptr - line]) {
+
+        if (diffchars) {
+          if ((ptr - line) < STRLEN(line) && !diffchars[ptr - line]) {
             diff_hlf = HLF_TXD;                   // changed text
           } else {
             diff_hlf = HLF_CHD;
           }
-        }
-        if (diff_hlf == HLF_TXD && ptr - line > change_end
-            && n_extra == 0) {
-          diff_hlf = HLF_CHD;                   // changed line
+        } else {
+          if (diff_hlf == HLF_CHD && ptr - line >= change_start
+              && n_extra == 0) {
+            diff_hlf = HLF_TXD;                   // changed text
+          }
+          if (diff_hlf == HLF_TXD && ptr - line > change_end
+              && n_extra == 0) {
+            diff_hlf = HLF_CHD;                   // changed line
+          }
         }
         line_attr = win_hl_attr(wp, diff_hlf);
         // Overlay CursorLine onto diff-mode highlight.
