@@ -5,6 +5,7 @@
 typedef struct {
   int *df_decision;  // to keep track of this path traveled
   int df_lev_score;  // to keep track of the total score of this path
+  int df_penalty;
   int df_path_index;  // current index of this path
 } diffcomparisonpath_T;
 

@@ -1,3 +1,4 @@
+#include <math.h>
 #include "nvim/linematch.h"
 #include "nvim/memory.h"
 #include "nvim/vim.h"
@@ -299,13 +300,40 @@ void try_possible_paths(int char_compare, const int *df_iterators, const int *pa
             stringps, fromValues, nDiffs, comparison_mem);
       }
 
+      int cur_penalty = 0;
+      if (char_compare) {
+        // calculate penalty, if any
+        if (matched_chars == 0) {
+          // we are skipping a character because it's not greater than 1 and
+          // it's not INT_MIN
+          if (diffcomparisonpath[unwrapped_index_from].df_path_index) {
+            int lastdecision =
+              diffcomparisonpath[unwrapped_index_from].df_decision[
+              diffcomparisonpath[unwrapped_index_from].df_path_index - 1];
+
+            // if the last decision was a matching character in all lines
+            if (lastdecision == pow(2, nDiffs) - 1) {
+              cur_penalty = 1;
+            }
+          } else {
+            cur_penalty = 1;
+            // this is the start of the line
+            // and we are comparing
+          }
+        }
+      }
+
       if (matched_chars != INT_MIN) {
         int score = diffcomparisonpath[unwrapped_index_from].df_lev_score +
           matched_chars;
 
         // only update the path if everything is matching
 
-        if (score > diffcomparisonpath[unwrapped_index_to].df_lev_score) {
+        if ((score > diffcomparisonpath[unwrapped_index_to].df_lev_score) ||
+            (score == diffcomparisonpath[unwrapped_index_to].df_lev_score &&
+             penalty < diffcomparisonpath[unwrapped_index_to].
+
+             )) {
           update_path_flat(
               diffcomparisonpath,
               score,
