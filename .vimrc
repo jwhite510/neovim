@@ -1606,6 +1606,9 @@ nnoremap  <c-j> :call MoveBySameLevel("down")<cr>
 " quickfix jump list
 nnoremap [q :cprev <CR>zv
 nnoremap ]q :cnext <CR>zv
+nnoremap ]t :tnext <CR>
+nnoremap [t :tprev <CR>
+nnoremap <leader>ts :tsel <CR>
 nnoremap [Q :cfirst <CR>zv
 nnoremap ]Q :clast <CR>zv
 nnoremap <C-u> 5<C-y>
