@@ -1,2 +1,6 @@
 exec startxfce4
-! xmodmap ~/.Xmodmap
+
+# dbus-update-activation-environment --all
+# exec env GNOME_SHELL_SESSION_MODE=classic gnome-session --session gnome-classic
+
+# xmodmap ~/.Xmodmap
