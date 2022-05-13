@@ -6,3 +6,4 @@ gconf
 mekhq
 unityhub
 yay
+input-remapper-git
