@@ -1,0 +1,1 @@
+woeusb  --target-filesystem NTFS --device path/to/windows.iso /dev/sdX

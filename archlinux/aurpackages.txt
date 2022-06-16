@@ -3,7 +3,9 @@ beyondallreason-appimage
 downgrade
 downlords-faf-client
 gconf
+icu68-bin
 mekhq
 unityhub
+woeusb-ng
 yay
 input-remapper-git
