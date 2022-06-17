@@ -1,4 +1,8 @@
 all-repository-fonts
+android-ndk
+android-sdk
+android-sdk-platform-tools
+android-studio
 beyondallreason-appimage
 downgrade
 downlords-faf-client
