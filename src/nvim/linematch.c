@@ -7,7 +7,7 @@
 ///
 /// @param s1
 /// @param s2
-int count_matched_chars(const char *s1, const char *s2)
+df_lev_score_T count_matched_chars(const char *s1, const char *s2)
 {
   int l1 = (int)STRLEN(s1), l2 = (int)STRLEN(s2);
   if ( diff_flags & DIFF_IWHITE || diff_flags & DIFF_IWHITEALL
@@ -32,7 +32,7 @@ int count_matched_chars(const char *s1, const char *s2)
       }
       strsproc[k][i] = '\0';
     }
-    int matching = matching_characters(s1_proc, s2_proc);
+    df_lev_score_T matching = matching_characters(s1_proc, s2_proc);
     xfree(s1_proc), xfree(s2_proc);
     return matching;
   }
@@ -75,14 +75,15 @@ void free_comparison_mem(int ***comparison_mem, const int *diff_length, const in
 /// @param from
 /// @param choice
 void update_path_flat(diffcomparisonpath_T *diffcomparisonpath,
-                      int score, int to, int from, const int choice)
+                      int score_matched, int score_mismatched, int to, int from, const int choice)
 {
   for (int k = 0; k < diffcomparisonpath[from].df_path_index; k++) {
     diffcomparisonpath[to].df_decision[k] = diffcomparisonpath[from].df_decision[k];
   }
   diffcomparisonpath[to].df_path_index = diffcomparisonpath[from].df_path_index;
 
-  diffcomparisonpath[to].df_lev_score = score;
+  diffcomparisonpath[to].df_lev_score.df_lev_matched = score_matched;
+  diffcomparisonpath[to].df_lev_score.df_lev_mismatched = score_mismatched;
   diffcomparisonpath[to].df_decision[diffcomparisonpath[to].df_path_index] = choice;
   diffcomparisonpath[to].df_path_index++;
 }
@@ -96,7 +97,7 @@ void update_path_flat(diffcomparisonpath_T *diffcomparisonpath,
 ///
 /// @param s1
 /// @param s2
-int matching_characters(const char *s1, const char *s2)
+df_lev_score_T matching_characters(const char *s1, const char *s2)
 {
   size_t s1len = STRLEN(s1), s2len = STRLEN(s2);
   int *matrix[2];
@@ -128,9 +129,11 @@ int matching_characters(const char *s1, const char *s2)
       }
     }
   }
-  int rvalue = matrix[icur][s2len];
+  df_lev_score_T df_lev_score;
+  df_lev_score.df_lev_matched = matrix[icur][s2len];
+  df_lev_score.df_lev_mismatched = (int)(s1len > s2len ? s1len : s2len) - df_lev_score.df_lev_matched;
   xfree(matrix[0]), xfree(matrix[1]);
-  return rvalue;
+  return df_lev_score;
 }
 
 
@@ -141,21 +144,22 @@ int matching_characters(const char *s1, const char *s2)
 /// @param fromValues
 /// @param n
 /// @param comparison_mem
-int count_n_matched_chars(const char **stringps, const int *fromValues,
-                           const int n, int ***comparison_mem)
+df_lev_score_T count_n_matched_chars(const char **stringps, const int *fromValues,
+                           const int n, df_lev_score_T ***comparison_mem)
 {
-  int matched_chars = 0, pointerindex = 0, matched = 0;
+  int matched_chars = 0, pointerindex = 0, matched = 0, mismatched_chars = 0;
   for (int i = 0; i < n; i++) {
     for (int j = i + 1; j < n; j++) {
       if ( stringps[i] != NULL && stringps[j] != NULL ) {
         int i1 = fromValues[i];  // index of where to get the buffer
         int j1 = fromValues[j];
-        if (comparison_mem[pointerindex][i1][j1] == -1) {
+        if (comparison_mem[pointerindex][i1][j1].df_lev_matched == -1) {
           comparison_mem[pointerindex][i1][j1] =
             count_matched_chars(stringps[i], stringps[j]);
         }
         matched++;
-        matched_chars += comparison_mem[pointerindex][i1][j1];
+        matched_chars += comparison_mem[pointerindex][i1][j1].df_lev_matched;
+        mismatched_chars += comparison_mem[pointerindex][i1][j1].df_lev_mismatched;
       }
       pointerindex++;
     }
@@ -163,11 +167,16 @@ int count_n_matched_chars(const char **stringps, const int *fromValues,
 
   // prioritize a match of 3 (or more lines) equally to a match of 2 lines
   if (matched >= 2) {
+    mismatched_chars *= 2;
     matched_chars *= 2;
+    mismatched_chars /= matched;
     matched_chars /= matched;
   }
 
-  return matched_chars;
+  df_lev_score_T df_lev_score;
+  df_lev_score.df_lev_matched = matched_chars;
+  df_lev_score.df_lev_mismatched = mismatched_chars;
+  return df_lev_score;
 }
 
 /// allocate the memory for comparisons run with the diff linematch algorithm.
@@ -175,7 +184,7 @@ int count_n_matched_chars(const char **stringps, const int *fromValues,
 /// line twice
 /// @param diff_length
 /// @param nDiffs
-int ***allocate_comparison_mem(const int *diff_length, const int nDiffs)
+df_lev_score_T ***allocate_comparison_mem(const int *diff_length, const int nDiffs)
 {
   size_t pointercount = 0;
   for (int i = 0; i < nDiffs; i++) {
@@ -183,22 +192,23 @@ int ***allocate_comparison_mem(const int *diff_length, const int nDiffs)
       pointercount++;
     }
   }
-  int ***comparison_mem = xmalloc(sizeof(int **) * pointercount);
+  df_lev_score_T ***comparison_mem = xmalloc(sizeof(df_lev_score_T **) * pointercount);
   int cpointer = 0;
   for (int i = 0; i < nDiffs; i++) {
     for (int j = i + 1; j < nDiffs; j++) {
       comparison_mem[cpointer] = NULL;
       if (diff_length[i]) {
-        comparison_mem[cpointer] = xmalloc(sizeof(int *) * (size_t)diff_length[i]);
+        comparison_mem[cpointer] = xmalloc(sizeof(df_lev_score_T *) * (size_t)diff_length[i]);
       }
       for (int k = 0; k < diff_length[i]; k++) {
         comparison_mem[cpointer][k] = NULL;
         if (diff_length[j]) {
-          comparison_mem[cpointer][k] = xmalloc(sizeof(int) * (size_t)diff_length[j]);
+          comparison_mem[cpointer][k] = xmalloc(sizeof(df_lev_score_T) * (size_t)diff_length[j]);
         }
         // initialize to -1
         for (int l = 0; l < diff_length[j]; l++) {
-          comparison_mem[cpointer][k][l] = -1;
+          comparison_mem[cpointer][k][l].df_lev_matched = -1;
+          comparison_mem[cpointer][k][l].df_lev_mismatched = -1;
         }
       }
       cpointer++;
@@ -222,7 +232,7 @@ int ***allocate_comparison_mem(const int *diff_length, const int nDiffs)
 void try_possible_paths(const int *df_iterators, const int *paths,
                         const int nPaths, const int pathIndex, int *choice,
                         diffcomparisonpath_T *diffcomparisonpath,
-                        int ***comparison_mem, const int *diff_length,
+                        df_lev_score_T ***comparison_mem, const int *diff_length,
                         const int nDiffs, const char **diff_block)
 {
   if (pathIndex == nPaths) {
@@ -263,17 +273,38 @@ void try_possible_paths(const int *df_iterators, const int *paths,
       }
       int unwrapped_index_from = unwrap_indexes(fromValues, diff_length, nDiffs);
       int unwrapped_index_to = unwrap_indexes(toValues, diff_length, nDiffs);
-      int matched_chars = count_n_matched_chars(
+      df_lev_score_T df_lev_score = count_n_matched_chars(
           stringps, fromValues, nDiffs, comparison_mem);
-      int score = diffcomparisonpath[unwrapped_index_from].df_lev_score +
-        matched_chars;
-      if (score > diffcomparisonpath[unwrapped_index_to].df_lev_score) {
-        update_path_flat(
-            diffcomparisonpath,
-            score,
-            unwrapped_index_to,
-            unwrapped_index_from,
-            *choice);
+
+      int score_matched = diffcomparisonpath[unwrapped_index_from].df_lev_score.df_lev_matched +
+        df_lev_score.df_lev_matched;
+
+      int score_mismatched = diffcomparisonpath[unwrapped_index_from].df_lev_score.df_lev_mismatched
+        + df_lev_score.df_lev_mismatched;
+
+      if (score_matched > diffcomparisonpath[unwrapped_index_to].df_lev_score.df_lev_matched) {
+          update_path_flat(
+              diffcomparisonpath,
+              score_matched,
+              score_mismatched,
+              unwrapped_index_to,
+              unwrapped_index_from,
+              *choice);
+      } else if (score_matched ==
+          diffcomparisonpath[unwrapped_index_to].df_lev_score.df_lev_matched)
+      {
+        if (score_mismatched <=
+            diffcomparisonpath[unwrapped_index_to].df_lev_score.df_lev_mismatched)
+        {
+          update_path_flat(
+              diffcomparisonpath,
+              score_matched,
+              score_mismatched,
+              unwrapped_index_to,
+              unwrapped_index_from,
+              *choice);
+
+        }
       }
       for (int i = 0; i < nDiffs; i++) {
         xfree(current_lines[i]);
@@ -289,7 +320,8 @@ void try_possible_paths(const int *df_iterators, const int *paths,
       while (i < nDiffs && df_iterators[i] == 0) {
         i++;
         if (i == nDiffs) {
-          diffcomparisonpath[0].df_lev_score = 0;
+          diffcomparisonpath[0].df_lev_score.df_lev_mismatched = 0;
+          diffcomparisonpath[0].df_lev_score.df_lev_matched = 0;
           diffcomparisonpath[0].df_path_index = 0;
         }
       }
@@ -340,7 +372,7 @@ int unwrap_indexes(const int *values, const int *diff_length, const int nDiffs)
 /// @param nDiffs
 /// @param diff_block
 void populate_tensor(int *df_iterators, const int ch_dim,
-                     diffcomparisonpath_T *diffcomparisonpath, int ***comparison_mem,
+                     diffcomparisonpath_T *diffcomparisonpath, df_lev_score_T ***comparison_mem,
                      const int *diff_length, const int nDiffs, const char **diff_block)
 {
   if (ch_dim == nDiffs) {
@@ -355,7 +387,8 @@ void populate_tensor(int *df_iterators, const int ch_dim,
     }
     int choice = 0;
     int unwrapper_index_to = unwrap_indexes(df_iterators, diff_length, nDiffs);
-    diffcomparisonpath[unwrapper_index_to].df_lev_score = -1;
+    diffcomparisonpath[unwrapper_index_to].df_lev_score.df_lev_matched = -1;
+    diffcomparisonpath[unwrapper_index_to].df_lev_score.df_lev_mismatched = INT_MAX;
     try_possible_paths(df_iterators, paths, nPaths, 0, &choice, diffcomparisonpath,
                        comparison_mem, diff_length, nDiffs, diff_block);
 
@@ -446,7 +479,7 @@ void linematch_nbuffers(const char **diff_block, const int *diff_length,
   int *df_iterators;
   df_iterators = xmalloc(sizeof(int) * (size_t)nDiffs);
 
-  int ***comparison_mem = allocate_comparison_mem(diff_length, nDiffs);
+  df_lev_score_T ***comparison_mem = allocate_comparison_mem(diff_length, nDiffs);
 
   populate_tensor(df_iterators, 0, diffcomparisonpath, comparison_mem,
                   diff_length, nDiffs, diff_block);
