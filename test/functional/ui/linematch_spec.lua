@@ -3,10 +3,7 @@ local Screen = require('test.functional.ui.screen')
 
 local feed = helpers.feed
 local clear = helpers.clear
-local command = helpers.command
-local insert = helpers.insert
 local write_file = helpers.write_file
-local source = helpers.source
 
 describe('Diff mode screen with 3 diffs open', function()
   local fname = 'Xtest-functional-diff-screen-1'

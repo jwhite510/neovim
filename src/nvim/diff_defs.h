@@ -21,4 +21,4 @@
 
 EXTERN int diff_flags INIT(= DIFF_INTERNAL | DIFF_FILLER | DIFF_CLOSE_OFF);
 
-#endif // NVIM_DIFF_DEFS_H
+#endif  // NVIM_DIFF_DEFS_H

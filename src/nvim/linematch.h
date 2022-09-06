@@ -1,5 +1,5 @@
-#ifndef LINEMATCH_H
-#define LINEMATCH_H
+#ifndef NVIM_LINEMATCH_H
+#define NVIM_LINEMATCH_H
 
 // struct for running the diff linematch algorithm
 typedef struct {
@@ -12,4 +12,4 @@ typedef struct {
 # include "linematch.h.generated.h"
 #endif
 
-#endif // #if !defined(LINEMATCH_H)
+#endif  // NVIM_LINEMATCH_H

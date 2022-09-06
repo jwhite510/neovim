@@ -2060,7 +2060,7 @@ void run_linematch_algorithm(diff_T *dp)
   for (int i = 0; i < diffbuffers_count; i++) {
     clear_diffin(&diffbuffers[i]);
   }
-  // TODO remove allocations by instead using static buffers or arena
+  // TODO(jwhite510): remove allocations by instead using static buffers or arena
   xfree(diffbuffers);
   xfree(diff_begin);
   xfree(diff_length);
@@ -2236,7 +2236,7 @@ static bool diff_equal_entry(diff_T *dp, int idx1, int idx2)
 
 // Compare the characters at "p1" and "p2".  If they are equal (possibly
 // ignoring case) return true and set "len" to the number of bytes.
-static bool diff_equal_char(const char_u *const p1, const char_u *const p2, int *const len)
+static bool diff_equal_char(const char *const p1, const char *const p2, int *const len)
 {
   const int l = utfc_ptr2len((char *)p1);
 
@@ -2296,7 +2296,7 @@ static int diff_cmp(char_u *s1, char_u *s2)
       p2 = skipwhite(p2);
     } else {
       int l;
-      if (!diff_equal_char((char_u *)p1, (char_u *)p2, &l)) {
+      if (!diff_equal_char(p1, p2, &l)) {
         break;
       }
       p1 += l;
@@ -2656,7 +2656,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
           si_org = (int)(skipwhite(line_org + si_org) - line_org);
           si_new = (int)(skipwhite(line_new + si_new) - line_new);
         } else {
-          if (!diff_equal_char((char_u *)line_org + si_org, (char_u *)line_new + si_new, &l)) {
+          if (!diff_equal_char(line_org + si_org, line_new + si_new, &l)) {
             break;
           }
           si_org += l;
@@ -2696,11 +2696,11 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
               ei_new--;
             }
           } else {
-            const char_u *p1 = (char_u *)line_org + ei_org;
-            const char_u *p2 = (char_u *)line_new + ei_new;
+            const char *p1 = line_org + ei_org;
+            const char *p2 = line_new + ei_new;
 
-            p1 -= utf_head_off(line_org, (char *)p1);
-            p2 -= utf_head_off(line_new, (char *)p2);
+            p1 -= utf_head_off(line_org, p1);
+            p2 -= utf_head_off(line_new, p2);
 
             if (!diff_equal_char(p1, p2, &l)) {
               break;
@@ -2964,13 +2964,12 @@ void ex_diffgetput(exarg_T *eap)
   diff_T *dprev = NULL;
 
   for (dp = curtab->tp_first_diff; dp != NULL;) {
-    if (dp->is_linematched && !eap->addr_count) {
+    if (!eap->addr_count) {
       // handle the case with adjacent diff blocks
       while (dp->is_linematched
              && dp->df_next
              && dp->df_next->df_lnum[idx_cur] == dp->df_lnum[idx_cur] + dp->df_count[idx_cur]
-             && dp->df_next->df_lnum[idx_cur] == eap->line1 + off + 1)
-      {
+             && dp->df_next->df_lnum[idx_cur] == eap->line1 + off + 1) {
         dp = dp->df_next;
       }
     }
