@@ -1,7 +1,7 @@
+#include "nvim/diff_defs.h"
 #include "nvim/linematch.h"
 #include "nvim/memory.h"
 #include "nvim/vim.h"
-#include "nvim/diff_defs.h"
 
 /// return the number of matching characters between two strings
 ///
@@ -10,8 +10,8 @@
 int count_matched_chars(const char *s1, const char *s2)
 {
   int l1 = (int)STRLEN(s1), l2 = (int)STRLEN(s2);
-  if ( diff_flags & DIFF_IWHITE || diff_flags & DIFF_IWHITEALL
-      || diff_flags & DIFF_ICASE ) {
+  if (diff_flags & DIFF_IWHITE || diff_flags & DIFF_IWHITEALL
+      || diff_flags & DIFF_ICASE) {
     bool iwhite = (diff_flags & DIFF_IWHITEALL || diff_flags & DIFF_IWHITE);
     // the newly processed strings that will be compared
     char *s1_proc = xmalloc((STRLEN(s1) + 1) * sizeof(char));
@@ -23,12 +23,14 @@ int count_matched_chars(const char *s1, const char *s2)
     int slen[2] = { l1, l2 };
     for (int k = 0; k < 2; k++) {
       int d = 0, i = 0;
-      while (d+i < slen[k]) {
-        if ((iwhite)?(strsorig[k][i+d] != ' ' && strsorig[k][i+d] != '\t'):1) {
+      while (d + i < slen[k]) {
+        if ((iwhite)?(strsorig[k][i + d] != ' ' && strsorig[k][i + d] != '\t'):1) {
           strsproc[k][i] = (diff_flags & DIFF_ICASE)?
-           ((char)tolower(strsorig[k][i+d])):((char)strsorig[k][i+d]);
+                           ((char)tolower(strsorig[k][i + d])):((char)strsorig[k][i + d]);
           i++;
-        } else { d++; }
+        } else {
+          d++;
+        }
       }
       strsproc[k][i] = '\0';
     }
@@ -39,7 +41,6 @@ int count_matched_chars(const char *s1, const char *s2)
   // compare strings without changing the white space / case
   return matching_characters(s1, s2);
 }
-
 
 /// free the memory for comparisons run with the diff linematch algorithm.
 /// this memory is used to prevent counting the matching characters on the same
@@ -67,15 +68,14 @@ void free_comparison_buffers(int ***comparison_buffers, const int *diff_length, 
   xfree(comparison_buffers);
 }
 
-
 /// update the path of a point in the diff linematch algorithm
 /// @param  diffcomparisonpath
 /// @param score
 /// @param to
 /// @param from
 /// @param choice
-void update_path_flat(diffcomparisonpath_T *diffcomparisonpath,
-                      int score, int to, int from, const int choice)
+void update_path_flat(diffcomparisonpath_T *diffcomparisonpath, int score, int to, int from,
+                      const int choice)
 {
   for (int k = 0; k < diffcomparisonpath[from].df_path_index; k++) {
     diffcomparisonpath[to].df_decision[k] = diffcomparisonpath[from].df_decision[k];
@@ -86,7 +86,6 @@ void update_path_flat(diffcomparisonpath_T *diffcomparisonpath,
   diffcomparisonpath[to].df_decision[diffcomparisonpath[to].df_path_index] = choice;
   diffcomparisonpath[to].df_path_index++;
 }
-
 
 /// return matching characters between "s1" and "s2"
 /// between string "s1" and "s2".
@@ -100,8 +99,8 @@ int matching_characters(const char *s1, const char *s2)
 {
   size_t s1len = STRLEN(s1), s2len = STRLEN(s2);
   int *matrix[2];
-  matrix[0] = xmalloc(sizeof(int) * (s2len+1));
-  matrix[1] = xmalloc(sizeof(int) * (s2len+1));
+  matrix[0] = xmalloc(sizeof(int) * (s2len + 1));
+  matrix[1] = xmalloc(sizeof(int) * (s2len + 1));
   bool icur = 1;  // save space by storing only two rows for i axis
   for (size_t i = 0; i <= s1len; i++) {
     icur = !icur;
@@ -117,13 +116,13 @@ int matching_characters(const char *s1, const char *s2)
           matrix[icur][j] = matrix[!icur][j];
         }
         // skip char in s2
-        if (matrix[icur][j-1] > matrix[icur][j]) {
-          matrix[icur][j] = matrix[icur][j-1];
+        if (matrix[icur][j - 1] > matrix[icur][j]) {
+          matrix[icur][j] = matrix[icur][j - 1];
         }
         // compare char in s1 and s2
-        if ( (s1[i-1] == s2[j-1])
-            && (matrix[!icur][j-1] + 1) > matrix[icur][j] ) {
-          matrix[icur][j] = matrix[!icur][j-1] + 1;
+        if ((s1[i - 1] == s2[j - 1])
+            && (matrix[!icur][j - 1] + 1) > matrix[icur][j]) {
+          matrix[icur][j] = matrix[!icur][j - 1] + 1;
         }
       }
     }
@@ -133,7 +132,6 @@ int matching_characters(const char *s1, const char *s2)
   return rvalue;
 }
 
-
 /// count the matching characters between a variable number of strings "stringps"
 /// mark the strings that have already been compared to extract them later
 /// without re-running the character match counting.
@@ -141,13 +139,13 @@ int matching_characters(const char *s1, const char *s2)
 /// @param fromValues
 /// @param n
 /// @param comparison_buffers
-int count_n_matched_chars(const char **stringps, const int *fromValues,
-                           const int n, int ***comparison_buffers)
+int count_n_matched_chars(const char **stringps, const int *fromValues, const int n,
+                          int ***comparison_buffers)
 {
   int matched_chars = 0, pointerindex = 0, matched = 0;
   for (int i = 0; i < n; i++) {
     for (int j = i + 1; j < n; j++) {
-      if ( stringps[i] != NULL && stringps[j] != NULL ) {
+      if (stringps[i] != NULL && stringps[j] != NULL) {
         int i1 = fromValues[i];  // index of where to get the buffer
         int j1 = fromValues[j];
         if (comparison_buffers[pointerindex][i1][j1] == -1) {
@@ -219,11 +217,10 @@ int ***allocate_comparison_buffers(const int *diff_length, const int nDiffs)
 /// @param diff_length
 /// @param nDiffs
 /// @param diff_block
-void try_possible_paths(const int *df_iterators, const int *paths,
-                        const int nPaths, const int pathIndex, int *choice,
-                        diffcomparisonpath_T *diffcomparisonpath,
-                        int ***comparison_buffers, const int *diff_length,
-                        const int nDiffs, const char **diff_block)
+void try_possible_paths(const int *df_iterators, const int *paths, const int nPaths,
+                        const int pathIndex, int *choice, diffcomparisonpath_T *diffcomparisonpath,
+                        int ***comparison_buffers, const int *diff_length, const int nDiffs,
+                        const char **diff_block)
 {
   if (pathIndex == nPaths) {
     if ((*choice) > 0) {
@@ -235,7 +232,7 @@ void try_possible_paths(const int *df_iterators, const int *paths,
         fromValues[k] = df_iterators[k];
         toValues[k] = df_iterators[k];
         // get the index at all of the places
-        if ( (*choice) & (1 << k) ) {
+        if ((*choice) & (1 << k)) {
           fromValues[k]--;
           const char *p = diff_block[k];
           for (int j = 0; j < df_iterators[k] - 1; j++) {
@@ -263,17 +260,15 @@ void try_possible_paths(const int *df_iterators, const int *paths,
       }
       int unwrapped_index_from = unwrap_indexes(fromValues, diff_length, nDiffs);
       int unwrapped_index_to = unwrap_indexes(toValues, diff_length, nDiffs);
-      int matched_chars = count_n_matched_chars(
-          stringps, fromValues, nDiffs, comparison_buffers);
+      int matched_chars = count_n_matched_chars(stringps, fromValues, nDiffs, comparison_buffers);
       int score = diffcomparisonpath[unwrapped_index_from].df_lev_score +
-        matched_chars;
+                  matched_chars;
       if (score > diffcomparisonpath[unwrapped_index_to].df_lev_score) {
-        update_path_flat(
-            diffcomparisonpath,
-            score,
-            unwrapped_index_to,
-            unwrapped_index_from,
-            *choice);
+        update_path_flat(diffcomparisonpath,
+                         score,
+                         unwrapped_index_to,
+                         unwrapped_index_from,
+                         *choice);
       }
       for (int i = 0; i < nDiffs; i++) {
         xfree(current_lines[i]);
@@ -282,7 +277,6 @@ void try_possible_paths(const int *df_iterators, const int *paths,
       xfree(fromValues);
       xfree(toValues);
       xfree(stringps);
-
     } else {
       // initialize the 0, 0, 0 ... choice
       int i = 0;
@@ -339,9 +333,9 @@ int unwrap_indexes(const int *values, const int *diff_length, const int nDiffs)
 /// @param diff_length
 /// @param nDiffs
 /// @param diff_block
-void populate_tensor(int *df_iterators, const int ch_dim,
-                     diffcomparisonpath_T *diffcomparisonpath, int ***comparison_buffers,
-                     const int *diff_length, const int nDiffs, const char **diff_block)
+void populate_tensor(int *df_iterators, const int ch_dim, diffcomparisonpath_T *diffcomparisonpath,
+                     int ***comparison_buffers, const int *diff_length, const int nDiffs,
+                     const char **diff_block)
 {
   if (ch_dim == nDiffs) {
     int nPaths = 0;
@@ -424,8 +418,8 @@ void populate_tensor(int *df_iterators, const int ch_dim,
 /// @param nDiffs
 /// @param df_comparisonlines
 /// @param df_arr_col_size
-void linematch_nbuffers(const char **diff_block, const int *diff_length,
-                        const int nDiffs, int *decisions_length, int **decisions)
+void linematch_nbuffers(const char **diff_block, const int *diff_length, const int nDiffs,
+                        int *decisions_length, int **decisions)
 {
   int memsize = 1, memsize_decisions = 0;
   for (int i = 0; i < nDiffs; i++) {
@@ -435,11 +429,10 @@ void linematch_nbuffers(const char **diff_block, const int *diff_length,
 
   // create the flattened path matrix
   diffcomparisonpath_T *diffcomparisonpath = xmalloc(sizeof(diffcomparisonpath_T) *
-                                                               (size_t)memsize);
+                                                     (size_t)memsize);
   // allocate memory here
   for (int i = 0; i < memsize; i++) {
-    diffcomparisonpath[i].df_decision = xmalloc(
-        ((size_t)memsize_decisions) * sizeof(int));
+    diffcomparisonpath[i].df_decision = xmalloc(((size_t)memsize_decisions) * sizeof(int));
   }
 
   // memory for avoiding repetitive calculations of score

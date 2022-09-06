@@ -10,12 +10,12 @@
 #include <string.h>
 
 #include "nvim/api/private/helpers.h"
+#include "nvim/linematch.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
 #include "nvim/lua/xdiff.h"
 #include "nvim/vim.h"
 #include "xdiff/xdiff.h"
-#include "nvim/linematch.h"
 
 #define COMPARED_BUFFER0 (1 << 0)
 #define COMPARED_BUFFER1 (1 << 1)
@@ -37,9 +37,9 @@ typedef struct {
 
 static bool linematch;
 
-static void get_linematch_results(lua_State *lstate, long start_a, long count_a,
-    long start_b, long count_b) {
-
+static void get_linematch_results(lua_State *lstate, long start_a, long count_a, long start_b,
+                                  long count_b)
+{
   const char *diff_begin[2];
   int diff_length[2];
   size_t sz;
@@ -59,7 +59,7 @@ static void get_linematch_results(lua_State *lstate, long start_a, long count_a,
   int decisions_length = 0;
   int *decisions = NULL;
   linematch_nbuffers(diff_begin, diff_length, 2,
-      &decisions_length, &decisions);
+                     &decisions_length, &decisions);
 
   long lnuma = start_a, lnumb = start_b;
 
@@ -107,7 +107,7 @@ static void get_linematch_results(lua_State *lstate, long start_a, long count_a,
   lua_pushinteger(lstate, hunkcountb);
   lua_rawseti(lstate, -2, 4);
   lua_rawseti(lstate, -2, (signed)lua_objlen(lstate, -2) + 1);
-  xfree(decisions); 
+  xfree(decisions);
 }
 
 static int write_string(void *priv, mmbuffer_t *mb, int nbuf)
@@ -157,7 +157,6 @@ static int hunk_locations_cb(long start_a, long count_a, long start_b, long coun
 
     lua_rawseti(lstate, -2, (signed)lua_objlen(lstate, -2) + 1);
   }
-
 
   return 0;
 }
