@@ -1,5 +1,7 @@
-#ifndef DIFF_FLAGS_H
-#define DIFF_FLAGS_H
+#ifndef NVIM_DIFF_DEFS_H
+#define NVIM_DIFF_DEFS_H
+
+#include "nvim/vim.h"
 
 // Flags obtained from the 'diffopt' option
 #define DIFF_FILLER     0x001   // display filler lines
@@ -14,7 +16,9 @@
 #define DIFF_INTERNAL   0x200   // use internal xdiff algorithm
 #define DIFF_CLOSE_OFF  0x400   // diffoff when closing window
 #define DIFF_FOLLOWWRAP 0x800   // follow the wrap option
-#define DIFF_LINEMATCH  0x1000   // match most similar lines within diff
+#define DIFF_LINEMATCH  0x1000  // match most similar lines within diff
 #define ALL_WHITE_DIFF (DIFF_IWHITE | DIFF_IWHITEALL | DIFF_IWHITEEOL)
+
 EXTERN int diff_flags INIT(= DIFF_INTERNAL | DIFF_FILLER | DIFF_CLOSE_OFF);
-#endif
+
+#endif // NVIM_DIFF_DEFS_H
