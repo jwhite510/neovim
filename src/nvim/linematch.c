@@ -104,19 +104,19 @@ static int matching_chars(const char *s1, const char *s2)
 {
   size_t s1len = MIN(MATCH_CHAR_MAX_LEN - 1, line_len(s1));
   size_t s2len = MIN(MATCH_CHAR_MAX_LEN - 1, line_len(s2));
-  // FILE *fp = fopen("testlog_nocomparebuffer.log", "a");
-  // char tmpstring[255];
-  // int k = 0;
-  // for (size_t i = 0; i < s1len;i++) {
-  //   tmpstring[k++] = s1[i];
-  // }
-  // tmpstring[k++] = ':';
-  // for (size_t i = 0; i < s2len;i++) {
-  //   tmpstring[k++] = s2[i];
-  // }
-  // tmpstring[k] = '\0';
-  // fprintf(fp, "%s\n", tmpstring);
-  // fclose(fp);
+  FILE *fp = fopen("testlog.log", "a");
+  char tmpstring[255];
+  int k = 0;
+  for (size_t i = 0; i < s1len;i++) {
+    tmpstring[k++] = s1[i];
+  }
+  tmpstring[k++] = ':';
+  for (size_t i = 0; i < s2len;i++) {
+    tmpstring[k++] = s2[i];
+  }
+  tmpstring[k] = '\0';
+  fprintf(fp, "%s\n", tmpstring);
+  fclose(fp);
 
   int matrix[2][MATCH_CHAR_MAX_LEN] = { 0 };
   bool icur = 1;  // save space by storing only two rows for i axis
@@ -441,7 +441,10 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
                           int **decisions, bool iwhite)
 {
   assert(ndiffs <= LN_MAX_BUFS);
-
+  // start linematch algorithm
+  FILE *fp = fopen("testlog.log", "a");
+  fprintf(fp, "start linematch\n");
+  fclose(fp);
   size_t memsize = 1;
   size_t memsize_decisions = 0;
   for (size_t i = 0; i < ndiffs; i++) {
