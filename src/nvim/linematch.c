@@ -5,7 +5,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
-#include <stdio.h>
 
 #include "nvim/linematch.h"
 #include "nvim/macros.h"
@@ -18,6 +17,8 @@ typedef struct {
   size_t df_path_idx;   // current index of this path
 } diffcmppath_T;
 
+// struct to help for indexing comparison scores between strings to avoid
+// repetitive comparisons
 typedef struct {
   size_t *start_pos;
   size_t *col_size;
@@ -140,7 +141,8 @@ static int matching_chars(const char *s1, const char *s2)
 /// @param sp
 /// @param fomvals
 /// @param n
-static int count_n_matched_chars(const char **sp, const size_t n, bool iwhite, int* from_vals,
+static int count_n_matched_chars(const char **sp, const size_t n, bool iwhite,
+                                 int* from_vals,
                                  comparison_buffers_array_T *comparison_buffers_array)
 {
   int matched_chars = 0;
@@ -150,28 +152,18 @@ static int count_n_matched_chars(const char **sp, const size_t n, bool iwhite, i
     for (size_t j = i + 1; j < n; j++) {
       if (sp[i] != NULL && sp[j] != NULL) {
         matched++;
-
-        int i1 = from_vals[i];
-        int j1 = from_vals[j];
         int *comparison_mem = index_comparison_buffers_matrix(
             comparison_buffers_array, // comparison memory between sets of strings in buffers
             comparisonindex, // the matrix index (first comparison (buf 0 to 1), second (buf 1 to 2) etc)
-            i1, // the row == position in first compared buffer
-            j1); // the column == position in second compared buffer
-
-
+            from_vals[i], // the row == position in first compared buffer
+            from_vals[j]); // the column == position in second compared buffer
         if (*comparison_mem == -1) {
           // we have not yet compared these two strings
           *comparison_mem = iwhite ? matching_chars_iwhite(sp[i], sp[j]) : matching_chars(sp[i], sp[j]);
         }
-        // // the two strings have already been compared, don't compare them again, pull the result
-        // // from this array
-        // // TODO(lewis6991): handle whitespace ignoring higher up in the stack
+        // TODO(lewis6991): handle whitespace ignoring higher up in the stack
         matched_chars += *comparison_mem;
 
-        // // TODO(lewis6991): handle whitespace ignoring higher up in the stack
-        // matched_chars += iwhite ? matching_chars_iwhite(sp[i], sp[j])
-        //                         : matching_chars(sp[i], sp[j]);
 
       }
       comparisonindex++;
@@ -233,7 +225,8 @@ static void try_possible_paths(const int *df_iters, const size_t *paths, const i
       }
       size_t unwrapped_idx_from = unwrap_indexes(from_vals, diff_len, ndiffs);
       size_t unwrapped_idx_to = unwrap_indexes(to_vals, diff_len, ndiffs);
-      int matched_chars = count_n_matched_chars(current_lines, ndiffs, iwhite, from_vals, comparison_buffers_array);
+      int matched_chars = count_n_matched_chars(current_lines, ndiffs, iwhite,
+                                                from_vals, comparison_buffers_array);
       int score = diffcmppath[unwrapped_idx_from].df_lev_score + matched_chars;
       if (score > diffcmppath[unwrapped_idx_to].df_lev_score) {
         update_path_flat(diffcmppath, score, unwrapped_idx_to, unwrapped_idx_from, *choice);
@@ -320,7 +313,13 @@ static void populate_tensor(int *df_iters, const size_t ch_dim, diffcmppath_T *d
   }
 }
 
-
+/// helper function for indexing the comparison memory
+/// the comparison buffers are stored as a series of 2d matrices of different
+/// sizes, unwrapped to a single array
+/// @param comparison_buffers_array
+/// @param comparisonindex
+/// @param row
+/// @param col
 static int* index_comparison_buffers_matrix (comparison_buffers_array_T *comparison_buffers_array,
                                       size_t comparisonindex, int row, int col) {
   // return a pointer to an integer inside one of the matrixes
@@ -352,16 +351,18 @@ static void allocate_comparison_buffers(const int *diff_length, const size_t nDi
   size_t totalsize = 0, comparison_array_index = 0;
   for (size_t i = 0; i < nDiffs; i++) {
     for (size_t j = i + 1; j < nDiffs; j++) {
-      // start pos
+      // to index flattened 2-d matrix later, we need the start position along
+      // the actual 1-d array and the column size
       comparison_buffers_array->start_pos[comparison_array_index] = totalsize;
       comparison_buffers_array->col_size[comparison_array_index] = (size_t)diff_length[j];
-
       totalsize += (size_t)(diff_length[i] * diff_length[j]);
       comparison_array_index++;
     }
   }
   comparison_buffers_array->comparison_scores = xmalloc(sizeof(int) * totalsize);
   for (size_t i = 0; i < totalsize; i++) {
+    // initialize the comparison score to -1 to indicate that this pair of
+    // strings had not been compared yet
     comparison_buffers_array->comparison_scores[i] = -1;
   }
   return;
@@ -425,7 +426,6 @@ static void allocate_comparison_buffers(const int *diff_length, const size_t nDi
 size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size_t ndiffs,
                           int **decisions, bool iwhite)
 {
-  clock_t begin = clock();
   assert(ndiffs <= LN_MAX_BUFS);
 
   size_t memsize = 1;
@@ -470,10 +470,5 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
   }
   xfree(diffcmppath);
 
-  clock_t end = clock();
-  double time_spent = 1000 * (double)(end - begin) / CLOCKS_PER_SEC; // ms
-  FILE *fp = fopen("time.txt", "a");
-  fprintf(fp, "25line_no_optimization: %f\n", time_spent);
-  fclose(fp);
   return best_path_idx;
 }
