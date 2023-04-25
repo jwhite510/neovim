@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "nvim/linematch.h"
 #include "nvim/macros.h"
@@ -18,8 +19,8 @@ typedef struct {
 } diffcmppath_T1;
 
 typedef struct {
-  int *start_pos;
-  int *col_size;
+  size_t *start_pos;
+  size_t *col_size;
   int *comparison_scores;
 } comparison_buffers_array_T;
 
@@ -144,7 +145,7 @@ static int count_n_matched_chars(const char **sp, const size_t n, bool iwhite, i
 {
   int matched_chars = 0;
   int matched = 0;
-  int comparisonindex = 0; // marks which set of buffers to compare (0 to 1, 0 to 2, 1 to 2, etc)
+  size_t comparisonindex = 0; // marks which set of buffers to compare (0 to 1, 0 to 2, 1 to 2, etc)
   for (size_t i = 0; i < n; i++) {
     for (size_t j = i + 1; j < n; j++) {
       if (sp[i] != NULL && sp[j] != NULL) {
@@ -156,7 +157,7 @@ static int count_n_matched_chars(const char **sp, const size_t n, bool iwhite, i
             comparison_buffers_array, // comparison memory between sets of strings in buffers
             comparisonindex, // the matrix index (first comparison (buf 0 to 1), second (buf 1 to 2) etc)
             i1, // the row == position in first compared buffer
-            j1) // the column == position in second compared buffer
+            j1); // the column == position in second compared buffer
 
 
         if (*comparison_mem == -1) {
@@ -320,13 +321,13 @@ static void populate_tensor(int *df_iters, const size_t ch_dim, diffcmppath_T1 *
 }
 
 
-int* index_comparison_buffers_matrix (comparison_buffers_array_T *comparison_buffers_array,
-                                      int comparisonindex, int row, int col) {
+static int* index_comparison_buffers_matrix (comparison_buffers_array_T *comparison_buffers_array,
+                                      size_t comparisonindex, int row, int col) {
   // return a pointer to an integer inside one of the matrixes
   // get start position of 2s matrix
-  int start_pos = comparison_buffers_array->start_pos[comparisonindex];
-  int wrapped_index = row * comparison_buffers_array->col_size[comparisonindex] + col;
-  return &comparison_buffers_array[start_pos + wrapped_index];
+  int start_pos = (int)comparison_buffers_array->start_pos[comparisonindex];
+  int wrapped_index = row * (int)comparison_buffers_array->col_size[comparisonindex] + col;
+  return &comparison_buffers_array->comparison_scores[start_pos + wrapped_index];
 }
 
 /// allocate the memory for comparisons run with the diff linematch algorithm.
@@ -334,7 +335,7 @@ int* index_comparison_buffers_matrix (comparison_buffers_array_T *comparison_buf
 /// line twice
 /// @param diff_length
 /// @param nDiffs
-void allocate_comparison_buffers(const int *diff_length, const size_t nDiffs,
+static void allocate_comparison_buffers(const int *diff_length, const size_t nDiffs,
                                  comparison_buffers_array_T* comparison_buffers_array)
 {
   size_t pointercount = 0;
@@ -353,10 +354,10 @@ void allocate_comparison_buffers(const int *diff_length, const size_t nDiffs,
     for (size_t j = i + 1; j < nDiffs; j++) {
       // start pos
       comparison_buffers_array->start_pos[comparison_array_index] = totalsize;
-      comparison_buffers_array->col_size[comparison_array_index] = diff_length[j];
+      comparison_buffers_array->col_size[comparison_array_index] = (size_t)diff_length[j];
 
-      totalsize += (diff_length[i] * diff_length[j]);
-      comparison_array_index++:
+      totalsize += (size_t)(diff_length[i] * diff_length[j]);
+      comparison_array_index++;
     }
   }
   comparison_buffers_array->comparison_scores = xmalloc(sizeof(int) * totalsize);
@@ -449,7 +450,7 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
   // iterators to mark position in each diff buffer
   int df_iters[LN_MAX_BUFS];
   populate_tensor(df_iters, 0, diffcmppath, diff_len, ndiffs, diff_blk, iwhite,
-                  comparison_buffers_array);
+                  &comparison_buffers_array);
 
   const size_t u = unwrap_indexes(diff_len, diff_len, ndiffs);
   const size_t best_path_idx = diffcmppath[u].df_path_idx;
