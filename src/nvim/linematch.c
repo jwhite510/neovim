@@ -15,7 +15,13 @@ typedef struct {
   int *df_decision;  // to keep track of this path traveled
   int df_lev_score;  // to keep track of the total score of this path
   size_t df_path_idx;   // current index of this path
-} diffcmppath_T;
+} diffcmppath_T1;
+
+typedef struct {
+  int *start_pos;
+  int *col_size;
+  int *comparison_scores;
+} comparison_buffers_array_T;
 
 #define LN_MAX_BUFS 8
 
@@ -70,7 +76,7 @@ static int matching_chars_iwhite(const char *s1, const char *s2)
 /// @param to
 /// @param from
 /// @param choice
-static void update_path_flat(diffcmppath_T *diffcmppath, int score, size_t to, size_t from,
+static void update_path_flat(diffcmppath_T1 *diffcmppath, int score, size_t to, size_t from,
                              const int choice)
 {
   size_t path_idx = diffcmppath[from].df_path_idx;
@@ -133,7 +139,8 @@ static int matching_chars(const char *s1, const char *s2)
 /// @param sp
 /// @param fomvals
 /// @param n
-static int count_n_matched_chars(const char **sp, const size_t n, bool iwhite, int* from_vals, int ***comparison_buffers)
+static int count_n_matched_chars(const char **sp, const size_t n, bool iwhite, int* from_vals,
+                                 comparison_buffers_array_T *comparison_buffers_array)
 {
   int matched_chars = 0;
   int matched = 0;
@@ -143,16 +150,27 @@ static int count_n_matched_chars(const char **sp, const size_t n, bool iwhite, i
       if (sp[i] != NULL && sp[j] != NULL) {
         matched++;
 
-        int i1 = from_vals[i];  // index of where to get the buffer
+        int i1 = from_vals[i];
         int j1 = from_vals[j];
-        if (comparison_buffers[comparisonindex][i1][j1] == -1) {
+        int *comparison_mem = index_comparison_buffers_matrix(
+            comparison_buffers_array, // comparison memory between sets of strings in buffers
+            comparisonindex, // the matrix index (first comparison (buf 0 to 1), second (buf 1 to 2) etc)
+            i1, // the row == position in first compared buffer
+            j1) // the column == position in second compared buffer
+
+
+        if (*comparison_mem == -1) {
           // we have not yet compared these two strings
-          comparison_buffers[comparisonindex][i1][j1] = iwhite ? matching_chars_iwhite(sp[i], sp[j]) : matching_chars(sp[i], sp[j]);
+          *comparison_mem = iwhite ? matching_chars_iwhite(sp[i], sp[j]) : matching_chars(sp[i], sp[j]);
         }
         // // the two strings have already been compared, don't compare them again, pull the result
         // // from this array
         // // TODO(lewis6991): handle whitespace ignoring higher up in the stack
-        matched_chars += comparison_buffers[comparisonindex][i1][j1];
+        matched_chars += *comparison_mem;
+
+        // // TODO(lewis6991): handle whitespace ignoring higher up in the stack
+        // matched_chars += iwhite ? matching_chars_iwhite(sp[i], sp[j])
+        //                         : matching_chars(sp[i], sp[j]);
 
       }
       comparisonindex++;
@@ -191,9 +209,9 @@ void fastforward_buf_to_lnum(const char **s, long lnum)
 /// @param ndiffs
 /// @param diff_blk
 static void try_possible_paths(const int *df_iters, const size_t *paths, const int npaths,
-                               const int path_idx, int *choice, diffcmppath_T *diffcmppath,
+                               const int path_idx, int *choice, diffcmppath_T1 *diffcmppath,
                                const int *diff_len, const size_t ndiffs, const char **diff_blk,
-                               bool iwhite, int ***comparison_buffers)
+                               bool iwhite, comparison_buffers_array_T *comparison_buffers_array)
 {
   if (path_idx == npaths) {
     if ((*choice) > 0) {
@@ -214,7 +232,7 @@ static void try_possible_paths(const int *df_iters, const size_t *paths, const i
       }
       size_t unwrapped_idx_from = unwrap_indexes(from_vals, diff_len, ndiffs);
       size_t unwrapped_idx_to = unwrap_indexes(to_vals, diff_len, ndiffs);
-      int matched_chars = count_n_matched_chars(current_lines, ndiffs, iwhite, from_vals, comparison_buffers);
+      int matched_chars = count_n_matched_chars(current_lines, ndiffs, iwhite, from_vals, comparison_buffers_array);
       int score = diffcmppath[unwrapped_idx_from].df_lev_score + matched_chars;
       if (score > diffcmppath[unwrapped_idx_to].df_lev_score) {
         update_path_flat(diffcmppath, score, unwrapped_idx_to, unwrapped_idx_from, *choice);
@@ -235,10 +253,10 @@ static void try_possible_paths(const int *df_iters, const size_t *paths, const i
   size_t bit_place = paths[path_idx];
   *(choice) |= (1 << bit_place);  // set it to 1
   try_possible_paths(df_iters, paths, npaths, path_idx + 1, choice,
-                     diffcmppath, diff_len, ndiffs, diff_blk, iwhite, comparison_buffers);
+                     diffcmppath, diff_len, ndiffs, diff_blk, iwhite, comparison_buffers_array);
   *(choice) &= ~(1 << bit_place);  // set it to 0
   try_possible_paths(df_iters, paths, npaths, path_idx + 1, choice,
-                     diffcmppath, diff_len, ndiffs, diff_blk, iwhite, comparison_buffers);
+                     diffcmppath, diff_len, ndiffs, diff_blk, iwhite, comparison_buffers_array);
 }
 
 /// unwrap indexes to access n dimensional tensor
@@ -272,9 +290,9 @@ static size_t unwrap_indexes(const int *values, const int *diff_len, const size_
 /// @param diff_len
 /// @param ndiffs
 /// @param diff_blk
-static void populate_tensor(int *df_iters, const size_t ch_dim, diffcmppath_T *diffcmppath,
+static void populate_tensor(int *df_iters, const size_t ch_dim, diffcmppath_T1 *diffcmppath,
                             const int *diff_len, const size_t ndiffs, const char **diff_blk,
-                            bool iwhite, int*** comparison_buffers)
+                            bool iwhite, comparison_buffers_array_T *comparison_buffers_array)
 {
   if (ch_dim == ndiffs) {
     int npaths = 0;
@@ -290,15 +308,25 @@ static void populate_tensor(int *df_iters, const size_t ch_dim, diffcmppath_T *d
     size_t unwrapper_idx_to = unwrap_indexes(df_iters, diff_len, ndiffs);
     diffcmppath[unwrapper_idx_to].df_lev_score = -1;
     try_possible_paths(df_iters, paths, npaths, 0, &choice, diffcmppath,
-                       diff_len, ndiffs, diff_blk, iwhite, comparison_buffers);
+                       diff_len, ndiffs, diff_blk, iwhite, comparison_buffers_array);
     return;
   }
 
   for (int i = 0; i <= diff_len[ch_dim]; i++) {
     df_iters[ch_dim] = i;
     populate_tensor(df_iters, ch_dim + 1, diffcmppath, diff_len,
-                    ndiffs, diff_blk, iwhite, comparison_buffers);
+                    ndiffs, diff_blk, iwhite, comparison_buffers_array);
   }
+}
+
+
+int* index_comparison_buffers_matrix (comparison_buffers_array_T *comparison_buffers_array,
+                                      int comparisonindex, int row, int col) {
+  // return a pointer to an integer inside one of the matrixes
+  // get start position of 2s matrix
+  int start_pos = comparison_buffers_array->start_pos[comparisonindex];
+  int wrapped_index = row * comparison_buffers_array->col_size[comparisonindex] + col;
+  return &comparison_buffers_array[start_pos + wrapped_index];
 }
 
 /// allocate the memory for comparisons run with the diff linematch algorithm.
@@ -306,7 +334,8 @@ static void populate_tensor(int *df_iters, const size_t ch_dim, diffcmppath_T *d
 /// line twice
 /// @param diff_length
 /// @param nDiffs
-int ***allocate_comparison_buffers(const int *diff_length, const size_t nDiffs)
+void allocate_comparison_buffers(const int *diff_length, const size_t nDiffs,
+                                 comparison_buffers_array_T* comparison_buffers_array)
 {
   size_t pointercount = 0;
   for (size_t i = 0; i < nDiffs; i++) {
@@ -314,54 +343,27 @@ int ***allocate_comparison_buffers(const int *diff_length, const size_t nDiffs)
       pointercount++;
     }
   }
-  int ***comparison_buffers = xmalloc(sizeof(int **) * pointercount);
-  int cpointer = 0;
+  // store the start position of the 2d matrix for each comparison
+  comparison_buffers_array->start_pos = xmalloc(sizeof(int) * pointercount);
+  // store the column size to index the 2d matrix of each comparison
+  comparison_buffers_array->col_size = xmalloc(sizeof(int) * pointercount);
+  // for each comparison matrix: need start pos, col size
+  size_t totalsize = 0, comparison_array_index = 0;
   for (size_t i = 0; i < nDiffs; i++) {
     for (size_t j = i + 1; j < nDiffs; j++) {
-      comparison_buffers[cpointer] = NULL;
-      if (diff_length[i]) {
-        comparison_buffers[cpointer] = xmalloc(sizeof(int *) * (size_t)diff_length[i]);
-      }
-      for (int k = 0; k < diff_length[i]; k++) {
-        comparison_buffers[cpointer][k] = NULL;
-        if (diff_length[j]) {
-          comparison_buffers[cpointer][k] = xmalloc(sizeof(int) * (size_t)diff_length[j]);
-        }
-        // initialize to -1
-        for (int l = 0; l < diff_length[j]; l++) {
-          comparison_buffers[cpointer][k][l] = -1;
-        }
-      }
-      cpointer++;
-    }
-  }
-  return comparison_buffers;
-}
+      // start pos
+      comparison_buffers_array->start_pos[comparison_array_index] = totalsize;
+      comparison_buffers_array->col_size[comparison_array_index] = diff_length[j];
 
-/// free the memory for comparisons run with the diff linematch algorithm.
-/// this memory is used to prevent counting the matching characters on the same
-/// line twice
-/// @param comparison_buffers
-/// @param diff_length
-/// @param nDiffs
-void free_comparison_buffers(int ***comparison_buffers, const int *diff_length, const size_t nDiffs)
-{
-  // free comparison memory
-  int cpointer = 0;
-  for (size_t i = 0; i < nDiffs; i++) {
-    for (size_t j = i + 1; j < nDiffs; j++) {
-      for (int k = 0; k < diff_length[i]; k++) {
-        if (comparison_buffers[cpointer] && comparison_buffers[cpointer][k]) {
-          xfree(comparison_buffers[cpointer][k]);
-        }
-      }
-      if (comparison_buffers[cpointer]) {
-        xfree(comparison_buffers[cpointer]);
-      }
-      cpointer++;
+      totalsize += (diff_length[i] * diff_length[j]);
+      comparison_array_index++:
     }
   }
-  xfree(comparison_buffers);
+  comparison_buffers_array->comparison_scores = xmalloc(sizeof(int) * totalsize);
+  for (size_t i = 0; i < totalsize; i++) {
+    comparison_buffers_array->comparison_scores[i] = -1;
+  }
+  return;
 }
 
 /// algorithm to find an optimal alignment of lines of a diff block with 2 or
@@ -422,6 +424,7 @@ void free_comparison_buffers(int ***comparison_buffers, const int *diff_length, 
 size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size_t ndiffs,
                           int **decisions, bool iwhite)
 {
+  clock_t begin = clock();
   assert(ndiffs <= LN_MAX_BUFS);
 
   size_t memsize = 1;
@@ -433,17 +436,20 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
   }
 
   // create the flattened path matrix
-  diffcmppath_T *diffcmppath = xmalloc(sizeof(diffcmppath_T) * memsize);
+  diffcmppath_T1 *diffcmppath = xmalloc(sizeof(diffcmppath_T1) * memsize);
   // allocate memory here
   for (size_t i = 0; i < memsize; i++) {
     diffcmppath[i].df_decision = xmalloc(memsize_decisions * sizeof(int));
   }
 
   // memory for avoiding repetitive calculations of score
-  int ***comparison_buffers = allocate_comparison_buffers(diff_len, ndiffs);
+  comparison_buffers_array_T comparison_buffers_array;
+  allocate_comparison_buffers(diff_len, ndiffs, &comparison_buffers_array);
+
   // iterators to mark position in each diff buffer
   int df_iters[LN_MAX_BUFS];
-  populate_tensor(df_iters, 0, diffcmppath, diff_len, ndiffs, diff_blk, iwhite, comparison_buffers);
+  populate_tensor(df_iters, 0, diffcmppath, diff_len, ndiffs, diff_blk, iwhite,
+                  comparison_buffers_array);
 
   const size_t u = unwrap_indexes(diff_len, diff_len, ndiffs);
   const size_t best_path_idx = diffcmppath[u].df_path_idx;
@@ -454,11 +460,19 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
     (*decisions)[i] = best_path_decisions[i];
   }
 
-  free_comparison_buffers(comparison_buffers, diff_len, ndiffs);
+  xfree(comparison_buffers_array.start_pos);
+  xfree(comparison_buffers_array.col_size);
+  xfree(comparison_buffers_array.comparison_scores);
+
   for (size_t i = 0; i < memsize; i++) {
     xfree(diffcmppath[i].df_decision);
   }
   xfree(diffcmppath);
 
+  clock_t end = clock();
+  double time_spent = 1000 * (double)(end - begin) / CLOCKS_PER_SEC; // ms
+  FILE *fp = fopen("time.txt", "a");
+  fprintf(fp, "25line_no_optimization: %f\n", time_spent);
+  fclose(fp);
   return best_path_idx;
 }
