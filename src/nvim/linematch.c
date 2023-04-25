@@ -351,9 +351,9 @@ static void allocate_comparison_buffers(const int *diff_length, const size_t nDi
     }
   }
   // store the start position of the 2d matrix for each comparison
-  comparison_buffers_array->start_pos = xmalloc(sizeof(int) * pointercount);
+  comparison_buffers_array->start_pos = xmalloc(sizeof(size_t) * pointercount);
   // store the column size to index the 2d matrix of each comparison
-  comparison_buffers_array->col_size = xmalloc(sizeof(int) * pointercount);
+  comparison_buffers_array->col_size = xmalloc(sizeof(size_t) * pointercount);
   // for each comparison matrix: need start pos, col size
   size_t totalsize = 0, comparison_array_index = 0;
   for (size_t i = 0; i < nDiffs; i++) {
