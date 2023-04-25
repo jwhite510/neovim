@@ -16,7 +16,7 @@ typedef struct {
   int *df_decision;  // to keep track of this path traveled
   int df_lev_score;  // to keep track of the total score of this path
   size_t df_path_idx;   // current index of this path
-} diffcmppath_T1;
+} diffcmppath_T;
 
 typedef struct {
   size_t *start_pos;
@@ -77,7 +77,7 @@ static int matching_chars_iwhite(const char *s1, const char *s2)
 /// @param to
 /// @param from
 /// @param choice
-static void update_path_flat(diffcmppath_T1 *diffcmppath, int score, size_t to, size_t from,
+static void update_path_flat(diffcmppath_T *diffcmppath, int score, size_t to, size_t from,
                              const int choice)
 {
   size_t path_idx = diffcmppath[from].df_path_idx;
@@ -210,7 +210,7 @@ void fastforward_buf_to_lnum(const char **s, long lnum)
 /// @param ndiffs
 /// @param diff_blk
 static void try_possible_paths(const int *df_iters, const size_t *paths, const int npaths,
-                               const int path_idx, int *choice, diffcmppath_T1 *diffcmppath,
+                               const int path_idx, int *choice, diffcmppath_T *diffcmppath,
                                const int *diff_len, const size_t ndiffs, const char **diff_blk,
                                bool iwhite, comparison_buffers_array_T *comparison_buffers_array)
 {
@@ -291,7 +291,7 @@ static size_t unwrap_indexes(const int *values, const int *diff_len, const size_
 /// @param diff_len
 /// @param ndiffs
 /// @param diff_blk
-static void populate_tensor(int *df_iters, const size_t ch_dim, diffcmppath_T1 *diffcmppath,
+static void populate_tensor(int *df_iters, const size_t ch_dim, diffcmppath_T *diffcmppath,
                             const int *diff_len, const size_t ndiffs, const char **diff_blk,
                             bool iwhite, comparison_buffers_array_T *comparison_buffers_array)
 {
@@ -437,7 +437,7 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
   }
 
   // create the flattened path matrix
-  diffcmppath_T1 *diffcmppath = xmalloc(sizeof(diffcmppath_T1) * memsize);
+  diffcmppath_T *diffcmppath = xmalloc(sizeof(diffcmppath_T) * memsize);
   // allocate memory here
   for (size_t i = 0; i < memsize; i++) {
     diffcmppath[i].df_decision = xmalloc(memsize_decisions * sizeof(int));
