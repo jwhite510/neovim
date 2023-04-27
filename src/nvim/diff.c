@@ -3583,10 +3583,10 @@ static int xdiff_out(long start_a, long count_a, long start_b, long count_b, voi
 //   charmatch_nbuffers(diff_length, diff_p, dp->charmatchp);
 // }
 //
-static void breakpoint(int test)
-{
-
-}
+// static void breakpoint(int test)
+// {
+// 
+// }
 
 static void charmatch_nbuffers(const char **diff_blk, const int *diff_len,
     const size_t ndiffs) {
@@ -3618,6 +3618,7 @@ static void charmatch_nbuffers(const char **diff_blk, const int *diff_len,
   // TODO add the +1 here
   charmatch_choice_T *path_trial = xmalloc((size_t)(largest * secondlargest) * sizeof(charmatch_choice_T)); // the trial path for the comparison set between two buffers
   charmatch_grid_T *charmatch_grid = xmalloc((size_t)((largest + 1) * (secondlargest + 1)) * sizeof(charmatch_grid_T));
+  // breakpoint(0);
   for (size_t i = 0; i < ndiffs; i++) {
     for (size_t j = i + 1; j < ndiffs; j++) {
       // run once for every comparison (0 -> 1, 0 -> 2, 1 -> 2, etc)
@@ -3683,7 +3684,7 @@ static void charmatch_nbuffers(const char **diff_blk, const int *diff_len,
       // perform search to find path with least turns
       // write to an array as we recursively follow
       // what is the longest possible length for a path?
-      test_charmatch_paths(startNode, 0, path_trial);
+      test_charmatch_paths(startNode, 0, path_trial, 0);
 
       // breakpoint(0);
       int testabc = 1;
@@ -3691,13 +3692,27 @@ static void charmatch_nbuffers(const char **diff_blk, const int *diff_len,
     }
   }
 }
-static void test_charmatch_paths(charmatch_grid_T *node, size_t depth, charmatch_choice_T *path_trial) {
+// follow path with inertia to avoid unecessary recursion
+static void test_charmatch_paths(charmatch_grid_T *node, size_t depth, charmatch_choice_T *path_trial, size_t turns) {
   if (node->n_p == 0) {
-    breakpoint(0);
+    int testv = 1;
     // end of a path
   }
+  if (depth > 0) {
+    // prefer the last choice taken, if there's no other option, then take anything
+    charmatch_choice_T lastchoice = path_trial[depth - 1];
+    // can we take this choice?
+    for (size_t i = 0; i < node->n_p; i++) {
+      if (node->charmatch_choice[i] == lastchoice) {
+        path_trial[depth] = lastchoice;
+        test_charmatch_paths(node->cm_next[i], depth + 1, path_trial, turns);
+        return;
+      }
+    }
+  }
+
   for (size_t i = 0; i < node->n_p; i++) {
     path_trial[depth] = node->charmatch_choice[i];
-    test_charmatch_paths(node->cm_next[i], depth + 1, path_trial);
+    test_charmatch_paths(node->cm_next[i], depth + 1, path_trial, turns + 1);
   }
 }
