@@ -3616,7 +3616,9 @@ static void charmatch_nbuffers(const char **diff_blk, const int *diff_len,
   }
   // allocate grid for solving the comparison between two of these diff hunks at a time
   // TODO add the +1 here
+  int *resultHighlight = xmalloc(total_chars_length * sizeof(int)); // will hold results
   charmatch_choice_T *path_trial = xmalloc((size_t)(largest * secondlargest) * sizeof(charmatch_choice_T)); // the trial path for the comparison set between two buffers
+  charmatch_choice_T *path_optimal = xmalloc((size_t)(largest * secondlargest) * sizeof(charmatch_choice_T)); // the trial path for the comparison set between two buffers
   charmatch_grid_T *charmatch_grid = xmalloc((size_t)((largest + 1) * (secondlargest + 1)) * sizeof(charmatch_grid_T));
   // breakpoint(0);
   for (size_t i = 0; i < ndiffs; i++) {
@@ -3684,19 +3686,31 @@ static void charmatch_nbuffers(const char **diff_blk, const int *diff_len,
       // perform search to find path with least turns
       // write to an array as we recursively follow
       // what is the longest possible length for a path?
-      test_charmatch_paths(startNode, 0, path_trial, 0);
+      size_t minturns = SIZE_MAX;
+      size_t n_optimal = 0;
+      test_charmatch_paths(startNode, 0, path_trial, 0, *minturns, path_optimal, n_optimal);
 
-      // breakpoint(0);
+      // write the diff locations that should be highlighted using this optimal path
+
       int testabc = 1;
 
     }
   }
 }
 // follow path with inertia to avoid unecessary recursion
-static void test_charmatch_paths(charmatch_grid_T *node, size_t depth, charmatch_choice_T *path_trial, size_t turns) {
+static void test_charmatch_paths(charmatch_grid_T *node, size_t depth, charmatch_choice_T *path_trial,
+                                 size_t turns, size_t *minturns, charmatch_choice_T* path_optimal,
+                                 size_t* n_optimal) {
   if (node->n_p == 0) {
-    int testv = 1;
-    // end of a path
+    if (turns < *minturns) {
+      for (size_t j = 0, i = depth - 1; i >= 0; i--) {
+        path_optimal[j++] = path_trial[i];
+        *n_optimal = depth;
+      }
+      minturns = turns;
+      // write this path
+    }
+    return;
   }
   if (depth > 0) {
     // prefer the last choice taken, if there's no other option, then take anything
@@ -3710,7 +3724,6 @@ static void test_charmatch_paths(charmatch_grid_T *node, size_t depth, charmatch
       }
     }
   }
-
   for (size_t i = 0; i < node->n_p; i++) {
     path_trial[depth] = node->charmatch_choice[i];
     test_charmatch_paths(node->cm_next[i], depth + 1, path_trial, turns + 1);
