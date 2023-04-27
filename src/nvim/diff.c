@@ -122,7 +122,7 @@ typedef struct {
 typedef enum {
   SKIP0,
   SKIP1,
-  COMPARE,
+  COMPARE01,
 } charmatch_choice_T;
 
 typedef struct charmatch_grid_S charmatch_grid_T;
@@ -130,6 +130,7 @@ struct charmatch_grid_S {
   int score;
   size_t n_p;
   charmatch_grid_T* cm_next[3]; // top, left, diagonal(top, left)
+  charmatch_choice_T charmatch_choice[3];
 };
 
 typedef enum {
@@ -3615,7 +3616,8 @@ static void charmatch_nbuffers(const char **diff_blk, const int *diff_len,
   }
   // allocate grid for solving the comparison between two of these diff hunks at a time
   // TODO add the +1 here
-  charmatch_grid_T *charmatch_grid = xmalloc((size_t)(largest * secondlargest) * sizeof(charmatch_grid_T));
+  charmatch_choice_T *path_trial = xmalloc((size_t)(largest * secondlargest) * sizeof(charmatch_choice_T)); // the trial path for the comparison set between two buffers
+  charmatch_grid_T *charmatch_grid = xmalloc((size_t)((largest + 1) * (secondlargest + 1)) * sizeof(charmatch_grid_T));
   for (size_t i = 0; i < ndiffs; i++) {
     for (size_t j = i + 1; j < ndiffs; j++) {
       // run once for every comparison (0 -> 1, 0 -> 2, 1 -> 2, etc)
@@ -3634,10 +3636,12 @@ static void charmatch_nbuffers(const char **diff_blk, const int *diff_len,
             if (charmatch_grid[topindex].score > charmatch_grid[curindex].score) {
               size_t *n_p = &charmatch_grid[curindex].n_p;
               *n_p = 0;
+              charmatch_grid[curindex].charmatch_choice[*n_p] = SKIP0;
               charmatch_grid[curindex].cm_next[(*n_p)++] = &charmatch_grid[topindex];
               charmatch_grid[curindex].score = charmatch_grid[topindex].score;
             } else if (charmatch_grid[topindex].score == charmatch_grid[curindex].score) {
               size_t *n_p = &charmatch_grid[curindex].n_p;
+              charmatch_grid[curindex].charmatch_choice[*n_p] = SKIP0;
               charmatch_grid[curindex].cm_next[(*n_p)++] = &charmatch_grid[topindex];
             }
           }
@@ -3647,24 +3651,28 @@ static void charmatch_nbuffers(const char **diff_blk, const int *diff_len,
             if (charmatch_grid[leftindex].score > charmatch_grid[curindex].score) {
               size_t *n_p = &charmatch_grid[curindex].n_p;
               *n_p = 0;
+              charmatch_grid[curindex].charmatch_choice[*n_p] = SKIP1;
               charmatch_grid[curindex].cm_next[(*n_p)++] = &charmatch_grid[leftindex];
               charmatch_grid[curindex].score = charmatch_grid[leftindex].score;
             } else if (charmatch_grid[leftindex].score == charmatch_grid[curindex].score) {
               size_t *n_p = &charmatch_grid[curindex].n_p;
+              charmatch_grid[curindex].charmatch_choice[*n_p] = SKIP1;
               charmatch_grid[curindex].cm_next[(*n_p)++] = &charmatch_grid[leftindex];
             }
           }
           // from top left
-          if (_i > 0 && _j > 0 && diff_blk[i][_i - 1] == diff_blk[j][_j - 1]) {
+          if (_i > 0 && _j > 0 && diff_blk[i][_i - 1] == diff_blk[j][_j - 1] && diff_blk[j][_j - 1] != '\n') {
             size_t topleftindex = (_i - 1) * ncols + (_j - 1);
             if (charmatch_grid[topleftindex].score + 1 > charmatch_grid[curindex].score) {
               size_t *n_p = &charmatch_grid[curindex].n_p;
               *n_p = 0;
+              charmatch_grid[curindex].charmatch_choice[*n_p] = COMPARE01;
               charmatch_grid[curindex].cm_next[(*n_p)++] = &charmatch_grid[topleftindex];
               // ADD 1 to the score because this is a matching character
               charmatch_grid[curindex].score = charmatch_grid[topleftindex].score + 1;
             } else if (charmatch_grid[topleftindex].score == charmatch_grid[curindex].score) {
               size_t *n_p = &charmatch_grid[curindex].n_p;
+              charmatch_grid[curindex].charmatch_choice[*n_p] = COMPARE01;
               charmatch_grid[curindex].cm_next[(*n_p)++] = &charmatch_grid[topleftindex];
             }
           }
@@ -3672,9 +3680,24 @@ static void charmatch_nbuffers(const char **diff_blk, const int *diff_len,
       }
       // extract results for comparison of i <-> j
       charmatch_grid_T *startNode = &charmatch_grid[(nrows - 1) * ncols + (ncols - 1)];
-      breakpoint(0);
+      // perform search to find path with least turns
+      // write to an array as we recursively follow
+      // what is the longest possible length for a path?
+      test_charmatch_paths(startNode, 0, path_trial);
+
+      // breakpoint(0);
       int testabc = 1;
 
     }
+  }
+}
+static void test_charmatch_paths(charmatch_grid_T *node, size_t depth, charmatch_choice_T *path_trial) {
+  if (node->n_p == 0) {
+    breakpoint(0);
+    // end of a path
+  }
+  for (size_t i = 0; i < node->n_p; i++) {
+    path_trial[depth] = node->charmatch_choice[i];
+    test_charmatch_paths(node->cm_next[i], depth + 1, path_trial);
   }
 }
