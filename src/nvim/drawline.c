@@ -1236,10 +1236,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   int bg_attr = win_bg_attr(wp);
 
   int linestatus = 0;
+  int *hlresult = NULL;
   wlv.filler_lines = diff_check_with_linestatus(wp, lnum, &linestatus);
   if (wlv.filler_lines < 0 || linestatus < 0) {
     if (wlv.filler_lines == -1 || linestatus == -1) {
-      if (diff_find_change(wp, lnum, &change_start, &change_end)) {
+      if (diff_find_change(wp, lnum, &change_start, &change_end, &hlresult)) {
         wlv.diff_hlf = HLF_ADD;             // added line
       } else if (change_start == 0) {
         wlv.diff_hlf = HLF_TXD;             // changed text
@@ -1737,14 +1738,34 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       }
 
       if (wlv.diff_hlf != (hlf_T)0) {
-        if (wlv.diff_hlf == HLF_CHD && ptr - line >= change_start
-            && wlv.n_extra == 0) {
-          wlv.diff_hlf = HLF_TXD;                   // changed text
+        int diffchars = 1;
+        if (diffchars) {
+          // wlv.diff_hlf = HLF_TXD;
+          if (hlresult == NULL) {
+            wlv.diff_hlf = HLF_CHD;
+          } else {
+            if ((size_t)(ptr - line) < strlen(line) && hlresult[ptr - line] == 1) {
+              wlv.diff_hlf = HLF_TXD;
+            } else {
+              wlv.diff_hlf = HLF_CHD;
+            }
+          }
+          // wlv.diff_hlf = hlresult[ptr - line] == 1 ? HLF_CHD : HLF_TXD;
+          // get the relative line number of the diff that we are currently in
+          // get start position of this line
+          // and the array that has the highlight results
+        } else {
+          if (wlv.diff_hlf == HLF_CHD && ptr - line >= change_start
+              && wlv.n_extra == 0) {
+            wlv.diff_hlf = HLF_TXD;                   // changed text
+          }
+          if (wlv.diff_hlf == HLF_TXD && ptr - line > change_end
+              && wlv.n_extra == 0) {
+            wlv.diff_hlf = HLF_CHD;                   // changed line
+          }
         }
-        if (wlv.diff_hlf == HLF_TXD && ptr - line > change_end
-            && wlv.n_extra == 0) {
-          wlv.diff_hlf = HLF_CHD;                   // changed line
-        }
+
+
         wlv.line_attr = win_hl_attr(wp, (int)wlv.diff_hlf);
         // Overlay CursorLine onto diff-mode highlight.
         if (wlv.cul_attr) {
