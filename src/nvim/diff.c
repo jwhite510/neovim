@@ -120,10 +120,29 @@ typedef struct {
 } diffio_T;
 
 typedef enum {
+  SKIP0,
+  SKIP1,
+  COMPARE,
+} charmatch_choice_T;
+
+typedef struct charmatch_grid_S charmatch_grid_T;
+struct charmatch_grid_S {
+  int score;
+  size_t n_p;
+  charmatch_grid_T* cm_next[3]; // top, left, diagonal(top, left)
+};
+
+typedef enum {
   DIFF_ED,
   DIFF_UNIFIED,
   DIFF_NONE,
 } diffstyle_T;
+
+typedef enum {
+  LINEMATCH,
+  CHARMATCH
+} diff_allignment_T;
+
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "diff.c.generated.h"
@@ -2056,7 +2075,7 @@ static void apply_linematch_results(diff_T *dp, size_t decisions_length, const i
   dp->is_linematched = true;
 }
 
-static void run_linematch_algorithm(diff_T *dp)
+static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignment)
 {
   // define buffers for diff algorithm
   mmfile_t diffbufs_mm[DB_COUNT];
@@ -2085,17 +2104,19 @@ static void run_linematch_algorithm(diff_T *dp)
 
   // we will get the output of the linematch algorithm in the format of an array
   // of integers (*decisions) and the length of that array (decisions_length)
-  int *decisions = NULL;
   const bool iwhite = (diff_flags & (DIFF_IWHITEALL | DIFF_IWHITE)) > 0;
-  size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, iwhite);
+  if (diff_allignment == LINEMATCH) {
+    int *decisions = NULL;
+    size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, iwhite);
+    apply_linematch_results(dp, decisions_length, decisions);
+    xfree(decisions);
+  } else if (diff_allignment == CHARMATCH) {
+    charmatch_nbuffers(diffbufs, diff_length, ndiffs);
+  }
 
   for (size_t i = 0; i < ndiffs; i++) {
     XFREE_CLEAR(diffbufs_mm[i].ptr);
   }
-
-  apply_linematch_results(dp, decisions_length, decisions);
-
-  xfree(decisions);
 }
 
 /// Check diff status for line "lnum" in buffer "buf":
@@ -2156,7 +2177,7 @@ int diff_check_with_linestatus(win_T *wp, linenr_T lnum, int *linestatus)
   }
 
   if (!dp->is_linematched && diff_linematch(dp)) {
-    run_linematch_algorithm(dp);
+    run_alignment_algorithm(dp, LINEMATCH);
   }
 
   if (dp->is_linematched) {
@@ -2657,7 +2678,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
 
   if (dp->charmatchp == NULL) {
     // get the first buffers
-    run_charmatch(dp);
+    run_alignment_algorithm(dp, CHARMATCH);
   }
 
   linenr_T off = lnum - dp->df_lnum[idx];
@@ -3526,43 +3547,134 @@ static int xdiff_out(long start_a, long count_a, long start_b, long count_b, voi
   return 0;
 }
 
-static void run_charmatch(diff_T *dp) {
-  // get pointers to the diff in each buffer
-  size_t ndiffs = 0;
-  size_t length_total = 0;
-  // length of each diff
-  // pointer to each
-  // write the whole thing to a file
-  char *diff_p[DB_COUNT];
-  size_t diff_length[DB_COUNT];
+// static void run_charmatch(diff_T *dp) {
+//   // get pointers to the diff in each buffer
+//   size_t ndiffs = 0;
+//   size_t length_total = 0;
+//   // length of each diff
+//   // pointer to each
+//   // write the whole thing to a file
+//   char *diff_p[DB_COUNT];
+//   size_t diff_length[DB_COUNT];
+// 
+//   // TODO
+//   // this would work for a single line diff, like with charmatch
+//   // when diff is not linematch
+//   // when diff is linematch, then we need to use the same method as linematch to get the buffer
+//   for (int i = 0; i < DB_COUNT; i++) {
+//     if (curtab->tp_diffbuf[i] != NULL) {
+//       // get the total length of the diff
+//       diff_p[ndiffs] = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i], false);
+//       size_t cur_len = 0;
+//       int num_lines = dp->df_count[i];
+//       char *p = diff_p[ndiffs];
+//       while (num_lines) {
+//         cur_len++;
+//         length_total++;
+//         p++;
+//         if (*p == '\n') { num_lines--; }
+//       }
+//       diff_length[ndiffs] = cur_len;
+//       ndiffs++;
+//     }
+//   }
+//   dp->charmatchp = xmalloc(length_total * sizeof(int));
+//   charmatch_nbuffers(diff_length, diff_p, dp->charmatchp);
+// }
+//
+static void breakpoint(int test)
+{
 
-  // TODO
-  // this would work for a single line diff, like with charmatch
-  // when diff is not linematch
-  // when diff is linematch, then we need to use the same method as linematch to get the buffer
-  for (int i = 0; i < DB_COUNT; i++) {
-    if (curtab->tp_diffbuf[i] != NULL) {
-      // get the total length of the diff
-      diff_p[ndiffs] = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i], false);
-      size_t cur_len = 0;
-      int num_lines = dp->df_count[i];
-      char *p = diff_p[ndiffs];
-      while (num_lines) {
-        cur_len++;
-        length_total++;
-        p++;
-        if (*p == '\n') { num_lines--; }
-      }
-      diff_length[ndiffs] = cur_len;
-      ndiffs++;
-    }
-  }
-  dp->charmatchp = xmalloc(length_total * sizeof(int));
-  charmatch_nbuffers(diff_length, diff_p, dp->charmatchp);
 }
 
-static void charmatch_nbuffers(size_t *diff_length, char **diff_p, int *result) {
+static void charmatch_nbuffers(const char **diff_blk, const int *diff_len,
+    const size_t ndiffs) {
+  // get the total dimmensions (in characters)
+  size_t total_chars_length = 0;
+  size_t hunk_chars_length[DB_COUNT] = { 0 };
+  for (size_t i = 0; i < ndiffs; i++) {
+    int lines = diff_len[i];
+    const char *p = diff_blk[i];
+    while (lines) {
+      total_chars_length++; // increment the total characters counter
+      hunk_chars_length[i]++; // increment the chars counter for this buffer number
+      if (*p == '\n') { lines--; }
+      p++;
+    }
+  }
+  // allocate grid memory for comparison of two buffers at a time
+  // grid size will be the largest possible
+  int largest = -1, secondlargest = -1;
+  for (size_t i = 0; i < ndiffs; i++) {
+    if ((int)hunk_chars_length[i] >= largest) {
+      secondlargest = largest;
+      largest = (int)hunk_chars_length[i];
+    } else if ((int)hunk_chars_length[i] >= secondlargest) {
+      secondlargest = (int)hunk_chars_length[i];
+    }
+  }
+  // allocate grid for solving the comparison between two of these diff hunks at a time
+  // TODO add the +1 here
+  charmatch_grid_T *charmatch_grid = xmalloc((size_t)(largest * secondlargest) * sizeof(charmatch_grid_T));
+  for (size_t i = 0; i < ndiffs; i++) {
+    for (size_t j = i + 1; j < ndiffs; j++) {
+      // run once for every comparison (0 -> 1, 0 -> 2, 1 -> 2, etc)
+      // nrows
+      // ncols
+      size_t nrows = hunk_chars_length[i] + 1;
+      size_t ncols = hunk_chars_length[j] + 1;
+      for (size_t _i = 0; _i < nrows; _i++) {
+        for (size_t _j = 0; _j < ncols; _j++) {
+          size_t curindex = _i * ncols + _j;
+          charmatch_grid[curindex].score = 0;
+          charmatch_grid[curindex].n_p = 0;
+          // from top
+          if (_i > 0) {
+            size_t topindex = (_i - 1) * ncols + _j;
+            if (charmatch_grid[topindex].score > charmatch_grid[curindex].score) {
+              size_t *n_p = &charmatch_grid[curindex].n_p;
+              *n_p = 0;
+              charmatch_grid[curindex].cm_next[(*n_p)++] = &charmatch_grid[topindex];
+              charmatch_grid[curindex].score = charmatch_grid[topindex].score;
+            } else if (charmatch_grid[topindex].score == charmatch_grid[curindex].score) {
+              size_t *n_p = &charmatch_grid[curindex].n_p;
+              charmatch_grid[curindex].cm_next[(*n_p)++] = &charmatch_grid[topindex];
+            }
+          }
+          // from left
+          if (_j > 0) {
+            size_t leftindex = _i * ncols + (_j - 1);
+            if (charmatch_grid[leftindex].score > charmatch_grid[curindex].score) {
+              size_t *n_p = &charmatch_grid[curindex].n_p;
+              *n_p = 0;
+              charmatch_grid[curindex].cm_next[(*n_p)++] = &charmatch_grid[leftindex];
+              charmatch_grid[curindex].score = charmatch_grid[leftindex].score;
+            } else if (charmatch_grid[leftindex].score == charmatch_grid[curindex].score) {
+              size_t *n_p = &charmatch_grid[curindex].n_p;
+              charmatch_grid[curindex].cm_next[(*n_p)++] = &charmatch_grid[leftindex];
+            }
+          }
+          // from top left
+          if (_i > 0 && _j > 0 && diff_blk[i][_i - 1] == diff_blk[j][_j - 1]) {
+            size_t topleftindex = (_i - 1) * ncols + (_j - 1);
+            if (charmatch_grid[topleftindex].score + 1 > charmatch_grid[curindex].score) {
+              size_t *n_p = &charmatch_grid[curindex].n_p;
+              *n_p = 0;
+              charmatch_grid[curindex].cm_next[(*n_p)++] = &charmatch_grid[topleftindex];
+              // ADD 1 to the score because this is a matching character
+              charmatch_grid[curindex].score = charmatch_grid[topleftindex].score + 1;
+            } else if (charmatch_grid[topleftindex].score == charmatch_grid[curindex].score) {
+              size_t *n_p = &charmatch_grid[curindex].n_p;
+              charmatch_grid[curindex].cm_next[(*n_p)++] = &charmatch_grid[topleftindex];
+            }
+          }
+        }
+      }
+      // extract results for comparison of i <-> j
+      charmatch_grid_T *startNode = &charmatch_grid[(nrows - 1) * ncols + (ncols - 1)];
+      breakpoint(0);
+      int testabc = 1;
 
-  int testv = 1;
-
+    }
+  }
 }
