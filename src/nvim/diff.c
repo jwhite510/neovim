@@ -3600,12 +3600,20 @@ static size_t charmatch_nbuffers(const char **diff_blk, const int *diff_len,
   size_t hunk_chars_length[DB_COUNT] = { 0 };
   size_t result_diff_start_pos[DB_COUNT] = { 0 }; // the position in the result array where this
                                                   // line's highlight is located
+  char testPrint[8000] = { 0 };
+  int l1 = 0;
   for (size_t i = 0; i < ndiffs; i++) {
     result_diff_start_pos[i] = total_chars_length;
     int lines = diff_len[i];
     const char *p = diff_blk[i];
     while (lines) {
       total_chars_length++; // increment the total characters counter
+      char t = *p;
+      if (t == '\n') {
+        t = '%';
+      }
+      testPrint[l1++] = t;
+      testPrint[l1] = '\0';
       hunk_chars_length[i]++; // increment the chars counter for this buffer number
       if (*p == '\n') { lines--; }
       p++;
@@ -3712,6 +3720,16 @@ static size_t charmatch_nbuffers(const char **diff_blk, const int *diff_len,
       }
     }
   }
+  FILE *fp = fopen("testcharmatchoutput.txt", "a");
+  fprintf(fp, "%s\n", testPrint);
+
+  for (size_t l = 0; l < total_chars_length; l++) {
+    testPrint[l] = '0' + (*resultHighlight)[l];
+  }
+  testPrint[total_chars_length] = '\0';
+
+  fprintf(fp, "%s\n", testPrint);
+  fclose(fp);
   return total_chars_length;
 }
 // follow path with inertia to avoid unecessary recursion
