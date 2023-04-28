@@ -2112,7 +2112,12 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
     apply_linematch_results(dp, decisions_length, decisions);
     xfree(decisions);
   } else if (diff_allignment == CHARMATCH) {
-    charmatch_nbuffers(diffbufs, diff_length, ndiffs);
+    int *highlight = NULL;
+    size_t n = charmatch_nbuffers(diffbufs, diff_length, ndiffs, &highlight);
+    int testv = 1;
+
+    // test output here
+
   }
 
   for (size_t i = 0; i < ndiffs; i++) {
@@ -3588,12 +3593,15 @@ static int xdiff_out(long start_a, long count_a, long start_b, long count_b, voi
 // 
 // }
 
-static void charmatch_nbuffers(const char **diff_blk, const int *diff_len,
-    const size_t ndiffs) {
+static size_t charmatch_nbuffers(const char **diff_blk, const int *diff_len,
+    const size_t ndiffs, int **resultHighlight) {
   // get the total dimmensions (in characters)
   size_t total_chars_length = 0;
   size_t hunk_chars_length[DB_COUNT] = { 0 };
+  size_t result_diff_start_pos[DB_COUNT] = { 0 }; // the position in the result array where this
+                                                  // line's highlight is located
   for (size_t i = 0; i < ndiffs; i++) {
+    result_diff_start_pos[i] = total_chars_length;
     int lines = diff_len[i];
     const char *p = diff_blk[i];
     while (lines) {
@@ -3616,7 +3624,10 @@ static void charmatch_nbuffers(const char **diff_blk, const int *diff_len,
   }
   // allocate grid for solving the comparison between two of these diff hunks at a time
   // TODO add the +1 here
-  int *resultHighlight = xmalloc(total_chars_length * sizeof(int)); // will hold results
+  *resultHighlight = xmalloc(total_chars_length * sizeof(int)); // will hold results
+  for (size_t i = 0; i < total_chars_length; i++) {
+    (*resultHighlight)[i] = 0; // default to not highlighted
+  }
   charmatch_choice_T *path_trial = xmalloc((size_t)(largest * secondlargest) * sizeof(charmatch_choice_T)); // the trial path for the comparison set between two buffers
   charmatch_choice_T *path_optimal = xmalloc((size_t)(largest * secondlargest) * sizeof(charmatch_choice_T)); // the trial path for the comparison set between two buffers
   charmatch_grid_T *charmatch_grid = xmalloc((size_t)((largest + 1) * (secondlargest + 1)) * sizeof(charmatch_grid_T));
@@ -3688,14 +3699,20 @@ static void charmatch_nbuffers(const char **diff_blk, const int *diff_len,
       // what is the longest possible length for a path?
       size_t minturns = SIZE_MAX;
       size_t n_optimal = 0;
-      test_charmatch_paths(startNode, 0, path_trial, 0, *minturns, path_optimal, n_optimal);
-
-      // write the diff locations that should be highlighted using this optimal path
-
-      int testabc = 1;
-
+      test_charmatch_paths(startNode, 0, path_trial, 0, &minturns, path_optimal, &n_optimal);
+      for (size_t k = 0, b0 = 0, b1 = 0; k < n_optimal; k++) {
+        if (path_optimal[k] == COMPARE01) {
+          b0++;
+          b1++;
+        } else if (path_optimal[k] == SKIP0) {
+          (*resultHighlight)[result_diff_start_pos[i] + b0++] = 1;
+        } else if (path_optimal[k] == SKIP1) {
+          (*resultHighlight)[result_diff_start_pos[j] + b1++] = 1;
+        }
+      }
     }
   }
+  return total_chars_length;
 }
 // follow path with inertia to avoid unecessary recursion
 static void test_charmatch_paths(charmatch_grid_T *node, size_t depth, charmatch_choice_T *path_trial,
@@ -3703,11 +3720,11 @@ static void test_charmatch_paths(charmatch_grid_T *node, size_t depth, charmatch
                                  size_t* n_optimal) {
   if (node->n_p == 0) {
     if (turns < *minturns) {
-      for (size_t j = 0, i = depth - 1; i >= 0; i--) {
+      for (int j = 0, i = (int)depth - 1; i >= 0; i--) {
         path_optimal[j++] = path_trial[i];
         *n_optimal = depth;
       }
-      minturns = turns;
+      *minturns = turns;
       // write this path
     }
     return;
@@ -3719,13 +3736,13 @@ static void test_charmatch_paths(charmatch_grid_T *node, size_t depth, charmatch
     for (size_t i = 0; i < node->n_p; i++) {
       if (node->charmatch_choice[i] == lastchoice) {
         path_trial[depth] = lastchoice;
-        test_charmatch_paths(node->cm_next[i], depth + 1, path_trial, turns);
+        test_charmatch_paths(node->cm_next[i], depth + 1, path_trial, turns, minturns, path_optimal, n_optimal);
         return;
       }
     }
   }
   for (size_t i = 0; i < node->n_p; i++) {
     path_trial[depth] = node->charmatch_choice[i];
-    test_charmatch_paths(node->cm_next[i], depth + 1, path_trial, turns + 1);
+    test_charmatch_paths(node->cm_next[i], depth + 1, path_trial, turns + 1, minturns, path_optimal, n_optimal);
   }
 }
