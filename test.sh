@@ -12,6 +12,8 @@ make -j8 CMAKE_BUILD_TYPE=Debug
 gdb\
   -ex "set follow-fork-mode child"\
   -ex "r"\
+  -ex "b /home/jonathon/Projects/neovim/src/nvim/diff.c:3667"\
+  -ex "b test_charmatch_paths"\
   -ex "b /home/jonathon/Projects/neovim/src/nvim/drawline.c:1749"\
   -ex "b /home/jonathon/Projects/neovim/src/nvim/diff.c:2690"\
   -ex "b charmatch_nbuffers"\

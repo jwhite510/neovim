@@ -3707,7 +3707,7 @@ static size_t charmatch_nbuffers(const char **diff_blk, const int *diff_len,
               charmatch_grid[curindex].cm_next[(*n_p)++] = &charmatch_grid[topleftindex];
               // ADD 1 to the score because this is a matching character
               charmatch_grid[curindex].score = charmatch_grid[topleftindex].score + 1;
-            } else if (charmatch_grid[topleftindex].score == charmatch_grid[curindex].score) {
+            } else if (charmatch_grid[topleftindex].score + 1 == charmatch_grid[curindex].score) {
               size_t *n_p = &charmatch_grid[curindex].n_p;
               charmatch_grid[curindex].charmatch_choice[*n_p] = COMPARE01;
               charmatch_grid[curindex].cm_next[(*n_p)++] = &charmatch_grid[topleftindex];
