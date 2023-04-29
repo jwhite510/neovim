@@ -2112,8 +2112,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
     apply_linematch_results(dp, decisions_length, decisions);
     xfree(decisions);
   } else if (diff_allignment == CHARMATCH) {
-    int *highlight = NULL;
-    size_t n = charmatch_nbuffers(diffbufs, diff_length, ndiffs, &highlight);
+    size_t n = charmatch_nbuffers(diffbufs, diff_length, ndiffs, &dp->charmatchp);
     int testv = 1;
 
     // test output here
@@ -2642,7 +2641,7 @@ bool diffopt_filler(void)
 /// @param  endp    last char of the change
 ///
 /// @return true if the line was added, no other buffer has it.
-bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
+bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hlresult)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   // Make a copy of the line, the next ml_get() will invalidate it.
@@ -2686,8 +2685,24 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
     // get the first buffers
     run_alignment_algorithm(dp, CHARMATCH);
   }
-
+  // get the correct offset for hlresult
+  //
   linenr_T off = lnum - dp->df_lnum[idx];
+  size_t hlresult_line_offset = 0;
+  for (int i = 0; i < DB_COUNT; i++) {
+    if ((curtab->tp_diffbuf[i] != NULL)) {
+      for (int j = 0; j < ((i == idx) ? off : dp->df_count[i]); j++) {
+          char *diffline = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j, false);
+          while (*diffline != '\0') { diffline++; hlresult_line_offset++; }
+          hlresult_line_offset++; // count the '\0' character as the newline marker for each line
+          int testv = 1;
+      }
+      if (i == idx) { break; }
+    }
+  }
+  (*hlresult) = dp->charmatchp + hlresult_line_offset;
+  return false;
+
   for (int i = 0; i < DB_COUNT; i++) {
     if ((curtab->tp_diffbuf[i] != NULL) && (i != idx)) {
       // Skip lines that are not in the other change (filler lines).
