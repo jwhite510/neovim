@@ -1236,7 +1236,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   int bg_attr = win_bg_attr(wp);
 
   int linestatus = 0;
-  int change_startpos = 0;
+  // int change_startpos = 0;
   int *hlresult = NULL;
   wlv.filler_lines = diff_check_with_linestatus(wp, lnum, &linestatus);
   if (wlv.filler_lines < 0 || linestatus < 0) {
@@ -1746,10 +1746,14 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
         int diffchars = 1;
         if (diffchars) {
           // wlv.diff_hlf = HLF_TXD;
-          if ((ptr - line) < strlen(line) && hlresult[ptr - line] == 1) {
-            wlv.diff_hlf = HLF_TXD;
-          } else {
+          if (hlresult == NULL) {
             wlv.diff_hlf = HLF_CHD;
+          } else {
+            if ((size_t)(ptr - line) < strlen(line) && hlresult[ptr - line] == 1) {
+              wlv.diff_hlf = HLF_TXD;
+            } else {
+              wlv.diff_hlf = HLF_CHD;
+            }
           }
           // wlv.diff_hlf = hlresult[ptr - line] == 1 ? HLF_CHD : HLF_TXD;
           // get the relative line number of the diff that we are currently in
