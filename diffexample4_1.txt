@@ -1,0 +1,6 @@
+            if ((size_t)(ptr - line) < strlen(line) && hlresult[ptr - line] == 1) {
+ABCDEFG
+            } else {
+              wlv.diff_hlf = HLF_CHD;
+            }
+
