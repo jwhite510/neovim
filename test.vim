@@ -1,5 +1,5 @@
 " set diffopt+=linematch:800
-e  ./testdiff2.txt
-vs ./testdiff1.txt
-" vs ./testdiff3.txt
+e  ./diffexample3_1.txt
+vs ./diffexample3_2.txt
+vs ./diffexample3_3.txt
 windo :diffthis

@@ -2083,6 +2083,8 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
   const char *diffbufs[DB_COUNT];
   int diff_length[DB_COUNT];
   size_t ndiffs = 0;
+  size_t total_chars_length = 0;
+  size_t result_diff_start_pos[DB_COUNT]; // the position in the result array where this
   for (int i = 0; i < DB_COUNT; i++) {
     if (curtab->tp_diffbuf[i] != NULL) {
       // write the contents of the entire buffer to
@@ -2094,9 +2096,24 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
       // we add it to the array of char*, diffbufs
       diffbufs[ndiffs] = diffbufs_mm[ndiffs].ptr;
 
-      // keep track of the length of this diff block to pass it to the linematch
-      // algorithm
-      diff_length[ndiffs] = dp->df_count[i];
+      if (diff_allignment == CHARMATCH) {
+        result_diff_start_pos[ndiffs] = total_chars_length;
+        // get the length of each of the diffs
+        int lines = dp->df_count[i];
+        const char *p = diffbufs[ndiffs];
+        diff_length[i] = 0;
+        while (lines) {
+          total_chars_length++; // increment the total characters counter
+          diff_length[i]++; // increment the chars counter for this buffer number
+          if (*p == '\n') { lines--; }
+          p++;
+        }
+      } else {
+        // LINEMATCH
+        // keep track of the length of this diff block to pass it to the linematch
+        // algorithm
+        diff_length[ndiffs] = dp->df_count[i];
+      }
 
       // increment the amount of diff buffers we are passing to the algorithm
       ndiffs++;
@@ -2108,11 +2125,35 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
   const bool iwhite = (diff_flags & (DIFF_IWHITEALL | DIFF_IWHITE)) > 0;
   if (diff_allignment == LINEMATCH) {
     int *decisions = NULL;
-    size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, iwhite);
+    size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, iwhite, 0);
     apply_linematch_results(dp, decisions_length, decisions);
     xfree(decisions);
   } else if (diff_allignment == CHARMATCH) {
-    dp->n_charmatch = charmatch_nbuffers(diffbufs, diff_length, ndiffs, &dp->charmatchp);
+    int *decisions = NULL;
+    size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, iwhite, 1);
+    dp->charmatchp = xmalloc(total_chars_length * sizeof(int)); // will hold results
+    dp->n_charmatch = total_chars_length;
+    for (size_t i = 0; i < total_chars_length; i++) {
+      dp->charmatchp[i] = 0; // default to not highlighted
+    }
+    for (int i = 0; i < decisions_length; i++) {
+      // write to result
+      // is it a comparison
+      if (decisions[i] == (pow(2, ndiffs) - 1)) {
+        // it's a comparison of all the buffers (don't highlight)
+        for (int j = 0; j < ndiffs; j++) {
+          dp->charmatchp[result_diff_start_pos[j]++] = 0;
+        }
+      } else {
+        // it's a skip in a single buffer (highlight as changed)
+        for (int j = 0; j < ndiffs; j++) {
+          if (decisions[i] & (1 << j)) {
+            dp->charmatchp[result_diff_start_pos[j]++] = 1;
+            break;
+          }
+        }
+      }
+    }
   }
 
   for (size_t i = 0; i < ndiffs; i++) {
@@ -2677,50 +2718,52 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hl
   int ei_new;
   bool added = true;
 
-  if (dp->charmatchp == NULL) {
-    // get the first buffers
-    run_alignment_algorithm(dp, CHARMATCH);
-  }
   linenr_T off = lnum - dp->df_lnum[idx];
-  size_t charcount = 0;
-  for (int i = 0; i < DB_COUNT; i++) {
-    // for each diff buffer
-    if (curtab->tp_diffbuf[i] != NULL) {
-      for (int j = 0; j < dp->df_count[i]; j++) {
-        // for each line in that buffer
-        // get a pointer to the line
-        char *diffline = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j, false);
-        while (*diffline != '\0') { diffline++; charcount++; }
-        charcount++;
-      }
+  if (1) {
+    if (dp->charmatchp == NULL) {
+      // get the first buffers
+      run_alignment_algorithm(dp, CHARMATCH);
     }
-  }
-  if (dp->n_charmatch != charcount) {
-    // we need to re run if the length of the diff has changed
-    // count the number of characters in this diff
-    // the line is currently being edited in insert mode, so pause highlighting until the diff is
-    // recalculated, then resume the charmatch highlighting
-    (*hlresult) = NULL;
-  } else {
-    // get the correct offset for hlresult
-    //
-    // if the character count is not null
-    size_t hlresult_line_offset = 0;
-    // get the offset for the highlight of this line
+    size_t charcount = 0;
     for (int i = 0; i < DB_COUNT; i++) {
-      if ((curtab->tp_diffbuf[i] != NULL)) {
-        for (int j = 0; j < ((i == idx) ? off : dp->df_count[i]); j++) {
+      // for each diff buffer
+      if (curtab->tp_diffbuf[i] != NULL) {
+        for (int j = 0; j < dp->df_count[i]; j++) {
+          // for each line in that buffer
+          // get a pointer to the line
           char *diffline = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j, false);
-          while (*diffline != '\0') { diffline++; hlresult_line_offset++; }
-          hlresult_line_offset++; // count the '\0' character as the newline marker for each line
-          int testv = 1;
+          while (*diffline != '\0') { diffline++; charcount++; }
+          charcount++;
         }
-        if (i == idx) { break; }
       }
     }
-    (*hlresult) = dp->charmatchp + hlresult_line_offset;
+    if (dp->n_charmatch != charcount) {
+      // we need to re run if the length of the diff has changed
+      // count the number of characters in this diff
+      // the line is currently being edited in insert mode, so pause highlighting until the diff is
+      // recalculated, then resume the charmatch highlighting
+      (*hlresult) = NULL;
+    } else {
+      // get the correct offset for hlresult
+      //
+      // if the character count is not null
+      size_t hlresult_line_offset = 0;
+      // get the offset for the highlight of this line
+      for (int i = 0; i < DB_COUNT; i++) {
+        if ((curtab->tp_diffbuf[i] != NULL)) {
+          for (int j = 0; j < ((i == idx) ? off : dp->df_count[i]); j++) {
+            char *diffline = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j, false);
+            while (*diffline != '\0') { diffline++; hlresult_line_offset++; }
+            hlresult_line_offset++; // count the '\0' character as the newline marker for each line
+            int testv = 1;
+          }
+          if (i == idx) { break; }
+        }
+      }
+      (*hlresult) = dp->charmatchp + hlresult_line_offset;
+    }
+    return false;
   }
-  return false;
 
   for (int i = 0; i < DB_COUNT; i++) {
     if ((curtab->tp_diffbuf[i] != NULL) && (i != idx)) {

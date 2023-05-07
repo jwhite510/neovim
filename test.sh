@@ -11,14 +11,18 @@ make -j8 CMAKE_BUILD_TYPE=Debug
 
 gdb\
   -ex "set follow-fork-mode child"\
-  -ex "b /home/jonathon/Projects/neovim/src/nvim/diff.c:2698"\
   -ex "r"\
-  -ex "b /home/jonathon/Projects/neovim/src/nvim/diff.c:3667"\
-  -ex "b test_charmatch_paths"\
-  -ex "b /home/jonathon/Projects/neovim/src/nvim/drawline.c:1749"\
-  -ex "b /home/jonathon/Projects/neovim/src/nvim/diff.c:2690"\
-  -ex "b charmatch_nbuffers"\
   --args ./build/bin/nvim -u NONE -S ./test.vim
+  # -ex "b /home/jonathon/Projects/neovim/src/nvim/diff.c:2739 "\
+  # -ex "b /home/jonathon/Projects/neovim/src/nvim/drawline.c:1749 "\
+  # -ex "source print.gdb"\
+  # -ex "b /home/jonathon/Projects/neovim/src/nvim/diff.c:2138"\
+  # -ex "b /home/jonathon/Projects/neovim/src/nvim/diff.c:2698"\
+  # -ex "b /home/jonathon/Projects/neovim/src/nvim/diff.c:3667"\
+  # -ex "b test_charmatch_paths"\
+  # -ex "b /home/jonathon/Projects/neovim/src/nvim/drawline.c:1749"\
+  # -ex "b /home/jonathon/Projects/neovim/src/nvim/diff.c:2690"\
+  # -ex "b charmatch_nbuffers"\
   # -ex "b /home/jonathon/Projects/neovim/src/nvim/diff.c:2117"\
   # -ex "b /home/jonathon/Projects/neovim/src/nvim/linematch.c:145"\
 

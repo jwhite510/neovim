@@ -159,7 +159,7 @@ static int count_n_matched_chars(const char **sp, const size_t n, bool iwhite)
 
 void fastforward_buf_to_lnum(const char **s, long lnum)
 {
-  for (long i = 0; i < lnum - 1; i++) {
+  for (long i = 0; i < lnum; i++) {
     *s = strchr(*s, '\n');
     if (!*s) {
       return;
@@ -182,7 +182,7 @@ void fastforward_buf_to_lnum(const char **s, long lnum)
 static void try_possible_paths(const int *df_iters, const size_t *paths, const int npaths,
                                const int path_idx, int *choice, diffcmppath_T *diffcmppath,
                                const int *diff_len, const size_t ndiffs, const char **diff_blk,
-                               bool iwhite)
+                               bool iwhite, bool charmatch)
 {
   if (path_idx == npaths) {
     if ((*choice) > 0) {
@@ -195,7 +195,11 @@ static void try_possible_paths(const int *df_iters, const size_t *paths, const i
         if ((*choice) & (1 << k)) {
           from_vals[k]--;
           const char *p = diff_blk[k];
-          fastforward_buf_to_lnum(&p, df_iters[k]);
+          if (charmatch) {
+            p += df_iters[k] - 1; // advance by the character count
+          } else {
+            fastforward_buf_to_lnum(&p, df_iters[k] - 1);
+          }
           current_lines[k] = p;
         } else {
           current_lines[k] = NULL;
@@ -203,7 +207,37 @@ static void try_possible_paths(const int *df_iters, const size_t *paths, const i
       }
       size_t unwrapped_idx_from = unwrap_indexes(from_vals, diff_len, ndiffs);
       size_t unwrapped_idx_to = unwrap_indexes(to_vals, diff_len, ndiffs);
-      int matched_chars = count_n_matched_chars(current_lines, ndiffs, iwhite);
+
+      int matched_chars = 0;
+      if (charmatch) {
+        // only two valid options for charmatch
+        // 1. skip of a single character
+        // 2. a combination of 'ndiffs' characters, when not equal to '\n'
+        char t = '\0';
+        size_t compared = 0;
+        for (size_t i = 0; i < ndiffs; i++) {
+          if (current_lines[i] != NULL) {
+            compared++;
+            if ((t != '\0' && *current_lines[i] != t) ||  // if theres more than one to compare, and
+                                                          // they're not matching
+                (t != '\0' && *current_lines[i] == '\n')) // if there's more than one to compare, and
+                                                          // at least one is a '\n'
+            {
+              return; // not a possible path
+            } else if (t != '\0') {
+              matched_chars = 1; // comparison of all buffers
+            }
+            t = *current_lines[i];
+          }
+        }
+        if (!(compared == ndiffs || compared == 1)) {
+          return;
+        }
+
+      } else {
+        matched_chars = count_n_matched_chars(current_lines, ndiffs, iwhite);
+      }
+
       int score = diffcmppath[unwrapped_idx_from].df_lev_score + matched_chars;
       if (score > diffcmppath[unwrapped_idx_to].df_lev_score) {
         update_path_flat(diffcmppath, score, unwrapped_idx_to, unwrapped_idx_from, *choice);
@@ -224,10 +258,10 @@ static void try_possible_paths(const int *df_iters, const size_t *paths, const i
   size_t bit_place = paths[path_idx];
   *(choice) |= (1 << bit_place);  // set it to 1
   try_possible_paths(df_iters, paths, npaths, path_idx + 1, choice,
-                     diffcmppath, diff_len, ndiffs, diff_blk, iwhite);
+                     diffcmppath, diff_len, ndiffs, diff_blk, iwhite, charmatch);
   *(choice) &= ~(1 << bit_place);  // set it to 0
   try_possible_paths(df_iters, paths, npaths, path_idx + 1, choice,
-                     diffcmppath, diff_len, ndiffs, diff_blk, iwhite);
+                     diffcmppath, diff_len, ndiffs, diff_blk, iwhite, charmatch);
 }
 
 /// unwrap indexes to access n dimensional tensor
@@ -263,7 +297,7 @@ static size_t unwrap_indexes(const int *values, const int *diff_len, const size_
 /// @param diff_blk
 static void populate_tensor(int *df_iters, const size_t ch_dim, diffcmppath_T *diffcmppath,
                             const int *diff_len, const size_t ndiffs, const char **diff_blk,
-                            bool iwhite)
+                            bool iwhite, bool charmatch)
 {
   if (ch_dim == ndiffs) {
     int npaths = 0;
@@ -279,14 +313,14 @@ static void populate_tensor(int *df_iters, const size_t ch_dim, diffcmppath_T *d
     size_t unwrapper_idx_to = unwrap_indexes(df_iters, diff_len, ndiffs);
     diffcmppath[unwrapper_idx_to].df_lev_score = -1;
     try_possible_paths(df_iters, paths, npaths, 0, &choice, diffcmppath,
-                       diff_len, ndiffs, diff_blk, iwhite);
+                       diff_len, ndiffs, diff_blk, iwhite, charmatch);
     return;
   }
 
   for (int i = 0; i <= diff_len[ch_dim]; i++) {
     df_iters[ch_dim] = i;
     populate_tensor(df_iters, ch_dim + 1, diffcmppath, diff_len,
-                    ndiffs, diff_blk, iwhite);
+                    ndiffs, diff_blk, iwhite, charmatch);
   }
 }
 
@@ -346,7 +380,7 @@ static void populate_tensor(int *df_iters, const size_t ch_dim, diffcmppath_T *d
 /// @param [out] [allocated] decisions
 /// @return the length of decisions
 size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size_t ndiffs,
-                          int **decisions, bool iwhite)
+                          int **decisions, bool iwhite, bool charmatch)
 {
   assert(ndiffs <= LN_MAX_BUFS);
 
@@ -367,7 +401,7 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
 
   // memory for avoiding repetitive calculations of score
   int df_iters[LN_MAX_BUFS];
-  populate_tensor(df_iters, 0, diffcmppath, diff_len, ndiffs, diff_blk, iwhite);
+  populate_tensor(df_iters, 0, diffcmppath, diff_len, ndiffs, diff_blk, iwhite, charmatch);
 
   const size_t u = unwrap_indexes(diff_len, diff_len, ndiffs);
   const size_t best_path_idx = diffcmppath[u].df_path_idx;
