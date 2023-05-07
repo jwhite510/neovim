@@ -3630,46 +3630,6 @@ static int xdiff_out(long start_a, long count_a, long start_b, long count_b, voi
   return 0;
 }
 
-// static void run_charmatch(diff_T *dp) {
-//   // get pointers to the diff in each buffer
-//   size_t ndiffs = 0;
-//   size_t length_total = 0;
-//   // length of each diff
-//   // pointer to each
-//   // write the whole thing to a file
-//   char *diff_p[DB_COUNT];
-//   size_t diff_length[DB_COUNT];
-// 
-//   // TODO
-//   // this would work for a single line diff, like with charmatch
-//   // when diff is not linematch
-//   // when diff is linematch, then we need to use the same method as linematch to get the buffer
-//   for (int i = 0; i < DB_COUNT; i++) {
-//     if (curtab->tp_diffbuf[i] != NULL) {
-//       // get the total length of the diff
-//       diff_p[ndiffs] = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i], false);
-//       size_t cur_len = 0;
-//       int num_lines = dp->df_count[i];
-//       char *p = diff_p[ndiffs];
-//       while (num_lines) {
-//         cur_len++;
-//         length_total++;
-//         p++;
-//         if (*p == '\n') { num_lines--; }
-//       }
-//       diff_length[ndiffs] = cur_len;
-//       ndiffs++;
-//     }
-//   }
-//   dp->charmatchp = xmalloc(length_total * sizeof(int));
-//   charmatch_nbuffers(diff_length, diff_p, dp->charmatchp);
-// }
-//
-// static void breakpoint(int test)
-// {
-// 
-// }
-
 static size_t charmatch_nbuffers(const char **diff_blk, const int *diff_len,
     const size_t ndiffs, int **resultHighlight) {
   // get the total dimmensions (in characters)
