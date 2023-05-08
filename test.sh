@@ -12,7 +12,8 @@ make -j8 CMAKE_BUILD_TYPE=Debug
 gdb\
   -ex "set follow-fork-mode child"\
   -ex "r"\
-  --args ./build/bin/nvim -u NONE -S ./test.vim
+  --args ./build/bin/nvim -u NONE -S ./test_groupcharmatch.vim
+  # --args ./build/bin/nvim -u NONE -S ./test_grouplinematch.vim
   # -ex "b /home/jonathon/Projects/neovim/src/nvim/diff.c:2739 "\
   # -ex "b /home/jonathon/Projects/neovim/src/nvim/drawline.c:1749 "\
   # -ex "source print.gdb"\
