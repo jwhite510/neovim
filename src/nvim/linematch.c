@@ -11,11 +11,13 @@
 #include "nvim/memory.h"
 
 // struct for running the diff linematch algorithm
-typedef struct {
-  int *df_decision;  // to keep track of this path traveled
+typedef struct diffcmppath_S diffcmppath_T;
+struct diffcmppath_S {
+  int df_choice;
+  diffcmppath_T *df_decision;  // to keep track of this path traveled
   int df_lev_score;  // to keep track of the total score of this path
   size_t df_path_idx;   // current index of this path
-} diffcmppath_T;
+};
 
 #define LN_MAX_BUFS 8
 
@@ -73,15 +75,8 @@ static int matching_chars_iwhite(const char *s1, const char *s2)
 static void update_path_flat(diffcmppath_T *diffcmppath, int score, size_t to, size_t from,
                              const int choice)
 {
-  size_t path_idx = diffcmppath[from].df_path_idx;
-
-  for (size_t k = 0; k < path_idx; k++) {
-    diffcmppath[to].df_decision[k] = diffcmppath[from].df_decision[k];
-  }
-
-  diffcmppath[to].df_decision[path_idx] = choice;
-  diffcmppath[to].df_lev_score = score;
-  diffcmppath[to].df_path_idx = path_idx + 1;
+  diffcmppath[to].df_decision = &diffcmppath[from];
+  diffcmppath[to].df_choice = choice;
 }
 
 #define MATCH_CHAR_MAX_LEN 800
@@ -396,7 +391,7 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
   diffcmppath_T *diffcmppath = xmalloc(sizeof(diffcmppath_T) * memsize);
   // allocate memory here
   for (size_t i = 0; i < memsize; i++) {
-    diffcmppath[i].df_decision = xmalloc(memsize_decisions * sizeof(int));
+    diffcmppath[i].df_decision = NULL;
   }
 
   // memory for avoiding repetitive calculations of score
@@ -404,12 +399,22 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
   populate_tensor(df_iters, 0, diffcmppath, diff_len, ndiffs, diff_blk, iwhite, charmatch);
 
   const size_t u = unwrap_indexes(diff_len, diff_len, ndiffs);
-  const size_t best_path_idx = diffcmppath[u].df_path_idx;
-  const int *best_path_decisions = diffcmppath[u].df_decision;
+  diffcmppath_T *path_start = &diffcmppath[u];
 
-  *decisions = xmalloc(sizeof(int) * best_path_idx);
-  for (size_t i = 0; i < best_path_idx; i++) {
-    (*decisions)[i] = best_path_decisions[i];
+  // const int *best_path_decisions = diffcmppath[u].df_decision;
+
+  *decisions = xmalloc(sizeof(int) * memsize_decisions);
+  diffcmppath_T *curnode = path_start;
+  int k = 0;
+  while (curnode) {
+    (*decisions)[k++] = curnode->df_choice;
+    curnode = curnode->df_decision;
+  }
+  // reverse the list
+  for (int i = 0, tmp; i < (k / 2); i++) {
+    tmp = (*decisions)[i];
+    (*decisions)[i] = (*decisions)[k - 1 - i];
+    (*decisions)[k - 1 - i] = tmp;
   }
 
   for (size_t i = 0; i < memsize; i++) {
@@ -417,5 +422,5 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
   }
   xfree(diffcmppath);
 
-  return best_path_idx;
+  return k;
 }
