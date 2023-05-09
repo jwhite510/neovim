@@ -10,16 +10,18 @@
 #include "nvim/macros.h"
 #include "nvim/memory.h"
 
+#define LN_MAX_BUFS 8
+#define LN_DECISION_MAX 255 // pow(2, LN_MAX_BUFS(8)) - 1 = 255
+
 // struct for running the diff linematch algorithm
 typedef struct diffcmppath_S diffcmppath_T;
 struct diffcmppath_S {
-  int df_choice;
-  diffcmppath_T *df_decision;  // to keep track of this path traveled
   int df_lev_score;  // to keep track of the total score of this path
-  size_t df_path_idx;   // current index of this path
+  size_t df_path_n;   // current index of this path
+  int df_choice[LN_DECISION_MAX];
+  diffcmppath_T *df_decision[LN_DECISION_MAX];  // to keep track of this path traveled
 };
 
-#define LN_MAX_BUFS 8
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "linematch.c.generated.h"
@@ -66,19 +68,19 @@ static int matching_chars_iwhite(const char *s1, const char *s2)
   return matching;
 }
 
-/// update the path of a point in the diff linematch algorithm
-/// @param diffcmppath
-/// @param score
-/// @param to
-/// @param from
-/// @param choice
-static void update_path_flat(diffcmppath_T *diffcmppath, int score, size_t to, size_t from,
-                             const int choice)
-{
-  diffcmppath[to].df_decision = &diffcmppath[from];
-  diffcmppath[to].df_choice = choice;
-  diffcmppath[to].df_lev_score = score;
-}
+// /// update the path of a point in the diff linematch algorithm
+// /// @param diffcmppath
+// /// @param score
+// /// @param to
+// /// @param from
+// /// @param choice
+// static void update_path_flat(diffcmppath_T *diffcmppath, int score, size_t to, size_t from,
+//                              const int choice)
+// {
+//   diffcmppath[to].df_decision = &diffcmppath[from];
+//   diffcmppath[to].df_choice = choice;
+//   diffcmppath[to].df_lev_score = score;
+// }
 
 #define MATCH_CHAR_MAX_LEN 800
 
@@ -236,17 +238,14 @@ static void try_possible_paths(const int *df_iters, const size_t *paths, const i
 
       int score = diffcmppath[unwrapped_idx_from].df_lev_score + matched_chars;
       if (score > diffcmppath[unwrapped_idx_to].df_lev_score) {
-        update_path_flat(diffcmppath, score, unwrapped_idx_to, unwrapped_idx_from, *choice);
-      }
-    } else {
-      // initialize the 0, 0, 0 ... choice
-      size_t i = 0;
-      while (i < ndiffs && df_iters[i] == 0) {
-        i++;
-        if (i == ndiffs) {
-          diffcmppath[0].df_lev_score = 0;
-          diffcmppath[0].df_path_idx = 0;
-        }
+        diffcmppath[unwrapped_idx_to].df_path_n = 1;
+        diffcmppath[unwrapped_idx_to].df_decision[0] = &diffcmppath[unwrapped_idx_from];
+        diffcmppath[unwrapped_idx_to].df_choice[0] = *choice;
+        diffcmppath[unwrapped_idx_to].df_lev_score = score;
+      } else if (score == diffcmppath[unwrapped_idx_to].df_lev_score) {
+        size_t k = diffcmppath[unwrapped_idx_to].df_path_n++;
+        diffcmppath[unwrapped_idx_to].df_decision[k] = &diffcmppath[unwrapped_idx_from];
+        diffcmppath[unwrapped_idx_to].df_choice[k] = *choice;
       }
     }
     return;
@@ -391,8 +390,8 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
   diffcmppath_T *diffcmppath = xmalloc(sizeof(diffcmppath_T) * memsize);
   // allocate memory here
   for (size_t i = 0; i < memsize; i++) {
-    diffcmppath[i].df_decision = NULL;
-    diffcmppath[i].df_choice = 0;
+    diffcmppath[i].df_lev_score = 0;
+    diffcmppath[i].df_path_n = 0;
   }
 
   // memory for avoiding repetitive calculations of score
@@ -400,26 +399,65 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
   populate_tensor(df_iters, 0, diffcmppath, diff_len, ndiffs, diff_blk, iwhite, charmatch);
 
   const size_t u = unwrap_indexes(diff_len, diff_len, ndiffs);
-  diffcmppath_T *path_start = &diffcmppath[u];
-
-  // const int *best_path_decisions = diffcmppath[u].df_decision;
+  diffcmppath_T *startNode = &diffcmppath[u];
 
   *decisions = xmalloc(sizeof(int) * memsize_decisions);
-  diffcmppath_T *curnode = path_start;
+  int *path_trial = xmalloc(sizeof(int) * memsize_decisions);
 
-  int k = 0;
-  while (curnode != NULL && curnode->df_choice != 0) {
-    (*decisions)[k++] = curnode->df_choice;
-    curnode = curnode->df_decision;
-  }
-  // reverse the list
-  for (int i = 0, tmp; i < (k / 2); i++) {
-    tmp = (*decisions)[i];
-    (*decisions)[i] = (*decisions)[k - 1 - i];
-    (*decisions)[k - 1 - i] = tmp;
-  }
+  size_t minturns = SIZE_MAX;
+  size_t n_optimal = 0;
+  // diffcmppath_T *curnode = startNode;
+
+  test_charmatch_paths(startNode, 0, path_trial, 0, &minturns, *decisions, &n_optimal);
+
+  // test possible paths
+  // // trial path
+  // int k = 0;
+  // while (curnode != NULL && curnode->df_choice != 0) {
+  //   (*decisions)[k++] = curnode->df_choice;
+  //   curnode = curnode->df_decision;
+  // }
+  // // reverse the list
+  // for (int i = 0, tmp; i < (k / 2); i++) {
+  //   tmp = (*decisions)[i];
+  //   (*decisions)[i] = (*decisions)[k - 1 - i];
+  //   (*decisions)[k - 1 - i] = tmp;
+  // }
 
   xfree(diffcmppath);
+  xfree(path_trial);
 
-  return k;
+  return n_optimal;
+}
+
+static void test_charmatch_paths(diffcmppath_T *node, size_t depth, int *path_trial,
+                                 size_t turns, size_t *minturns, int *path_optimal,
+                                 size_t* n_optimal) {
+  if (node->df_path_n == 0) {
+    if (turns < *minturns) {
+      for (int j = 0, i = (int)depth - 1; i >= 0; i--) {
+        path_optimal[j++] = path_trial[i];
+      }
+      *n_optimal = depth;
+      *minturns = turns;
+      // write this path
+    }
+    return;
+  }
+  if (depth > 0) {
+    // prefer the last choice taken, if there's no other option, then take anything
+    int lastchoice = path_trial[depth - 1];
+    // can we take this choice?
+    for (size_t i = 0; i < node->df_path_n; i++) {
+      if (node->df_choice[i] == lastchoice) {
+        path_trial[depth] = lastchoice;
+        test_charmatch_paths(node->df_decision[i], depth + 1, path_trial, turns, minturns, path_optimal, n_optimal);
+        return;
+      }
+    }
+  }
+  for (size_t i = 0; i < node->df_path_n; i++) {
+    path_trial[depth] = node->df_choice[i];
+    test_charmatch_paths(node->df_decision[i], depth + 1, path_trial, turns + 1, minturns, path_optimal, n_optimal);
+  }
 }
