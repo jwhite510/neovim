@@ -1236,16 +1236,11 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   int bg_attr = win_bg_attr(wp);
 
   int linestatus = 0;
-  // int change_startpos = 0;
   int *hlresult = NULL;
   wlv.filler_lines = diff_check_with_linestatus(wp, lnum, &linestatus);
   if (wlv.filler_lines < 0 || linestatus < 0) {
     if (wlv.filler_lines == -1 || linestatus == -1) {
-      if (diff_find_change(wp, lnum, &change_start, &change_end, &hlresult)) { // return hl for this
-                                                                               // line as an offset
-                                                                               // from the pointer
-                                                                               // base for this
-                                                                               // diffnum / lnum
+      if (diff_find_change(wp, lnum, &change_start, &change_end, &hlresult)) {
         wlv.diff_hlf = HLF_ADD;             // added line
       } else if (change_start == 0) {
         wlv.diff_hlf = HLF_TXD;             // changed text

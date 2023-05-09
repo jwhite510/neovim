@@ -1409,6 +1409,7 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   static int change_start = 0;
   static int change_end = 0;
   static hlf_T hlID = (hlf_T)0;
+  int *hlresult = NULL;
 
   if (lnum < 0) {       // ignore type error in {lnum} arg
     lnum = 0;
@@ -1418,7 +1419,6 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       || fnum != curbuf->b_fnum) {
     // New line, buffer, change: need to get the values.
     int linestatus = 0;
-    int *hlresult = NULL;
     int filler_lines = diff_check_with_linestatus(curwin, lnum, &linestatus);
     if (filler_lines < 0 || linestatus < 0) {
       if (filler_lines == -1 || linestatus == -1) {
@@ -1442,11 +1442,27 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
 
   if (hlID == HLF_CHD || hlID == HLF_TXD) {
     int col = (int)tv_get_number(&argvars[1]) - 1;  // Ignore type error in {col}.
-    if (col >= change_start && col <= change_end) {
-      hlID = HLF_TXD;  // Changed text.
+                                                    //
+    int diffchars = 1;
+    if (diffchars) {
+      if (hlresult == NULL) {
+        hlID = HLF_CHD;
+      } else {
+        // TODO may have to fix this
+        if (hlresult[col] == 1) {
+          hlID = HLF_TXD;
+        } else {
+          hlID = HLF_CHD;
+        }
+      }
     } else {
-      hlID = HLF_CHD;  // Changed line.
+      if (col >= change_start && col <= change_end) {
+        hlID = HLF_TXD;  // Changed text.
+      } else {
+        hlID = HLF_CHD;  // Changed line.
+      }
     }
+
   }
   rettv->vval.v_number = hlID == (hlf_T)0 ? 0 : (hlID + 1);
 }

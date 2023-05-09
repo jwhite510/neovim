@@ -68,19 +68,6 @@ static int matching_chars_iwhite(const char *s1, const char *s2)
   return matching;
 }
 
-// /// update the path of a point in the diff linematch algorithm
-// /// @param diffcmppath
-// /// @param score
-// /// @param to
-// /// @param from
-// /// @param choice
-// static void update_path_flat(diffcmppath_T *diffcmppath, int score, size_t to, size_t from,
-//                              const int choice)
-// {
-//   diffcmppath[to].df_decision = &diffcmppath[from];
-//   diffcmppath[to].df_choice = choice;
-//   diffcmppath[to].df_lev_score = score;
-// }
 
 #define MATCH_CHAR_MAX_LEN 800
 
@@ -409,20 +396,6 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
   // diffcmppath_T *curnode = startNode;
 
   test_charmatch_paths(startNode, 0, path_trial, 0, &minturns, *decisions, &n_optimal);
-
-  // test possible paths
-  // // trial path
-  // int k = 0;
-  // while (curnode != NULL && curnode->df_choice != 0) {
-  //   (*decisions)[k++] = curnode->df_choice;
-  //   curnode = curnode->df_decision;
-  // }
-  // // reverse the list
-  // for (int i = 0, tmp; i < (k / 2); i++) {
-  //   tmp = (*decisions)[i];
-  //   (*decisions)[i] = (*decisions)[k - 1 - i];
-  //   (*decisions)[k - 1 - i] = tmp;
-  // }
 
   xfree(diffcmppath);
   xfree(path_trial);
