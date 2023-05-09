@@ -77,6 +77,7 @@ static void update_path_flat(diffcmppath_T *diffcmppath, int score, size_t to, s
 {
   diffcmppath[to].df_decision = &diffcmppath[from];
   diffcmppath[to].df_choice = choice;
+  diffcmppath[to].df_lev_score = score;
 }
 
 #define MATCH_CHAR_MAX_LEN 800
@@ -274,8 +275,7 @@ static size_t unwrap_indexes(const int *values, const int *diff_len, const size_
   for (size_t k = 0; k < ndiffs; k++) {
     num_unwrap_scalar /= (size_t)diff_len[k] + 1;
 
-    // (k == 0) space optimization
-    int n = k == 0 ? values[k] % 2 : values[k];
+    int n = values[k];
     path_idx += num_unwrap_scalar * (size_t)n;
   }
   return path_idx;
@@ -383,7 +383,7 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
   size_t memsize_decisions = 0;
   for (size_t i = 0; i < ndiffs; i++) {
     assert(diff_len[i] >= 0);
-    memsize *= i == 0 ? 2 : (size_t)(diff_len[i] + 1);
+    memsize *= (size_t)(diff_len[i] + 1);
     memsize_decisions += (size_t)diff_len[i];
   }
 
@@ -392,6 +392,7 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
   // allocate memory here
   for (size_t i = 0; i < memsize; i++) {
     diffcmppath[i].df_decision = NULL;
+    diffcmppath[i].df_choice = 0;
   }
 
   // memory for avoiding repetitive calculations of score
@@ -405,8 +406,9 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
 
   *decisions = xmalloc(sizeof(int) * memsize_decisions);
   diffcmppath_T *curnode = path_start;
+
   int k = 0;
-  while (curnode) {
+  while (curnode != NULL && curnode->df_choice != 0) {
     (*decisions)[k++] = curnode->df_choice;
     curnode = curnode->df_decision;
   }
@@ -417,9 +419,6 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
     (*decisions)[k - 1 - i] = tmp;
   }
 
-  for (size_t i = 0; i < memsize; i++) {
-    xfree(diffcmppath[i].df_decision);
-  }
   xfree(diffcmppath);
 
   return k;
