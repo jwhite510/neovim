@@ -2115,7 +2115,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
   } else if (diff_allignment == CHARMATCH) {
     dp->charmatchp = xmalloc(total_chars_length * sizeof(int)); // will hold results
     dp->n_charmatch = total_chars_length;
-    if (total_chars_length < 100) { // TODO replace 100 with setting for max charmatch length
+    if (total_chars_length < 10) { // TODO replace 100 with setting for max charmatch length
       // do not run charmatch on the entire diff block
       // we will attempt to run charmatch on the individual lines later
       // for now, just initialize the result memory
@@ -2769,7 +2769,11 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hl
                 size_t space; // the size of this lnum slot, the length of characters for this line
                 size_t k = get_buffer_position(i, dp, off, space);
                 for (size_t m = 0; m < space; m++) {
-                  dp->charmatchp[k + m] = dp_tmp.charmatchp[p++];
+                  int val = dp_tmp.charmatchp[p++];
+                  dp->charmatchp[k + m] = val == -1 ? -2 : val; // if this individual line is still
+                                                                // too long to diff, mark it as a
+                                                                // -2, meaning it's been attempted
+                                                                // already
                 }
               }
             }
