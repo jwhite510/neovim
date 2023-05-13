@@ -2113,27 +2113,36 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
     apply_linematch_results(dp, decisions_length, decisions);
     xfree(decisions);
   } else if (diff_allignment == CHARMATCH) {
-    int *decisions = NULL;
-    size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, iwhite, 1);
     dp->charmatchp = xmalloc(total_chars_length * sizeof(int)); // will hold results
     dp->n_charmatch = total_chars_length;
-    for (size_t i = 0; i < total_chars_length; i++) {
-      dp->charmatchp[i] = 0; // default to not highlighted
-    }
-    for (int i = 0; i < decisions_length; i++) {
-      // write to result
-      // is it a comparison
-      if (decisions[i] == (pow(2, ndiffs) - 1)) {
-        // it's a comparison of all the buffers (don't highlight)
-        for (int j = 0; j < ndiffs; j++) {
-          dp->charmatchp[result_diff_start_pos[j]++] = 0;
-        }
-      } else {
-        // it's a skip in a single buffer (highlight as changed)
-        for (int j = 0; j < ndiffs; j++) {
-          if (decisions[i] & (1 << j)) {
-            dp->charmatchp[result_diff_start_pos[j]++] = 1;
-            break;
+    if (total_chars_length < 100) { // TODO replace 100 with setting for max charmatch length
+      // do not run charmatch on the entire diff block
+      // we will attempt to run charmatch on the individual lines later
+      // for now, just initialize the result memory
+      for (size_t i = 0; i < total_chars_length; i++) {
+        dp->charmatchp[i] = -1; // -1 indicates that algorithm has not yet ran
+      }
+    } else {
+      int *decisions = NULL;
+      size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, iwhite, 1);
+      for (size_t i = 0; i < total_chars_length; i++) {
+        dp->charmatchp[i] = 0; // default to not highlighted
+      }
+      for (size_t i = 0; i < decisions_length; i++) {
+        // write to result
+        // is it a comparison
+        if (decisions[i] == (pow(2, ndiffs) - 1)) {
+          // it's a comparison of all the buffers (don't highlight)
+          for (int j = 0; j < ndiffs; j++) {
+            dp->charmatchp[result_diff_start_pos[j]++] = 0;
+          }
+        } else {
+          // it's a skip in a single buffer (highlight as changed)
+          for (int j = 0; j < ndiffs; j++) {
+            if (decisions[i] & (1 << j)) {
+              dp->charmatchp[result_diff_start_pos[j]++] = 1;
+              break;
+            }
           }
         }
       }
@@ -2706,6 +2715,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hl
   if (1) {
     if (dp->charmatchp == NULL) {
       // get the first buffers
+      // try running on the whole diff buffer first
       run_alignment_algorithm(dp, CHARMATCH);
     }
     size_t charcount = 0;
@@ -2728,21 +2738,45 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hl
       // recalculated, then resume the charmatch highlighting
       (*hlresult) = NULL;
     } else {
+      // charmatchp is not null, is the whole thing already diffed?
       // get the correct offset for hlresult
       //
       // if the character count is not null
       size_t hlresult_line_offset = 0;
       // get the offset for the highlight of this line
-      for (int i = 0; i < DB_COUNT; i++) {
-        if ((curtab->tp_diffbuf[i] != NULL)) {
-          for (int j = 0; j < ((i == idx) ? off : dp->df_count[i]); j++) {
-            char *diffline = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j, false);
-            while (*diffline != '\0') { diffline++; hlresult_line_offset++; }
-            hlresult_line_offset++; // count the '\0' character as the newline marker for each line
-            int testv = 1;
+      size_t space_original;
+      hlresult_line_offset = get_buffer_position(idx, dp, off, space_original);
+      if (*(dp->charmatchp + hlresult_line_offset) == -1) {
+        diff_T dp_tmp;
+        // dp_tmp.df_lnum = { 0 };
+        // dp_tmp.df_count = { 0 };
+        for (int i = 0; i < DB_COUNT; i++) {
+          if (curtab->tp_diffbuf[i] != NULL) {
+            dp_tmp.df_lnum[i] = dp->df_lnum[i] + off;
+            dp_tmp.df_count[i] = off >= dp->df_count[i] ? 0 : 1;
           }
-          if (i == idx) { break; }
         }
+        // this line has not yet been calculated
+        // run charmatch on this line of the diff
+        // figure out how many buffers we are diffing
+        // what line number is this in each buffer?
+        run_alignment_algorithm(&dp_tmp, CHARMATCH);
+        if (dp_tmp.n_charmatch > 0 && dp_tmp.charmatchp[0] != -1) {
+          for (int i = 0, p = 0; i < DB_COUNT; i++) {
+            if (curtab->tp_diffbuf[i] != NULL) {
+              // get the offset in the original charmatchp
+              if (off < dp->df_count[i]) {
+                size_t space; // the size of this lnum slot, the length of characters for this line
+                size_t k = get_buffer_position(i, dp, off, space);
+                for (size_t m = 0; m < space; m++) {
+                  dp->charmatchp[k + m] = dp_tmp.charmatchp[p++];
+                }
+              }
+            }
+          }
+          // extract the results from here
+        }
+        xfree(dp_tmp.charmatchp);
       }
       (*hlresult) = dp->charmatchp + hlresult_line_offset;
     }
@@ -3612,4 +3646,23 @@ static int xdiff_out(long start_a, long count_a, long start_b, long count_b, voi
     .count_new  = count_b,
   }));
   return 0;
+}
+
+// get the position in the character diff buffer of this line
+static size_t get_buffer_position(const int idx, diff_T *dp, linenr_T offset, size_t *space) {
+  size_t comparison_mem_offset = 0;
+  for (int i = 0; i < DB_COUNT; i++) {
+    if ((curtab->tp_diffbuf[i] != NULL)) {
+      *space = 0;
+      for (int j = 0; j < ((i == idx) ? offset : dp->df_count[i]); j++) {
+        char *diffline = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j, false);
+        while (*diffline != '\0') { diffline++; comparison_mem_offset++; }
+        comparison_mem_offset++; // count the '\0' character as the newline marker for each line
+        space++;
+        int testv = 1;
+      }
+      if (i == idx) { break; }
+    }
+  }
+  return comparison_mem_offset;
 }
