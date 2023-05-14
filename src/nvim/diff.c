@@ -2115,7 +2115,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
   } else if (diff_allignment == CHARMATCH) {
     dp->charmatchp = xmalloc(total_chars_length * sizeof(int)); // will hold results
     dp->n_charmatch = total_chars_length;
-    if (total_chars_length < 10) { // TODO replace 100 with setting for max charmatch length
+    if (total_chars_length > 10) { // TODO replace 100 with setting for max charmatch length
       // do not run charmatch on the entire diff block
       // we will attempt to run charmatch on the individual lines later
       // for now, just initialize the result memory
@@ -2744,8 +2744,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hl
       // if the character count is not null
       size_t hlresult_line_offset = 0;
       // get the offset for the highlight of this line
-      size_t space_original;
-      hlresult_line_offset = get_buffer_position(idx, dp, off, space_original);
+      hlresult_line_offset = get_buffer_position(idx, dp, off);
       if (*(dp->charmatchp + hlresult_line_offset) == -1) {
         diff_T dp_tmp;
         // dp_tmp.df_lnum = { 0 };
@@ -2761,14 +2760,14 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hl
         // figure out how many buffers we are diffing
         // what line number is this in each buffer?
         run_alignment_algorithm(&dp_tmp, CHARMATCH);
-        if (dp_tmp.n_charmatch > 0 && dp_tmp.charmatchp[0] != -1) {
+        if (dp_tmp.n_charmatch > 0) {
           for (int i = 0, p = 0; i < DB_COUNT; i++) {
             if (curtab->tp_diffbuf[i] != NULL) {
               // get the offset in the original charmatchp
               if (off < dp->df_count[i]) {
-                size_t space; // the size of this lnum slot, the length of characters for this line
-                size_t k = get_buffer_position(i, dp, off, space);
-                for (size_t m = 0; m < space; m++) {
+                size_t length = strlen(ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + off, false)) + 1;
+                size_t k = get_buffer_position(i, dp, off);
+                for (size_t m = 0; m < length; m++) {
                   int val = dp_tmp.charmatchp[p++];
                   dp->charmatchp[k + m] = val == -1 ? -2 : val; // if this individual line is still
                                                                 // too long to diff, mark it as a
@@ -3653,20 +3652,19 @@ static int xdiff_out(long start_a, long count_a, long start_b, long count_b, voi
 }
 
 // get the position in the character diff buffer of this line
-static size_t get_buffer_position(const int idx, diff_T *dp, linenr_T offset, size_t *space) {
+static size_t get_buffer_position(const int idx, diff_T *dp, linenr_T offset) {
   size_t comparison_mem_offset = 0;
   for (int i = 0; i < DB_COUNT; i++) {
     if ((curtab->tp_diffbuf[i] != NULL)) {
-      *space = 0;
       for (int j = 0; j < ((i == idx) ? offset : dp->df_count[i]); j++) {
         char *diffline = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j, false);
         while (*diffline != '\0') { diffline++; comparison_mem_offset++; }
         comparison_mem_offset++; // count the '\0' character as the newline marker for each line
-        space++;
         int testv = 1;
       }
       if (i == idx) { break; }
     }
   }
+  // what is the line length for this pointer?
   return comparison_mem_offset;
 }

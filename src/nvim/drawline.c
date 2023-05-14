@@ -1744,7 +1744,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
           if (hlresult == NULL) {
             wlv.diff_hlf = HLF_CHD;
           } else {
-            if ((size_t)(ptr - line) < strlen(line) && hlresult[ptr - line] == 1) {
+            if ((size_t)(ptr - line) < strlen(line) && (hlresult[ptr - line] == 1 || hlresult[ptr - line] == -2)) {
               wlv.diff_hlf = HLF_TXD;
             } else {
               wlv.diff_hlf = HLF_CHD;
