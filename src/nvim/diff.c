@@ -2115,7 +2115,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
   } else if (diff_allignment == CHARMATCH) {
     dp->charmatchp = xmalloc(total_chars_length * sizeof(int)); // will hold results
     dp->n_charmatch = total_chars_length;
-    if (total_chars_length > 10) { // TODO replace 100 with setting for max charmatch length
+    if (total_chars_length > 3) { // TODO replace 100 with setting for max charmatch length
       // do not run charmatch on the entire diff block
       // we will attempt to run charmatch on the individual lines later
       // for now, just initialize the result memory
@@ -2124,24 +2124,45 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
       }
     } else {
       int *decisions = NULL;
-      size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, iwhite, 1);
       for (size_t i = 0; i < total_chars_length; i++) {
         dp->charmatchp[i] = 0; // default to not highlighted
       }
-      for (size_t i = 0; i < decisions_length; i++) {
-        // write to result
-        // is it a comparison
-        if (decisions[i] == (pow(2, ndiffs) - 1)) {
-          // it's a comparison of all the buffers (don't highlight)
-          for (int j = 0; j < ndiffs; j++) {
-            dp->charmatchp[result_diff_start_pos[j]++] = 0;
-          }
-        } else {
-          // it's a skip in a single buffer (highlight as changed)
-          for (int j = 0; j < ndiffs; j++) {
-            if (decisions[i] & (1 << j)) {
-              dp->charmatchp[result_diff_start_pos[j]++] = 1;
-              break;
+
+      // check is this a line that does not exist in other buffers?
+      // if so, highlight it as a 'newline', and we don't need to run the algorithm
+      bool newline = true;
+      for (int i, c = 0; i < ndiffs; i++) {
+        if (diff_length[i] > 0) {
+          c++;
+        }
+        if (c > 1) {
+          newline = false;
+          break;
+        }
+      }
+
+      if (newline == true) {
+        for (int i = 0; i < total_chars_length; i++) {
+          dp->charmatchp[i] = 2;
+        }
+      } else {
+        size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, iwhite, 1);
+        for (size_t i = 0; i < decisions_length; i++) {
+          // write to result
+          // is it a comparison
+          // check for if this is a 'newline'
+          if (decisions[i] == (pow(2, ndiffs) - 1)) {
+            // it's a comparison of all the buffers (don't highlight)
+            for (int j = 0; j < ndiffs; j++) {
+              dp->charmatchp[result_diff_start_pos[j]++] = 0;
+            }
+          } else {
+            // it's a skip in a single buffer (highlight as changed)
+            for (int j = 0; j < ndiffs; j++) {
+              if (decisions[i] & (1 << j)) {
+                dp->charmatchp[result_diff_start_pos[j]++] = 1;
+                break;
+              }
             }
           }
         }
@@ -2747,12 +2768,10 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hl
       hlresult_line_offset = get_buffer_position(idx, dp, off);
       if (*(dp->charmatchp + hlresult_line_offset) == -1) {
         diff_T dp_tmp;
-        // dp_tmp.df_lnum = { 0 };
-        // dp_tmp.df_count = { 0 };
         for (int i = 0; i < DB_COUNT; i++) {
           if (curtab->tp_diffbuf[i] != NULL) {
             dp_tmp.df_lnum[i] = dp->df_lnum[i] + off;
-            dp_tmp.df_count[i] = off >= dp->df_count[i] ? 0 : 1;
+            dp_tmp.df_count[i] = off < dp->df_count[i] ? 1 : 0;
           }
         }
         // this line has not yet been calculated
