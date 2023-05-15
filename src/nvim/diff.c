@@ -2115,7 +2115,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
   } else if (diff_allignment == CHARMATCH) {
     dp->charmatchp = xmalloc(total_chars_length * sizeof(int)); // will hold results
     dp->n_charmatch = total_chars_length;
-    if (total_chars_length > 3) { // TODO replace 100 with setting for max charmatch length
+    if (total_chars_length > 12) { // TODO replace 100 with setting for max charmatch length
       // do not run charmatch on the entire diff block
       // we will attempt to run charmatch on the individual lines later
       // for now, just initialize the result memory
@@ -2131,7 +2131,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
       // check is this a line that does not exist in other buffers?
       // if so, highlight it as a 'newline', and we don't need to run the algorithm
       bool newline = true;
-      for (int i, c = 0; i < ndiffs; i++) {
+      for (int i = 0, c = 0; i < ndiffs; i++) {
         if (diff_length[i] > 0) {
           c++;
         }
@@ -2803,12 +2803,14 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hl
       }
       (*hlresult) = dp->charmatchp + hlresult_line_offset;
     }
-    if ((*hlresult)[0] != -2) {      // -2 indicates that we've attempted a character wise diff with the
-      return false;                  // entire block, and with this individual line, and still exceeded
-    } else {                         // the character limit
-                                     //
-      *diffchars_lim_exceeded = true; // go to the default highlighting behaviour without character
-    }                                // wise matching
+    if ((*hlresult) == NULL) {
+      return false;
+    } else if ((*hlresult)[0] != -2) {  // -2 indicates that we've attempted a character wise diff with the
+      return false;                     // entire block, and with this individual line, and still exceeded
+    } else {                            // the character limit
+                                        //
+      *diffchars_lim_exceeded = true;   // go to the default highlighting behaviour without character
+    }                                   // wise matching
   }
 
   for (int i = 0; i < DB_COUNT; i++) {
