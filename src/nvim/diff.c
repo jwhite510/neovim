@@ -2692,7 +2692,8 @@ bool diffopt_filler(void)
 /// @param  endp    last char of the change
 ///
 /// @return true if the line was added, no other buffer has it.
-bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hlresult)
+bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hlresult,
+    bool* diffchars_lim_exceeded)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   // Make a copy of the line, the next ml_get() will invalidate it.
@@ -2802,7 +2803,12 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hl
       }
       (*hlresult) = dp->charmatchp + hlresult_line_offset;
     }
-    return false;
+    if ((*hlresult)[0] != -2) {      // -2 indicates that we've attempted a character wise diff with the
+      return false;                  // entire block, and with this individual line, and still exceeded
+    } else {                         // the character limit
+                                     //
+      *diffchars_lim_exceeded = true; // go to the default highlighting behaviour without character
+    }                                // wise matching
   }
 
   for (int i = 0; i < DB_COUNT; i++) {

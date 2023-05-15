@@ -1409,6 +1409,7 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
   static int change_start = 0;
   static int change_end = 0;
   static hlf_T hlID = (hlf_T)0;
+  bool diffchars_lim_exceeded = false;
   int *hlresult = NULL;
 
   if (lnum < 0) {       // ignore type error in {lnum} arg
@@ -1424,7 +1425,7 @@ static void f_diff_hlID(typval_T *argvars, typval_T *rettv, EvalFuncData fptr)
       if (filler_lines == -1 || linestatus == -1) {
         change_start = MAXCOL;
         change_end = -1;
-        if (diff_find_change(curwin, lnum, &change_start, &change_end, &hlresult)) {
+        if (diff_find_change(curwin, lnum, &change_start, &change_end, &hlresult, &diffchars_lim_exceeded)) {
           hlID = HLF_ADD;               // added line
         } else {
           hlID = HLF_CHD;               // changed line

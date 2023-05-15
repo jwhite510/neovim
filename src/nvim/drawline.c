@@ -1236,11 +1236,12 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
   int bg_attr = win_bg_attr(wp);
 
   int linestatus = 0;
+  bool diffchars_lim_exceeded = false;
   int *hlresult = NULL;
   wlv.filler_lines = diff_check_with_linestatus(wp, lnum, &linestatus);
   if (wlv.filler_lines < 0 || linestatus < 0) {
     if (wlv.filler_lines == -1 || linestatus == -1) {
-      if (diff_find_change(wp, lnum, &change_start, &change_end, &hlresult)) {
+      if (diff_find_change(wp, lnum, &change_start, &change_end, &hlresult, &diffchars_lim_exceeded)) {
         wlv.diff_hlf = HLF_ADD;             // added line
       } else if (change_start == 0) {
         wlv.diff_hlf = HLF_TXD;             // changed text
@@ -1739,7 +1740,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
 
       if (wlv.diff_hlf != (hlf_T)0) {
         int diffchars = 1;
-        if (diffchars) {
+        if (diffchars && !diffchars_lim_exceeded) {
           // wlv.diff_hlf = HLF_TXD;
           if (hlresult == NULL) {
             wlv.diff_hlf = HLF_CHD;
