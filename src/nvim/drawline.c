@@ -1741,16 +1741,17 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       if (wlv.diff_hlf != (hlf_T)0) {
         int diffchars = 1;
         if (diffchars && !diffchars_lim_exceeded) {
-          // wlv.diff_hlf = HLF_TXD;
-          if (hlresult == NULL) {
-            wlv.diff_hlf = HLF_CHD;
-          }  else if (hlresult[0] == 2) {
-            wlv.diff_hlf = HLF_ADD;
-          } else {
-            if ((size_t)(ptr - line) < strlen(line) && (hlresult[ptr - line] == 1 || hlresult[ptr - line] == -2)) {
-              wlv.diff_hlf = HLF_TXD;
-            } else {
+          if (wlv.diff_hlf != HLF_ADD) {
+            if (hlresult == NULL) {
               wlv.diff_hlf = HLF_CHD;
+            }  else if (hlresult[0] == 2) {
+              wlv.diff_hlf = HLF_ADD;
+            } else {
+              if ((size_t)(ptr - line) < strlen(line) && (hlresult[ptr - line] == 1 || hlresult[ptr - line] == -2)) {
+                wlv.diff_hlf = HLF_TXD;
+              } else {
+                wlv.diff_hlf = HLF_CHD;
+              }
             }
           }
           // wlv.diff_hlf = hlresult[ptr - line] == 1 ? HLF_CHD : HLF_TXD;
