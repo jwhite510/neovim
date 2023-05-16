@@ -144,6 +144,7 @@ static int count_n_matched_chars(const char **sp, const size_t n, bool iwhite)
 
 void fastforward_buf_to_lnum(const char **s, long lnum)
 {
+  // TODO change this -1 offset in xdiff.c also
   for (long i = 0; i < lnum; i++) {
     *s = strchr(*s, '\n');
     if (!*s) {
