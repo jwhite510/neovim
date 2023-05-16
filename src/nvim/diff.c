@@ -2064,11 +2064,12 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
 {
   // define buffers for diff algorithm
   mmfile_t diffbufs_mm[DB_COUNT];
-  const char *diffbufs[DB_COUNT];
+  char *diffbufs[DB_COUNT];
   int diff_length[DB_COUNT];
   size_t ndiffs = 0;
   size_t total_chars_length = 0;
   size_t result_diff_start_pos[DB_COUNT]; // the position in the result array where this
+  const bool iwhite = (diff_flags & (DIFF_IWHITEALL | DIFF_IWHITE)) > 0;
   for (int i = 0; i < DB_COUNT; i++) {
     if (curtab->tp_diffbuf[i] != NULL) {
       // write the contents of the entire buffer to
@@ -2079,6 +2080,17 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
       // we want to get the char* to the diff buffer that was just written
       // we add it to the array of char*, diffbufs
       diffbufs[ndiffs] = diffbufs_mm[ndiffs].ptr;
+      if (iwhite) {
+        size_t j = 0, k = 0, lines = dp->df_count[i];
+        while (lines > 0) {
+          if (diffbufs[ndiffs][j] != ' ' && diffbufs[ndiffs][j] != '\t') {
+            diffbufs[ndiffs][k++] = diffbufs[ndiffs][j];
+          }
+          if (diffbufs[ndiffs][j++] == '\n') {
+            lines--;
+          }
+        }
+      }
 
       if (diff_allignment == CHARMATCH) {
         result_diff_start_pos[ndiffs] = total_chars_length;
@@ -2106,10 +2118,9 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
 
   // we will get the output of the linematch algorithm in the format of an array
   // of integers (*decisions) and the length of that array (decisions_length)
-  const bool iwhite = (diff_flags & (DIFF_IWHITEALL | DIFF_IWHITE)) > 0;
   if (diff_allignment == LINEMATCH) {
     int *decisions = NULL;
-    size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, iwhite, 0);
+    size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, 0);
     apply_linematch_results(dp, decisions_length, decisions);
     xfree(decisions);
   } else if (diff_allignment == CHARMATCH) {
@@ -2146,7 +2157,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
           dp->charmatchp[i] = 2;
         }
       } else {
-        size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, iwhite, 1);
+        size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, 1);
         for (size_t i = 0; i < decisions_length; i++) {
           // write to result
           // is it a comparison
