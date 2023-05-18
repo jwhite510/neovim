@@ -2063,12 +2063,14 @@ static void apply_linematch_results(diff_T *dp, size_t decisions_length, const i
 static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignment)
 {
   // define buffers for diff algorithm
-  mmfile_t diffbufs_mm[DB_COUNT];
-  char *diffbufs[DB_COUNT];
-  int diff_length[DB_COUNT];
+  mmfile_t diffbufs_mm[DB_COUNT] = { 0 };
+  char *diffbufs[DB_COUNT] = { 0 };
+  int diff_length[DB_COUNT] = { 0 };
   size_t ndiffs = 0;
   size_t total_chars_length = 0;
+  size_t *iwhite_index_offset = NULL;  // mapping array used for charmatch
   size_t result_diff_start_pos[DB_COUNT]; // the position in the result array where this
+                                          // an array for index mapping with iwhite
   const bool iwhite = (diff_flags & (DIFF_IWHITEALL | DIFF_IWHITE)) > 0;
   for (int i = 0; i < DB_COUNT; i++) {
     if (curtab->tp_diffbuf[i] != NULL) {
@@ -2080,31 +2082,19 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
       // we want to get the char* to the diff buffer that was just written
       // we add it to the array of char*, diffbufs
       diffbufs[ndiffs] = diffbufs_mm[ndiffs].ptr;
-      if (iwhite) {
-        size_t j = 0, k = 0, lines = dp->df_count[i];
-        while (lines > 0) {
-          if (diffbufs[ndiffs][j] != ' ' && diffbufs[ndiffs][j] != '\t') {
-            diffbufs[ndiffs][k++] = diffbufs[ndiffs][j];
-          }
-          if (diffbufs[ndiffs][j++] == '\n') {
-            lines--;
-          }
-        }
-      }
 
       if (diff_allignment == CHARMATCH) {
+        // before removing whitespace for charmatch
         result_diff_start_pos[ndiffs] = total_chars_length;
         // get the length of each of the diffs
         int lines = dp->df_count[i];
         const char *p = diffbufs[ndiffs];
-        diff_length[i] = 0;
         while (lines) {
           total_chars_length++; // increment the total characters counter
-          diff_length[i]++; // increment the chars counter for this buffer number
           if (*p == '\n') { lines--; }
           p++;
         }
-      } else {
+      } else if (diff_allignment == LINEMATCH) {
         // LINEMATCH
         // keep track of the length of this diff block to pass it to the linematch
         // algorithm
@@ -2113,6 +2103,29 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
 
       // increment the amount of diff buffers we are passing to the algorithm
       ndiffs++;
+    }
+  }
+
+  if (iwhite && diff_allignment == CHARMATCH) {
+    // allocate array for index mapping of result array
+    iwhite_index_offset = xmalloc(total_chars_length * sizeof(size_t));
+    for (int i = 0; i < total_chars_length; i++) {
+      iwhite_index_offset[i] = 99;
+    }
+  }
+  for (int i = 0; i < ndiffs; i++) {
+    size_t j = 0, k = 0, lines = dp->df_count[i], w = result_diff_start_pos[i];
+    while (lines > 0) {
+      if (iwhite ? (diffbufs[i][j] != ' ' && diffbufs[i][j] != '\t') : 1) {
+        if (diff_allignment == CHARMATCH) {
+          diff_length[i]++;
+          if (iwhite) {
+            iwhite_index_offset[w++] = j - k;
+          }
+        }
+        diffbufs[i][k++] = diffbufs[i][j];
+      }
+      if (diffbufs[i][j++] == '\n') { lines--; }
     }
   }
 
@@ -2126,7 +2139,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
   } else if (diff_allignment == CHARMATCH) {
     dp->charmatchp = xmalloc(total_chars_length * sizeof(int)); // will hold results
     dp->n_charmatch = total_chars_length;
-    if (total_chars_length > 12) { // TODO replace 100 with setting for max charmatch length
+    if (total_chars_length > 800) { // TODO replace 100 with setting for max charmatch length
       // do not run charmatch on the entire diff block
       // we will attempt to run charmatch on the individual lines later
       // for now, just initialize the result memory
@@ -2165,13 +2178,15 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
           if (decisions[i] == (pow(2, ndiffs) - 1)) {
             // it's a comparison of all the buffers (don't highlight)
             for (int j = 0; j < ndiffs; j++) {
-              dp->charmatchp[result_diff_start_pos[j]++] = 0;
+              int k = result_diff_start_pos[j]++;
+              dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[k] + k : k] = 0;
             }
           } else {
             // it's a skip in a single buffer (highlight as changed)
             for (int j = 0; j < ndiffs; j++) {
               if (decisions[i] & (1 << j)) {
-                dp->charmatchp[result_diff_start_pos[j]++] = 1;
+                int k = result_diff_start_pos[j]++;
+                dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[k] + k : k] = 1;
                 break;
               }
             }

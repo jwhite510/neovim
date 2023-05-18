@@ -20,6 +20,7 @@ struct diffcmppath_S {
   size_t df_path_n;   // current index of this path
   int df_choice[LN_DECISION_MAX];
   diffcmppath_T *df_decision[LN_DECISION_MAX];  // to keep track of this path traveled
+  size_t df_optimal_choice;
 };
 
 
@@ -257,7 +258,9 @@ static void populate_tensor(int *df_iters, const size_t ch_dim, diffcmppath_T *d
     }
     int choice = 0;
     size_t unwrapper_idx_to = unwrap_indexes(df_iters, diff_len, ndiffs);
-    diffcmppath[unwrapper_idx_to].df_lev_score = -1;
+    if (unwrapper_idx_to > 0) {
+      diffcmppath[unwrapper_idx_to].df_lev_score = -1;
+    }
     try_possible_paths(df_iters, paths, npaths, 0, &choice, diffcmppath,
                        diff_len, ndiffs, diff_blk, charmatch);
     return;
@@ -354,48 +357,45 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
   diffcmppath_T *startNode = &diffcmppath[u];
 
   *decisions = xmalloc(sizeof(int) * memsize_decisions);
-  int *path_trial = xmalloc(sizeof(int) * memsize_decisions);
-
-  size_t minturns = SIZE_MAX;
   size_t n_optimal = 0;
-  // diffcmppath_T *curnode = startNode;
-
-  test_charmatch_paths(startNode, 0, path_trial, 0, &minturns, *decisions, &n_optimal);
+  test_charmatch_paths(startNode, 0);
+  while (startNode->df_path_n > 0) {
+    size_t j = startNode->df_optimal_choice;
+    (*decisions)[n_optimal++] = startNode->df_choice[j];
+    startNode = startNode->df_decision[j];
+  }
+  // reverse array
+  for (size_t i = 0; i < (n_optimal / 2); i++) {
+    int tmp = (*decisions)[i];
+    (*decisions)[i] = (*decisions)[n_optimal - 1 - i];
+    (*decisions)[n_optimal - 1 - i] = tmp;
+  }
 
   xfree(diffcmppath);
-  xfree(path_trial);
 
   return n_optimal;
 }
 
-static void test_charmatch_paths(diffcmppath_T *node, size_t depth, int *path_trial,
-                                 size_t turns, size_t *minturns, int *path_optimal,
-                                 size_t* n_optimal) {
+// returns the minimum amount of path changes from start to end
+static size_t test_charmatch_paths(diffcmppath_T *node, int lastdecision) {
+  // memorize
+  // input for this node:
+  // depth - 1
+  // past choice
   if (node->df_path_n == 0) {
-    if (turns < *minturns) {
-      for (int j = 0, i = (int)depth - 1; i >= 0; i--) {
-        path_optimal[j++] = path_trial[i];
-      }
-      *n_optimal = depth;
-      *minturns = turns;
-      // write this path
-    }
-    return;
+    // we have reached the end of the tree
+    return 0;
   }
-  if (depth > 0) {
-    // prefer the last choice taken, if there's no other option, then take anything
-    int lastchoice = path_trial[depth - 1];
-    // can we take this choice?
-    for (size_t i = 0; i < node->df_path_n; i++) {
-      if (node->df_choice[i] == lastchoice) {
-        path_trial[depth] = lastchoice;
-        test_charmatch_paths(node->df_decision[i], depth + 1, path_trial, turns, minturns, path_optimal, n_optimal);
-        return;
-      }
-    }
-  }
+  size_t minimum_turns = SIZE_MAX; // the minimum amount of turns required to reach the end
   for (size_t i = 0; i < node->df_path_n; i++) {
-    path_trial[depth] = node->df_choice[i];
-    test_charmatch_paths(node->df_decision[i], depth + 1, path_trial, turns + 1, minturns, path_optimal, n_optimal);
+    // recurse
+    size_t t = test_charmatch_paths(node->df_decision[i], node->df_choice[i]) +
+                                   (lastdecision != node->df_choice[i] ? 1 : 0);
+    if (t < minimum_turns) {
+      node->df_optimal_choice = i;
+      minimum_turns = t;
+    }
   }
+  return minimum_turns;
+
 }
