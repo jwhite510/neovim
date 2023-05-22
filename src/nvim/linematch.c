@@ -18,6 +18,7 @@ typedef struct diffcmppath_S diffcmppath_T;
 struct diffcmppath_S {
   int df_lev_score;  // to keep track of the total score of this path
   size_t df_path_n;   // current index of this path
+  int df_choice_mem[LN_DECISION_MAX + 1];
   int df_choice[LN_DECISION_MAX];
   diffcmppath_T *df_decision[LN_DECISION_MAX];  // to keep track of this path traveled
   size_t df_optimal_choice;
@@ -347,6 +348,9 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
   for (size_t i = 0; i < memsize; i++) {
     diffcmppath[i].df_lev_score = 0;
     diffcmppath[i].df_path_n = 0;
+    for (int j = 0; j < pow(2, ndiffs); j++) {
+      diffcmppath[i].df_choice_mem[j] = -1;
+    }
   }
 
   // memory for avoiding repetitive calculations of score
@@ -378,24 +382,26 @@ size_t linematch_nbuffers(const char **diff_blk, const int *diff_len, const size
 
 // returns the minimum amount of path changes from start to end
 static size_t test_charmatch_paths(diffcmppath_T *node, int lastdecision) {
-  // memorize
-  // input for this node:
-  // depth - 1
-  // past choice
-  if (node->df_path_n == 0) {
-    // we have reached the end of the tree
-    return 0;
-  }
-  size_t minimum_turns = SIZE_MAX; // the minimum amount of turns required to reach the end
-  for (size_t i = 0; i < node->df_path_n; i++) {
-    // recurse
-    size_t t = test_charmatch_paths(node->df_decision[i], node->df_choice[i]) +
-                                   (lastdecision != node->df_choice[i] ? 1 : 0);
-    if (t < minimum_turns) {
-      node->df_optimal_choice = i;
-      minimum_turns = t;
+
+  // memoization
+  if (node->df_choice_mem[lastdecision] == -1) {
+    if (node->df_path_n == 0) {
+      // we have reached the end of the tree
+      node->df_choice_mem[lastdecision] = 0;
+    } else {
+      size_t minimum_turns = SIZE_MAX; // the minimum amount of turns required to reach the end
+      for (size_t i = 0; i < node->df_path_n; i++) {
+        // recurse
+        size_t t = test_charmatch_paths(node->df_decision[i], node->df_choice[i]) +
+                                       (lastdecision != node->df_choice[i] ? 1 : 0);
+        if (t < minimum_turns) {
+          node->df_optimal_choice = i;
+          minimum_turns = t;
+        }
+      }
+      node->df_choice_mem[lastdecision] = minimum_turns;
     }
   }
-  return minimum_turns;
+  return node->df_choice_mem[lastdecision];
 
 }
