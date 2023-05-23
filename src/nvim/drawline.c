@@ -1739,8 +1739,7 @@ int win_line(win_T *wp, linenr_T lnum, int startrow, int endrow, bool nochange, 
       }
 
       if (wlv.diff_hlf != (hlf_T)0) {
-        int diffchars = 1;
-        if (diffchars && !diffchars_lim_exceeded) {
+        if (chardiff() && !diffchars_lim_exceeded) {
           if (wlv.diff_hlf != HLF_ADD) {
             if (hlresult == NULL) {
               wlv.diff_hlf = HLF_CHD;

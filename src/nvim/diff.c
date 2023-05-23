@@ -1818,6 +1818,13 @@ void diff_clear(tabpage_T *tp)
 }
 
 ///
+/// return true if char diff option is enabled
+///
+bool chardiff() {
+  return diff_flags & DIFF_CHARDIFF;
+}
+
+///
 /// return true if the options are set to use diff linematch
 ///
 bool diff_linematch(diff_T *dp)
@@ -2768,7 +2775,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hl
   bool added = true;
 
   linenr_T off = lnum - dp->df_lnum[idx];
-  if (1) {
+  if (chardiff()) {
     if (dp->charmatchp == NULL) {
       // get the first buffers
       // try running on the whole diff buffer first
