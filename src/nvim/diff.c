@@ -79,11 +79,13 @@ static bool diff_need_update = false;  // ex_diffupdate needs to be called
 #define DIFF_CLOSE_OFF  0x400   // diffoff when closing window
 #define DIFF_FOLLOWWRAP 0x800   // follow the wrap option
 #define DIFF_LINEMATCH  0x1000  // match most similar lines within diff
+#define DIFF_CHARDIFF   0x2000  // character-wise matching
 #define ALL_WHITE_DIFF (DIFF_IWHITE | DIFF_IWHITEALL | DIFF_IWHITEEOL)
 static int diff_flags = DIFF_INTERNAL | DIFF_FILLER | DIFF_CLOSE_OFF;
 
 static long diff_algorithm = 0;
 static int linematch_lines = 0;
+static int chardiff_chars = 0;
 
 #define LBUFLEN 50               // length of line in diff file
 
@@ -2139,7 +2141,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
   } else if (diff_allignment == CHARMATCH) {
     dp->charmatchp = xmalloc(total_chars_length * sizeof(int)); // will hold results
     dp->n_charmatch = total_chars_length;
-    if (total_chars_length > 800) { // TODO replace 100 with setting for max charmatch length
+    if (total_chars_length > chardiff_chars) { // TODO replace 100 with setting for max charmatch length
       // do not run charmatch on the entire diff block
       // we will attempt to run charmatch on the individual lines later
       // for now, just initialize the result memory
@@ -2569,6 +2571,7 @@ int diffopt_changed(void)
 {
   int diff_context_new = 6;
   int linematch_lines_new = 0;
+  int chardiff_chars_new = 0;
   int diff_flags_new = 0;
   int diff_foldcolumn_new = 2;
   long diff_algorithm_new = 0;
@@ -2642,6 +2645,10 @@ int diffopt_changed(void)
       p += 10;
       linematch_lines_new = getdigits_int(&p, false, linematch_lines_new);
       diff_flags_new |= DIFF_LINEMATCH;
+    } else if ((strncmp(p, "chardiff:", 9) == 0) && ascii_isdigit(p[9])) {
+      p += 9;
+      chardiff_chars_new = getdigits_int(&p, false, chardiff_chars_new);
+      diff_flags_new |= DIFF_CHARDIFF;
     }
 
     if ((*p != ',') && (*p != NUL)) {
@@ -2671,6 +2678,7 @@ int diffopt_changed(void)
   diff_flags = diff_flags_new;
   diff_context = diff_context_new == 0 ? 1 : diff_context_new;
   linematch_lines = linematch_lines_new;
+  chardiff_chars = chardiff_chars_new;
   diff_foldcolumn = diff_foldcolumn_new;
   diff_algorithm = diff_algorithm_new;
 
