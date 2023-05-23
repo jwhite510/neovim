@@ -2734,7 +2734,7 @@ bool diffopt_filler(void)
 ///
 /// @return true if the line was added, no other buffer has it.
 bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hlresult,
-    bool* diffchars_lim_exceeded)
+    bool* diffchars_lim_exceeded, size_t *diffchars_line_len)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   // Make a copy of the line, the next ml_get() will invalidate it.
@@ -2807,6 +2807,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hl
       // if the character count is not null
       size_t hlresult_line_offset = 0;
       // get the offset for the highlight of this line
+      *diffchars_line_len = strlen(ml_get_buf(curtab->tp_diffbuf[idx], dp->df_lnum[idx] + off, false));
       hlresult_line_offset = get_buffer_position(idx, dp, off);
       if (*(dp->charmatchp + hlresult_line_offset) == -1) {
         diff_T dp_tmp;
