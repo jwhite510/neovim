@@ -88,7 +88,7 @@ static void get_linematch_results(lua_State *lstate, mmfile_t *ma, mmfile_t *mb,
   }
 
   int *decisions = NULL;
-  size_t decisions_length = linematch_nbuffers(diff_begin, diff_length, 2, &decisions, 0);
+  size_t decisions_length = linematch_nbuffers(diff_begin, diff_length, 2, &decisions, 0, NULL, NULL);
 
   long lnuma = start_a, lnumb = start_b;
 

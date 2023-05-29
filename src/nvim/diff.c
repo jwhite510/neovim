@@ -2077,6 +2077,9 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
   int diff_length[DB_COUNT] = { 0 };
   size_t ndiffs = 0;
   size_t total_chars_length = 0;
+  size_t *word_offset_size[DB_COUNT] = { 0 };  // mapping array used for charmatch
+  size_t *word_offset[DB_COUNT] = { 0 };  // mapping array used for charmatch
+  size_t word_offset_result_index[DB_COUNT] = { 0 };  // mapping array used for charmatch
   size_t *iwhite_index_offset = NULL;  // mapping array used for charmatch
   size_t result_diff_start_pos[DB_COUNT]; // the position in the result array where this
                                           // an array for index mapping with iwhite
@@ -2123,16 +2126,36 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
     }
   }
   for (int i = 0; i < ndiffs; i++) {
+    word_offset[i] = xmalloc(total_chars_length * sizeof(size_t));
+    word_offset_size[i] = xmalloc(total_chars_length * sizeof(size_t));
+    for (int j = 0; j < total_chars_length; j++) {
+      word_offset[i][j] = 99;
+      word_offset_size[i][j] = 0;
+    }
+  }
+  for (int i = 0; i < ndiffs; i++) {
+    int cls = INT_MIN;
     size_t j = 0, k = 0, lines = dp->df_count[i], w = result_diff_start_pos[i];
     while (lines > 0) {
       if (iwhite ? (diffbufs[i][j] != ' ' && diffbufs[i][j] != '\t') : 1) {
         if (diff_allignment == CHARMATCH) {
-          diff_length[i]++;
+          // a character which is not a blank
+          if (utf_class(diffbufs[i][j]) != cls || diffbufs[i][j] == '\n') {
+            word_offset[i][diff_length[i]] = k;
+            diff_length[i]++;
+          }
+          // TODO make sure the '\n' case is counted as two words
+          // character count increases for this word
+          word_offset_size[i][diff_length[i] - 1]++;
+          cls = utf_class(diffbufs[i][j]);
           if (iwhite) {
             iwhite_index_offset[w++] = j - k;
           }
         }
         diffbufs[i][k++] = diffbufs[i][j];
+      } else {
+        // we are ignoring whitespace and this is a whitespace ' ' or '\t' reset the class definition
+        cls = INT_MIN;
       }
       if (diffbufs[i][j++] == '\n') { lines--; }
     }
@@ -2142,7 +2165,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
   // of integers (*decisions) and the length of that array (decisions_length)
   if (diff_allignment == LINEMATCH) {
     int *decisions = NULL;
-    size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, 0);
+    size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, 0, NULL, NULL);
     apply_linematch_results(dp, decisions_length, decisions);
     xfree(decisions);
   } else if (diff_allignment == CHARMATCH) {
@@ -2179,7 +2202,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
           dp->charmatchp[i] = 2;
         }
       } else {
-        size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, 1);
+        size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, 1, word_offset, word_offset_size);
         for (size_t i = 0; i < decisions_length; i++) {
           // write to result
           // is it a comparison
@@ -2187,15 +2210,21 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
           if (decisions[i] == (pow(2, ndiffs) - 1)) {
             // it's a comparison of all the buffers (don't highlight)
             for (int j = 0; j < ndiffs; j++) {
-              int k = result_diff_start_pos[j]++;
-              dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[k] + k : k] = 0;
+              for (int k = 0; k < word_offset_size[j][word_offset_result_index[j]]; k++) {
+                int k = result_diff_start_pos[j]++;
+                dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[k] + k : k] = 0;
+              }
+              word_offset_result_index[j]++;
             }
           } else {
             // it's a skip in a single buffer (highlight as changed)
             for (int j = 0; j < ndiffs; j++) {
               if (decisions[i] & (1 << j)) {
-                int k = result_diff_start_pos[j]++;
-                dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[k] + k : k] = 1;
+                for (int k = 0; k < word_offset_size[j][word_offset_result_index[j]]; k++) {
+                  int k = result_diff_start_pos[j]++;
+                  dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[k] + k : k] = 1;
+                }
+                word_offset_result_index[j]++;
                 break;
               }
             }
@@ -2206,8 +2235,11 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
   }
 
   for (size_t i = 0; i < ndiffs; i++) {
+    xfree(word_offset[i]);
+    xfree(word_offset_size[i]);
     XFREE_CLEAR(diffbufs_mm[i].ptr);
   }
+
 }
 
 /// Check diff status for line "lnum" in buffer "buf":
