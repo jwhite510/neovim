@@ -2075,6 +2075,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
   mmfile_t diffbufs_mm[DB_COUNT] = { 0 };
   char *diffbufs[DB_COUNT] = { 0 };
   int diff_length[DB_COUNT] = { 0 };
+  int diff_lines[DB_COUNT] = { 0 };
   size_t ndiffs = 0;
   size_t total_chars_length = 0;
   size_t *word_offset_size[DB_COUNT] = { 0 };  // mapping array used for charmatch
@@ -2099,6 +2100,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
         // before removing whitespace for charmatch
         result_diff_start_pos[ndiffs] = total_chars_length;
         // get the length of each of the diffs
+        diff_lines[ndiffs] = dp->df_count[i];
         int lines = dp->df_count[i];
         const char *p = diffbufs[ndiffs];
         while (lines) {
@@ -2135,7 +2137,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
   }
   for (int i = 0; i < ndiffs; i++) {
     int cls = INT_MIN;
-    size_t j = 0, k = 0, lines = dp->df_count[i], w = result_diff_start_pos[i];
+    size_t j = 0, k = 0, lines = diff_lines[i], w = result_diff_start_pos[i];
     while (lines > 0) {
       if (iwhite ? (diffbufs[i][j] != ' ' && diffbufs[i][j] != '\t') : 1) {
         if (diff_allignment == CHARMATCH) {
