@@ -415,14 +415,14 @@ static size_t test_charmatch_paths(diffcmppath_T *node, int lastdecision) {
           minimum_turns = t;
         }
       }
-      node->df_choice_mem[lastdecision] = minimum_turns;
+      node->df_choice_mem[lastdecision] = (int)minimum_turns;
     }
   }
   return node->df_choice_mem[lastdecision];
 
 }
 // return true if these two strings are equal
-static bool compare(char *s1, size_t l1, char* s2, size_t l2)
+static bool compare(const char *s1, size_t l1, const char* s2, size_t l2)
 {
   if (l1 != l2) {
     return false;
