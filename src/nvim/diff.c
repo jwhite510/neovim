@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "auto/config.h"
 #include "nvim/ascii.h"
@@ -1820,7 +1821,7 @@ void diff_clear(tabpage_T *tp)
 ///
 /// return true if char diff option is enabled
 ///
-bool chardiff() {
+bool chardiff(void) {
   return diff_flags & DIFF_CHARDIFF;
 }
 
@@ -2123,21 +2124,21 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
   if (iwhite && diff_allignment == CHARMATCH) {
     // allocate array for index mapping of result array
     iwhite_index_offset = xmalloc(total_chars_length * sizeof(size_t));
-    for (int i = 0; i < total_chars_length; i++) {
+    for (size_t i = 0; i < total_chars_length; i++) {
       iwhite_index_offset[i] = 99;
     }
   }
-  for (int i = 0; i < ndiffs; i++) {
+  for (size_t i = 0; i < ndiffs; i++) {
     word_offset[i] = xmalloc(total_chars_length * sizeof(size_t));
     word_offset_size[i] = xmalloc(total_chars_length * sizeof(size_t));
-    for (int j = 0; j < total_chars_length; j++) {
+    for (size_t j = 0; j < total_chars_length; j++) {
       word_offset[i][j] = 99;
       word_offset_size[i][j] = 0;
     }
   }
-  for (int i = 0; i < ndiffs; i++) {
+  for (size_t i = 0; i < ndiffs; i++) {
     int cls = INT_MIN;
-    size_t j = 0, k = 0, lines = diff_lines[i], w = result_diff_start_pos[i];
+    size_t j = 0, k = 0, lines = (size_t)diff_lines[i], w = result_diff_start_pos[i];
     while (lines > 0) {
       if (iwhite ? (diffbufs[i][j] != ' ' && diffbufs[i][j] != '\t') : 1) {
         if (diff_allignment == CHARMATCH) {
@@ -2167,13 +2168,13 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
   // of integers (*decisions) and the length of that array (decisions_length)
   if (diff_allignment == LINEMATCH) {
     int *decisions = NULL;
-    size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, 0, NULL, NULL);
+    size_t decisions_length = linematch_nbuffers((const char**)diffbufs, diff_length, ndiffs, &decisions, 0, NULL, NULL);
     apply_linematch_results(dp, decisions_length, decisions);
     xfree(decisions);
   } else if (diff_allignment == CHARMATCH) {
     dp->charmatchp = xmalloc(total_chars_length * sizeof(int)); // will hold results
     dp->n_charmatch = total_chars_length;
-    if (total_chars_length > chardiff_chars) { // TODO replace 100 with setting for max charmatch length
+    if (total_chars_length > (size_t)chardiff_chars) { // TODO replace 100 with setting for max charmatch length
       // do not run charmatch on the entire diff block
       // we will attempt to run charmatch on the individual lines later
       // for now, just initialize the result memory
@@ -2189,7 +2190,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
       // check is this a line that does not exist in other buffers?
       // if so, highlight it as a 'newline', and we don't need to run the algorithm
       bool newline = true;
-      for (int i = 0, c = 0; i < ndiffs; i++) {
+      for (size_t i = 0, c = 0; i < ndiffs; i++) {
         if (diff_length[i] > 0) {
           c++;
         }
@@ -2200,31 +2201,31 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
       }
 
       if (newline == true) {
-        for (int i = 0; i < total_chars_length; i++) {
+        for (size_t i = 0; i < total_chars_length; i++) {
           dp->charmatchp[i] = 2;
         }
       } else {
-        size_t decisions_length = linematch_nbuffers(diffbufs, diff_length, ndiffs, &decisions, 1, word_offset, word_offset_size);
+        size_t decisions_length = linematch_nbuffers((const char**)diffbufs, diff_length, ndiffs, &decisions, 1, word_offset, word_offset_size);
         for (size_t i = 0; i < decisions_length; i++) {
           // write to result
           // is it a comparison
           // check for if this is a 'newline'
-          if (decisions[i] == (pow(2, ndiffs) - 1)) {
+          if (decisions[i] == (pow(2, (double)ndiffs) - 1)) {
             // it's a comparison of all the buffers (don't highlight)
-            for (int j = 0; j < ndiffs; j++) {
-              for (int k = 0; k < word_offset_size[j][word_offset_result_index[j]]; k++) {
-                int k = result_diff_start_pos[j]++;
-                dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[k] + k : k] = 0;
+            for (size_t j = 0; j < ndiffs; j++) {
+              for (size_t k = 0; k < word_offset_size[j][word_offset_result_index[j]]; k++) {
+                size_t l = result_diff_start_pos[j]++;
+                dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[l] + l : l] = 0;
               }
               word_offset_result_index[j]++;
             }
           } else {
             // it's a skip in a single buffer (highlight as changed)
-            for (int j = 0; j < ndiffs; j++) {
+            for (size_t j = 0; j < ndiffs; j++) {
               if (decisions[i] & (1 << j)) {
-                for (int k = 0; k < word_offset_size[j][word_offset_result_index[j]]; k++) {
-                  int k = result_diff_start_pos[j]++;
-                  dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[k] + k : k] = 1;
+                for (size_t k = 0; k < word_offset_size[j][word_offset_result_index[j]]; k++) {
+                  size_t l = result_diff_start_pos[j]++;
+                  dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[l] + l : l] = 1;
                 }
                 word_offset_result_index[j]++;
                 break;
@@ -3763,7 +3764,6 @@ static size_t get_buffer_position(const int idx, diff_T *dp, linenr_T offset) {
         char *diffline = ml_get_buf(curtab->tp_diffbuf[i], dp->df_lnum[i] + j, false);
         while (*diffline != '\0') { diffline++; comparison_mem_offset++; }
         comparison_mem_offset++; // count the '\0' character as the newline marker for each line
-        int testv = 1;
       }
       if (i == idx) { break; }
     }
