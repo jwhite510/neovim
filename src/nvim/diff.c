@@ -2153,8 +2153,8 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
             if (utf_class(diffbufs[i][j]) != cls || diffbufs[i][j] == '\n') {
               word_offset[i][diff_length[i]] = k;
               diff_length[i]++;
+              total_word_count++;
             }
-            total_word_count++;
             word_offset_size[i][diff_length[i] - 1]++;
             cls = utf_class(diffbufs[i][j]);
           } else {
@@ -2231,7 +2231,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
           if (decisions[i] == (pow(2, (double)ndiffs) - 1)) {
             // it's a comparison of all the buffers (don't highlight)
             for (size_t j = 0; j < ndiffs; j++) {
-              for (size_t k = 0; k < diff_allignment == WORDMATCH ? word_offset_size[j][word_offset_result_index[j]] : 1; k++) {
+              for (size_t k = 0; k < (diff_allignment == WORDMATCH ? word_offset_size[j][word_offset_result_index[j]] : 1); k++) {
                 size_t l = result_diff_start_pos[j]++;
                 dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[l] + l : l] = 0;
               }
@@ -2241,7 +2241,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
             // it's a skip in a single buffer (highlight as changed)
             for (size_t j = 0; j < ndiffs; j++) {
               if (decisions[i] & (1 << j)) {
-                for (size_t k = 0; k < diff_allignment == WORDMATCH ? word_offset_size[j][word_offset_result_index[j]] : 1; k++) {
+                for (size_t k = 0; k < (diff_allignment == WORDMATCH ? word_offset_size[j][word_offset_result_index[j]] : 1); k++) {
                   size_t l = result_diff_start_pos[j]++;
                   dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[l] + l : l] = 1;
                 }
@@ -2835,10 +2835,17 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hl
 
   linenr_T off = lnum - dp->df_lnum[idx];
   if (chardiff()) {
+    diff_allignment_T diff_allignment;
+    if (diff_flags & DIFF_CHARDIFF) {
+      // if both chardiff & worddiff are enabled, it will pick chardiff
+      diff_allignment = CHARMATCH;
+    } else if (diff_flags & DIFF_WORDDIFF) {
+      diff_allignment = WORDMATCH;
+    }
     if (dp->charmatchp == NULL) {
       // get the first buffers
       // try running on the whole diff buffer first
-      run_alignment_algorithm(dp, CHARMATCH);
+      run_alignment_algorithm(dp, diff_allignment);
     }
     size_t charcount = 0;
     for (int i = 0; i < DB_COUNT; i++) {
@@ -2880,7 +2887,7 @@ bool diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp, int** hl
         // run charmatch on this line of the diff
         // figure out how many buffers we are diffing
         // what line number is this in each buffer?
-        run_alignment_algorithm(&dp_tmp, CHARMATCH);
+        run_alignment_algorithm(&dp_tmp, diff_allignment);
         if (dp_tmp.n_charmatch > 0) {
           for (int i = 0, p = 0; i < DB_COUNT; i++) {
             if (curtab->tp_diffbuf[i] != NULL) {

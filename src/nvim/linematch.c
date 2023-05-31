@@ -149,7 +149,7 @@ static void try_possible_paths(const int *df_iters, const size_t *paths, const i
           from_vals[k]--;
           const char *p = diff_blk[k];
           if (charmatch) {
-            if (word_offset != NULL) {
+            if (word_offset[k] != NULL) {
               // get start position
               p += word_offset[k][df_iters[k] - 1];
               word_len[k] = word_offset_size[k][df_iters[k] - 1];
@@ -181,7 +181,7 @@ static void try_possible_paths(const int *df_iters, const size_t *paths, const i
         for (size_t i = 0; i < ndiffs; i++) {
           if (current_lines[i] != NULL) {
             compared++;
-            if ((t[0] != '\0' && !compare(current_lines[i], (word_offset != NULL ? word_len[i] : 1), t, t_l)) // if theres more than one to compare, and
+            if ((t[0] != '\0' && !compare(current_lines[i], (word_offset[i] != NULL ? word_len[i] : 1), t, t_l)) // if theres more than one to compare, and
                                                                                   // they're not matching
                 || (t[0] != '\0' && current_lines[i][0] == '\n'))                 // if there's more than one to compare, and
                                                                                   // at least one is a '\n'
@@ -190,7 +190,7 @@ static void try_possible_paths(const int *df_iters, const size_t *paths, const i
             } else if (t[0] != '\0') {
               matched_chars = 1; // comparison of all buffers
             }
-            size_t this_word_length = word_offset != NULL ? word_len[i] : 1;
+            size_t this_word_length = word_offset[i] != NULL ? word_len[i] : 1;
             t_l = this_word_length;
             for (size_t l = 0; l < this_word_length; l++) { t[l] = current_lines[i][l]; }
 
