@@ -81,12 +81,14 @@ static bool diff_need_update = false;  // ex_diffupdate needs to be called
 #define DIFF_FOLLOWWRAP 0x800   // follow the wrap option
 #define DIFF_LINEMATCH  0x1000  // match most similar lines within diff
 #define DIFF_CHARDIFF   0x2000  // character-wise matching
+#define DIFF_WORDDIFF   0x4000  // character-wise matching
 #define ALL_WHITE_DIFF (DIFF_IWHITE | DIFF_IWHITEALL | DIFF_IWHITEEOL)
 static int diff_flags = DIFF_INTERNAL | DIFF_FILLER | DIFF_CLOSE_OFF;
 
 static long diff_algorithm = 0;
 static int linematch_lines = 0;
 static int chardiff_chars = 0;
+static int worddiff_words = 0;
 
 #define LBUFLEN 50               // length of line in diff file
 
@@ -130,7 +132,8 @@ typedef enum {
 
 typedef enum {
   LINEMATCH,
-  CHARMATCH
+  CHARMATCH,
+  WORDMATCH
 } diff_allignment_T;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "diff.c.generated.h"
@@ -1822,7 +1825,7 @@ void diff_clear(tabpage_T *tp)
 /// return true if char diff option is enabled
 ///
 bool chardiff(void) {
-  return diff_flags & DIFF_CHARDIFF;
+  return (diff_flags & DIFF_CHARDIFF) || (diff_flags & DIFF_WORDDIFF);
 }
 
 ///
@@ -2078,6 +2081,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
   int diff_length[DB_COUNT] = { 0 };
   int diff_lines[DB_COUNT] = { 0 };
   size_t ndiffs = 0;
+  size_t total_word_count = 0;
   size_t total_chars_length = 0;
   size_t *word_offset_size[DB_COUNT] = { 0 };  // mapping array used for charmatch
   size_t *word_offset[DB_COUNT] = { 0 };  // mapping array used for charmatch
@@ -2097,7 +2101,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
       // we add it to the array of char*, diffbufs
       diffbufs[ndiffs] = diffbufs_mm[ndiffs].ptr;
 
-      if (diff_allignment == CHARMATCH) {
+      if (diff_allignment == CHARMATCH || diff_allignment == WORDMATCH) {
         // before removing whitespace for charmatch
         result_diff_start_pos[ndiffs] = total_chars_length;
         // get the length of each of the diffs
@@ -2121,19 +2125,21 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
     }
   }
 
-  if (iwhite && diff_allignment == CHARMATCH) {
+  if (iwhite && (diff_allignment == CHARMATCH || diff_allignment == WORDMATCH)) {
     // allocate array for index mapping of result array
     iwhite_index_offset = xmalloc(total_chars_length * sizeof(size_t));
     for (size_t i = 0; i < total_chars_length; i++) {
       iwhite_index_offset[i] = 99;
     }
   }
-  for (size_t i = 0; i < ndiffs; i++) {
-    word_offset[i] = xmalloc(total_chars_length * sizeof(size_t));
-    word_offset_size[i] = xmalloc(total_chars_length * sizeof(size_t));
-    for (size_t j = 0; j < total_chars_length; j++) {
-      word_offset[i][j] = 99;
-      word_offset_size[i][j] = 0;
+  if (diff_allignment == WORDMATCH) {
+    for (size_t i = 0; i < ndiffs; i++) {
+      word_offset[i] = xmalloc(total_chars_length * sizeof(size_t));
+      word_offset_size[i] = xmalloc(total_chars_length * sizeof(size_t));
+      for (size_t j = 0; j < total_chars_length; j++) {
+        word_offset[i][j] = 99;
+        word_offset_size[i][j] = 0;
+      }
     }
   }
   for (size_t i = 0; i < ndiffs; i++) {
@@ -2141,22 +2147,26 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
     size_t j = 0, k = 0, lines = (size_t)diff_lines[i], w = result_diff_start_pos[i];
     while (lines > 0) {
       if (iwhite ? (diffbufs[i][j] != ' ' && diffbufs[i][j] != '\t') : 1) {
-        if (diff_allignment == CHARMATCH) {
+        if (diff_allignment == CHARMATCH || diff_allignment == WORDMATCH) {
           // a character which is not a blank
-          if (utf_class(diffbufs[i][j]) != cls || diffbufs[i][j] == '\n') {
-            word_offset[i][diff_length[i]] = k;
+          if (diff_allignment == WORDMATCH) {
+            if (utf_class(diffbufs[i][j]) != cls || diffbufs[i][j] == '\n') {
+              word_offset[i][diff_length[i]] = k;
+              diff_length[i]++;
+            }
+            total_word_count++;
+            word_offset_size[i][diff_length[i] - 1]++;
+            cls = utf_class(diffbufs[i][j]);
+          } else {
+            // we are matching characters, not words
             diff_length[i]++;
           }
-          // TODO make sure the '\n' case is counted as two words
-          // character count increases for this word
-          word_offset_size[i][diff_length[i] - 1]++;
-          cls = utf_class(diffbufs[i][j]);
           if (iwhite) {
             iwhite_index_offset[w++] = j - k;
           }
         }
         diffbufs[i][k++] = diffbufs[i][j];
-      } else {
+      } else if (diff_allignment == WORDMATCH) {
         // we are ignoring whitespace and this is a whitespace ' ' or '\t' reset the class definition
         cls = INT_MIN;
       }
@@ -2171,10 +2181,18 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
     size_t decisions_length = linematch_nbuffers((const char**)diffbufs, diff_length, ndiffs, &decisions, 0, NULL, NULL);
     apply_linematch_results(dp, decisions_length, decisions);
     xfree(decisions);
-  } else if (diff_allignment == CHARMATCH) {
+  } else if (diff_allignment == CHARMATCH || diff_allignment == WORDMATCH) {
     dp->charmatchp = xmalloc(total_chars_length * sizeof(int)); // will hold results
     dp->n_charmatch = total_chars_length;
-    if (total_chars_length > (size_t)chardiff_chars) { // TODO replace 100 with setting for max charmatch length
+
+    bool lim_exceeded = false;
+    if (diff_allignment == CHARMATCH && total_chars_length > (size_t)chardiff_chars) {
+      lim_exceeded = true;
+    } else if (diff_allignment == WORDMATCH && total_word_count > (size_t)worddiff_words) {
+      lim_exceeded = true;
+    }
+
+    if (lim_exceeded == true) {
       // do not run charmatch on the entire diff block
       // we will attempt to run charmatch on the individual lines later
       // for now, just initialize the result memory
@@ -2213,7 +2231,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
           if (decisions[i] == (pow(2, (double)ndiffs) - 1)) {
             // it's a comparison of all the buffers (don't highlight)
             for (size_t j = 0; j < ndiffs; j++) {
-              for (size_t k = 0; k < word_offset_size[j][word_offset_result_index[j]]; k++) {
+              for (size_t k = 0; k < diff_allignment == WORDMATCH ? word_offset_size[j][word_offset_result_index[j]] : 1; k++) {
                 size_t l = result_diff_start_pos[j]++;
                 dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[l] + l : l] = 0;
               }
@@ -2223,7 +2241,7 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
             // it's a skip in a single buffer (highlight as changed)
             for (size_t j = 0; j < ndiffs; j++) {
               if (decisions[i] & (1 << j)) {
-                for (size_t k = 0; k < word_offset_size[j][word_offset_result_index[j]]; k++) {
+                for (size_t k = 0; k < diff_allignment == WORDMATCH ? word_offset_size[j][word_offset_result_index[j]] : 1; k++) {
                   size_t l = result_diff_start_pos[j]++;
                   dp->charmatchp[iwhite_index_offset ? iwhite_index_offset[l] + l : l] = 1;
                 }
@@ -2614,6 +2632,7 @@ int diffopt_changed(void)
   int diff_context_new = 6;
   int linematch_lines_new = 0;
   int chardiff_chars_new = 0;
+  int worddiff_words_new = 0;
   int diff_flags_new = 0;
   int diff_foldcolumn_new = 2;
   long diff_algorithm_new = 0;
@@ -2691,6 +2710,10 @@ int diffopt_changed(void)
       p += 9;
       chardiff_chars_new = getdigits_int(&p, false, chardiff_chars_new);
       diff_flags_new |= DIFF_CHARDIFF;
+    } else if ((strncmp(p, "worddiff:", 9) == 0) && ascii_isdigit(p[9])) {
+      p += 9;
+      worddiff_words_new = getdigits_int(&p, false, worddiff_words_new);
+      diff_flags_new |= DIFF_WORDDIFF;
     }
 
     if ((*p != ',') && (*p != NUL)) {
@@ -2721,6 +2744,7 @@ int diffopt_changed(void)
   diff_context = diff_context_new == 0 ? 1 : diff_context_new;
   linematch_lines = linematch_lines_new;
   chardiff_chars = chardiff_chars_new;
+  worddiff_words = worddiff_words_new;
   diff_foldcolumn = diff_foldcolumn_new;
   diff_algorithm = diff_algorithm_new;
 

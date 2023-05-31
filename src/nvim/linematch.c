@@ -181,7 +181,7 @@ static void try_possible_paths(const int *df_iters, const size_t *paths, const i
         for (size_t i = 0; i < ndiffs; i++) {
           if (current_lines[i] != NULL) {
             compared++;
-            if ((t[0] != '\0' && !compare(current_lines[i], word_len[i], t, t_l)) // if theres more than one to compare, and
+            if ((t[0] != '\0' && !compare(current_lines[i], (word_offset != NULL ? word_len[i] : 1), t, t_l)) // if theres more than one to compare, and
                                                                                   // they're not matching
                 || (t[0] != '\0' && current_lines[i][0] == '\n'))                 // if there's more than one to compare, and
                                                                                   // at least one is a '\n'
@@ -190,8 +190,9 @@ static void try_possible_paths(const int *df_iters, const size_t *paths, const i
             } else if (t[0] != '\0') {
               matched_chars = 1; // comparison of all buffers
             }
-            t_l = word_len[i];
-            for (size_t l = 0; l < word_len[i]; l++) { t[l] = current_lines[i][l]; }
+            size_t this_word_length = word_offset != NULL ? word_len[i] : 1;
+            t_l = this_word_length;
+            for (size_t l = 0; l < this_word_length; l++) { t[l] = current_lines[i][l]; }
 
           }
         }
