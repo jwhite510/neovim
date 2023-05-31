@@ -2101,11 +2101,11 @@ static void run_alignment_algorithm(diff_T *dp, diff_allignment_T diff_allignmen
       // we add it to the array of char*, diffbufs
       diffbufs[ndiffs] = diffbufs_mm[ndiffs].ptr;
 
+      diff_lines[ndiffs] = dp->df_count[i];
       if (diff_allignment == CHARMATCH || diff_allignment == WORDMATCH) {
         // before removing whitespace for charmatch
         result_diff_start_pos[ndiffs] = total_chars_length;
         // get the length of each of the diffs
-        diff_lines[ndiffs] = dp->df_count[i];
         int lines = dp->df_count[i];
         const char *p = diffbufs[ndiffs];
         while (lines) {
